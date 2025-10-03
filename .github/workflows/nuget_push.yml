@@ -17,7 +17,7 @@ jobs:
       run: dotnet build src --configuration Release
 
     - name: Publish x402
-      run: dotnet nuget push src\x402\bin\Release\*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+      run: dotnet nuget push src/x402/bin/Release/*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate
 
     - name: Publish x402.Coinbase
-      run: dotnet nuget push src\x402.Coinbase\bin\Release\*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+      run: dotnet nuget push src/x402.Coinbase/bin/Release/*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate
