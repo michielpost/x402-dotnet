@@ -1,0 +1,20 @@
+﻿using System.Text.Json.Serialization;
+
+namespace x402.Facilitator.Models
+{
+    public record FacilitatorKind(
+     [property: JsonPropertyName("scheme")] string Scheme,
+     [property: JsonPropertyName("network")] string Network,
+     [property: JsonPropertyName("x402Version")] int? X402Version = 1,
+     [property: JsonPropertyName("extra")] FacilitatorKindExtra? Extra = null
+         )
+    {
+        public override string ToString() => $"{Scheme}:{Network}";
+    }
+
+    public record FacilitatorKindExtra(
+     [property: JsonPropertyName("feePayer")] string FeePayer
+         );
+
+
+}

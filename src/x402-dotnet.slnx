@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/Sample/">
+    <Project Path="x402-dotnet.AppHost/x402-dotnet.AppHost.csproj" Id="ac4b40a4-37f1-4b1c-b1e8-a072636e5134" />
+    <Project Path="x402-dotnet.ServiceDefaults/x402-dotnet.ServiceDefaults.csproj" />
+    <Project Path="x402.FacilitatorMock/x402.FacilitatorMock.csproj" />
+    <Project Path="x402.SampleWeb/x402.SampleWeb.csproj" />
+  </Folder>
+  <Project Path="x402.Coinbase.Tests/x402.Coinbase.Tests.csproj" Id="061588bc-c7a7-4a57-a2e8-d6c979edeead" />
+  <Project Path="x402.Coinbase/x402.Coinbase.csproj" Id="e5c0ff35-3e08-4994-a2f1-b375d6f5a1b5" />
+  <Project Path="x402.Tests/x402.Tests.csproj" Id="f4a52ff8-e5f6-4a34-aa2f-f7f38a8ddc82" />
+  <Project Path="x402/x402.csproj" />
+</Solution>

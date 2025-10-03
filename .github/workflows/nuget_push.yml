@@ -1,0 +1,30 @@
+name: Push NuGet packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'NuGet package version'
+        required: true
+
+jobs:
+  publish:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v5
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 9.0.x
+    - name: publish x402 on version change
+      uses: alirezanet/publish-nuget@v3.1.0
+      with:
+        PROJECT_FILE_PATH: src/x402/x402.csproj
+        NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+    - name: publish x402.Coinbase on version change
+      uses: alirezanet/publish-nuget@v3.1.0
+      with:
+        PROJECT_FILE_PATH: src/x402.Coinbase/x402.Coinbase.csproj
+        NUGET_KEY: ${{secrets.NUGET_API_KEY}}
