@@ -1,14 +1,9 @@
 name: Push NuGet packages
 
-on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'NuGet package version'
-        required: true
+on: [push]
 
 jobs:
-  publish:
+  build:
 
     runs-on: ubuntu-latest
     
@@ -18,13 +13,11 @@ jobs:
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 9.0.x
-    - name: publish x402 on version change
-      uses: alirezanet/publish-nuget@v3.1.0
-      with:
-        PROJECT_FILE_PATH: src/x402/x402.csproj
-        NUGET_KEY: ${{secrets.NUGET_API_KEY}}
-    - name: publish x402.Coinbase on version change
-      uses: alirezanet/publish-nuget@v3.1.0
-      with:
-        PROJECT_FILE_PATH: src/x402.Coinbase/x402.Coinbase.csproj
-        NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+    - name: Build with dotnet
+      run: dotnet build src --configuration Release
+
+    - name: Publish x402
+      run: dotnet nuget push src\x402\bin\Release\*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+
+    - name: Publish x402.Coinbase
+      run: dotnet nuget push src\x402.Coinbase\bin\Release\*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate
