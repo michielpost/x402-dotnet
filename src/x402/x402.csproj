@@ -8,7 +8,7 @@
 	<Version>0.0.1</Version>
     <Authors>Michiel Post</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Description>x402 imlpementation for .net</Description>
+    <Description>x402 Payment Required implementation for .net</Description>
     <PackageProjectUrl>https://github.com/michielpost/x402-dotnet</PackageProjectUrl>
     <RepositoryUrl>https://github.com/michielpost/x402-dotnet</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>

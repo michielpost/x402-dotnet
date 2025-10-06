@@ -13,16 +13,18 @@
         /// <summary>
         /// The transaction hash, if successful.
         /// </summary>
-        public string? TxHash { get; set; }
+        public string? Transaction { get; set; }
+
+        public string? Payer { get; set; }
 
         /// <summary>
         /// The network ID, if successful.
         /// </summary>
-        public string? NetworkId { get; set; }
+        public string? Network { get; set; }
 
         /// <summary>
         /// Error message, if not successful.
         /// </summary>
-        public string? Error { get; set; }
+        public string? ErrorReason { get; set; }
     }
 }

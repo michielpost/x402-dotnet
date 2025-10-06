@@ -134,7 +134,7 @@ namespace x402
                         // Settlement failed - return 402 if headers not sent yet
                         if (!context.Response.HasStarted)
                         {
-                            string errorMsg = sr != null && sr.Error != null ? sr.Error : "settlement failed";
+                            string errorMsg = sr != null && sr.ErrorReason != null ? sr.ErrorReason : FacilitatorErrorCodes.UnexpectedSettleError;
                             await Respond402Async(context, path, paymentRequirements, errorMsg);
                         }
                         return;
@@ -205,8 +205,8 @@ namespace x402
         {
             var settlementHeader = new SettlementResponseHeader(
                 true,
-                sr.TxHash ?? string.Empty,
-                sr.NetworkId ?? string.Empty,
+                sr.Transaction ?? string.Empty,
+                sr.Network ?? string.Empty,
                 payer
             );
 

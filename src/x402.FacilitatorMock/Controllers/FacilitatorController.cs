@@ -18,9 +18,21 @@ public class FacilitatorController : ControllerBase
     [Route("verify")]
     public VerificationResponse Verify([FromBody] FacilitatorRequest req)
     {
+        if (req.X402Version != 1)
+            return VerificationError(FacilitatorErrorCodes.InvalidX402Version);
+
         return new()
         {
             IsValid = true
+        };
+    }
+
+    private VerificationResponse VerificationError(string invalidX402Version)
+    {
+        return new()
+        {
+            InvalidReason = invalidX402Version,
+            IsValid = false
         };
     }
 

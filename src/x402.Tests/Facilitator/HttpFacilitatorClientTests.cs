@@ -31,8 +31,9 @@
 
             var httpFactory = provider.GetRequiredService<IHttpClientFactory>();
 
-            //var apiUrl = "https://facilitator.payai.network";
-            var apiUrl = "https://facilitator.mogami.tech/";
+            var apiUrl = "https://facilitator.payai.network";
+            //var apiUrl = "https://facilitator.mogami.tech";
+            //var apiUrl = "https://facilitator.mcpay.tech";
 
             client = new HttpFacilitatorClient(httpFactory, apiUrl);
         }
