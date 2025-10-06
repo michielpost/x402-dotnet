@@ -30,10 +30,9 @@
 
             var provider = services.BuildServiceProvider();
 
-            var httpFactory = provider.GetRequiredService<IHttpClientFactory>();
             var coinbaseOptions = provider.GetRequiredService<IOptions<CoinbaseOptions>>();
 
-            client = new CoinbaseFacilitatorClient(httpFactory, coinbaseOptions);
+            client = new CoinbaseFacilitatorClient(new HttpClient(), coinbaseOptions);
         }
 
         [Test]

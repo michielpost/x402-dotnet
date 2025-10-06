@@ -7,8 +7,7 @@ namespace x402.Facilitator
 {
     public class HttpFacilitatorClient : IFacilitatorClient
     {
-        private readonly string _baseUrl;
-        private readonly IHttpClientFactory httpClientFactory;
+        private readonly HttpClient httpClient;
 
         private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
         {
@@ -20,12 +19,9 @@ namespace x402.Facilitator
         /// Creates a new HTTP facilitator client.
         /// </summary>
         /// <param name="baseUrl">The base URL of the facilitator service (trailing slash will be removed)</param>
-        public HttpFacilitatorClient(IHttpClientFactory httpClientFactory, string baseUrl)
+        public HttpFacilitatorClient(HttpClient httpClient)
         {
-            _baseUrl = baseUrl.EndsWith("/")
-                ? baseUrl[..^1] // remove trailing slash
-                : baseUrl;
-            this.httpClientFactory = httpClientFactory;
+            this.httpClient = httpClient;
         }
 
 
@@ -38,8 +34,7 @@ namespace x402.Facilitator
                 PaymentRequirements = req
             };
 
-            var httpClient = httpClientFactory.CreateClient();
-            var response = await httpClient.PostAsJsonAsync($"{_baseUrl}/verify", body);
+            var response = await httpClient.PostAsJsonAsync($"/verify", body);
             if (!response.IsSuccessStatusCode)
             {
                 throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
@@ -62,8 +57,7 @@ namespace x402.Facilitator
                 PaymentRequirements = req
             };
 
-            var httpClient = httpClientFactory.CreateClient();
-            var response = await httpClient.PostAsJsonAsync($"{_baseUrl}/settle", body);
+            var response = await httpClient.PostAsJsonAsync($"/settle", body);
             if (!response.IsSuccessStatusCode)
             {
                 throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
@@ -80,8 +74,7 @@ namespace x402.Facilitator
 
         public async Task<List<FacilitatorKind>> SupportedAsync()
         {
-            var httpClient = httpClientFactory.CreateClient();
-            using var response = await httpClient.GetAsync($"{_baseUrl}/supported");
+            using var response = await httpClient.GetAsync($"/supported");
 
             if (!response.IsSuccessStatusCode)
             {

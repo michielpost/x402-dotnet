@@ -1,4 +1,6 @@
 using x402;
+using x402.Coinbase;
+using x402.Coinbase.Models;
 using x402.Facilitator;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +12,15 @@ builder.AddServiceDefaults();
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddHttpClient<IFacilitatorClient, HttpFacilitatorClient>(client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7141");
+});
+
+// Coinbase facilitator client
+builder.Services.Configure<CoinbaseOptions>(builder.Configuration.GetSection(nameof(CoinbaseOptions)));
+//builder.Services.AddHttpClient<IFacilitatorClient, CoinbaseFacilitatorClient>();
 
 var app = builder.Build();
 
@@ -23,18 +34,17 @@ app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
-var httpClientFactory = app.Services.GetRequiredService<IHttpClientFactory>();
-
+var facilitator = app.Services.GetRequiredService<IFacilitatorClient>();
 var paymentOptions = new x402.Models.PaymentMiddlewareOptions
 {
-    Facilitator = new HttpFacilitatorClient(httpClientFactory, "https://localhost:7141"),
+    Facilitator = facilitator,
     DefaultPayToAddress = "0xYourWalletAddressHere", // Replace with your actual wallet address
+    DefaultNetwork = "base-sepolia",
     PaymentRequirements = new Dictionary<string, x402.Models.PaymentRequirementsConfig>()
         {
             {  "/", new x402.Models.PaymentRequirementsConfig
                 {
                     Scheme = x402.Enums.PaymentScheme.Exact,
-                    PayTo = "0xYourWalletAddressHere", // Replace with your actual wallet address
                     MaxAmountRequired = 1000000,
                     Asset = "USDC",
                     MimeType = "application/json"

@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\x402-dotnet.ServiceDefaults\x402-dotnet.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\x402.Coinbase\x402.Coinbase.csproj" />
     <ProjectReference Include="..\x402\x402.csproj" />
   </ItemGroup>
 

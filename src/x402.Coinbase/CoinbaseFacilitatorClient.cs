@@ -15,7 +15,7 @@ namespace x402.Coinbase
     public class CoinbaseFacilitatorClient : IFacilitatorClient
     {
         private readonly CoinbaseOptions coinbaseOptions;
-        private readonly IHttpClientFactory httpClientFactory;
+        private readonly HttpClient httpClient;
 
         private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
         {
@@ -27,9 +27,9 @@ namespace x402.Coinbase
         /// Creates a new HTTP facilitator client.
         /// </summary>
         /// <param name="baseUrl">The base URL of the facilitator service (trailing slash will be removed)</param>
-        public CoinbaseFacilitatorClient(IHttpClientFactory httpClientFactory, IOptions<CoinbaseOptions> coinbaseOptions)
+        public CoinbaseFacilitatorClient(HttpClient httpClient, IOptions<CoinbaseOptions> coinbaseOptions)
         {
-            this.httpClientFactory = httpClientFactory;
+            this.httpClient = httpClient;
             this.coinbaseOptions = coinbaseOptions.Value;
 
             //Remove trailing slash
@@ -49,7 +49,6 @@ namespace x402.Coinbase
             var url = $"{coinbaseOptions.BaseUrl}/verify";
             string accessToken = JWTHelper.GenerateBearerJWT(coinbaseOptions.ApiKeyId, coinbaseOptions.ApiKeySecret, "POST", url);
 
-            var httpClient = httpClientFactory.CreateClient();
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
             var response = await httpClient.PostAsJsonAsync(url, body);
@@ -78,7 +77,6 @@ namespace x402.Coinbase
             var url = $"{coinbaseOptions.BaseUrl}/settle";
             string accessToken = JWTHelper.GenerateBearerJWT(coinbaseOptions.ApiKeyId, coinbaseOptions.ApiKeySecret, "POST", url);
 
-            var httpClient = httpClientFactory.CreateClient();
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
             var response = await httpClient.PostAsJsonAsync(url, body);
@@ -101,7 +99,6 @@ namespace x402.Coinbase
             var url = $"{coinbaseOptions.BaseUrl}/supported";
             string accessToken = JWTHelper.GenerateBearerJWT(coinbaseOptions.ApiKeyId, coinbaseOptions.ApiKeySecret, "GET", url);
 
-            var httpClient = httpClientFactory.CreateClient();
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             using var response = await httpClient.GetAsync(url);
 

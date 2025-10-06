@@ -35,7 +35,10 @@
             //var apiUrl = "https://facilitator.mogami.tech";
             //var apiUrl = "https://facilitator.mcpay.tech";
 
-            client = new HttpFacilitatorClient(httpFactory, apiUrl);
+            var httpClient = new HttpClient();
+            httpClient.BaseAddress = new Uri(apiUrl);
+
+            client = new HttpFacilitatorClient(httpClient);
         }
 
         [Test]
