@@ -14,7 +14,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>x402-icon-blue.png</PackageIcon>
     <RepositoryType>GitHub</RepositoryType>
-    <PackageTags>x402 crypto blockchain</PackageTags>
+    <PackageTags>x402 crypto blockchain ai agents mcp</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>	
