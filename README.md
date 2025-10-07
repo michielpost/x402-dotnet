@@ -49,9 +49,7 @@ public async Task<IActionResult> Dynamic(string amount)
             Network = "base-sepolia",
             MaxAmountRequired = amount,
             PayTo = "0x"
-        },
-        Enums.SettlementMode.Optimistic,
-        OnSettlement);
+        });
 
     if (!x402Result.CanContinueRequest)
     {
