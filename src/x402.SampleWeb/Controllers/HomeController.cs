@@ -55,7 +55,7 @@ namespace x402.SampleWeb.Controllers
                     Description = "Dynamic payment",
                     Network = "base-sepolia",
                     MaxAmountRequired = amount,
-                    PayTo = "0x"
+                    PayTo = "0x",
                 },
                 Enums.SettlementMode.Optimistic,
                 OnSettlement);
