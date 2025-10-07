@@ -135,17 +135,27 @@ namespace x402
             // Settlement header must be written before any other content
             context.Response.OnStarting(async () =>
             {
+                //const string onStartingGuardKey = "__x402_onstarting_executed";
+                //if (context.Items.ContainsKey(onStartingGuardKey))
+                //{
+                //    return;
+                //}
+                //context.Items[onStartingGuardKey] = true;
+
                 //Start settlement
                 try
                 {
                     SettlementResponse sr = preSettledResponse ?? await facilitator.SettleAsync(payload, paymentRequirements).ConfigureAwait(false);
                     if (sr == null || !sr.Success)
                     {
-                        // Settlement failed - return 402 if headers not sent yet
-                        if (!context.Response.HasStarted)
+                        // Settlement failed
+                        string errorMsg = sr != null && sr.ErrorReason != null ? sr.ErrorReason : FacilitatorErrorCodes.UnexpectedSettleError;
+                        logger.LogWarning("Settlement failed for path {Path}: {Reason}", path, errorMsg);
+
+                        // In pessimistic mode, downgrade to 402 if possible (headers not sent)
+                        // In optimistic mode, do not alter the response status/body
+                        if (settlementMode == SettlementMode.Pessimistic && !context.Response.HasStarted)
                         {
-                            string errorMsg = sr != null && sr.ErrorReason != null ? sr.ErrorReason : FacilitatorErrorCodes.UnexpectedSettleError;
-                            logger.LogWarning("Settlement failed for path {Path}: {Reason}", path, errorMsg);
                             await Respond402Async(context, paymentRequirements, errorMsg).ConfigureAwait(false);
                         }
                         return;
@@ -179,8 +189,8 @@ namespace x402
                     }
                     catch (Exception)
                     {
-                        // If header creation fails, return 500
-                        if (!context.Response.HasStarted)
+                        // If header creation fails
+                        if (settlementMode == SettlementMode.Pessimistic && !context.Response.HasStarted)
                         {
                             logger.LogError("Failed to create settlement response header for path {Path}", path);
                             await Respond500Async(context, "Failed to create settlement response header").ConfigureAwait(false);
@@ -190,8 +200,8 @@ namespace x402
                 }
                 catch (Exception ex)
                 {
-                    // Network/communication errors during settlement - return 402
-                    if (!context.Response.HasStarted)
+                    // Network/communication errors during settlement
+                    if (settlementMode == SettlementMode.Pessimistic && !context.Response.HasStarted)
                     {
                         logger.LogError(ex, "Settlement error for path {Path}", path);
                         await Respond402Async(context, paymentRequirements, "settlement error: " + ex.Message).ConfigureAwait(false);

@@ -16,6 +16,9 @@ jobs:
     - name: Build with dotnet
       run: dotnet build src --configuration Release
 
+    - name: Run tests
+      run: dotnet test src --configuration Release
+
     - name: Publish x402
       run: dotnet nuget push src/x402/bin/Release/*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate
 

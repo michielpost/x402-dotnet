@@ -1,5 +1,9 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
@@ -36,18 +40,50 @@ namespace x402.Tests
             }
         }
 
-        private static DefaultHttpContext CreateHttpContext(out ServiceProvider sp)
+        private static IHost BuildHost(IFacilitatorClient facilitator,
+            string path,
+            PaymentRequirements requirements,
+            SettlementMode mode = SettlementMode.Optimistic,
+            Func<HttpContext, SettlementResponse, Task>? onSettlement = null,
+            Action? onStartingMarker = null)
         {
-            var services = new ServiceCollection();
-            services.AddLogging(builder => builder.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug));
-            sp = services.BuildServiceProvider();
+            return new HostBuilder()
+                .ConfigureLogging(b => b.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug))
+                .ConfigureWebHost(builder =>
+                {
+                    builder.UseTestServer();
+                    builder.ConfigureServices(services =>
+                    {
+                        services.AddSingleton(facilitator);
+                    });
+                    builder.Configure(app =>
+                    {
+                        app.Run(async context =>
+                        {
+                            // Test hook to verify Response.OnStarting is reachable in pipeline
+                            context.Response.OnStarting(() =>
+                            {
+                                onStartingMarker?.Invoke();
+                                return Task.CompletedTask;
+                            });
 
-            var context = new DefaultHttpContext
-            {
-                RequestServices = sp
-            };
-            context.Response.Body = new MemoryStream();
-            return context;
+                            // Invoke handler
+                            var result = await X402Handler.HandleX402Async(
+                                context,
+                                facilitator,
+                                path,
+                                requirements,
+                                mode,
+                                onSettlement).ConfigureAwait(false);
+
+                            if (result.CanContinueRequest)
+                            {
+                                await context.Response.WriteAsync("ok").ConfigureAwait(false);
+                            }
+                        });
+                    });
+                })
+                .Start();
         }
 
         private static PaymentRequirements CreateRequirements(string path)
@@ -90,131 +126,125 @@ namespace x402.Tests
         [Test]
         public async Task NoHeader_Returns402_AndCannotContinue()
         {
-            var context = CreateHttpContext(out var sp);
-            context.Request.Path = "/api";
             var facilitator = new FakeFacilitatorClient();
             var reqs = CreateRequirements("/api");
+            using var host = BuildHost(facilitator, "/api", reqs);
+            var client = host.GetTestClient();
 
-            var result = await X402Handler.HandleX402Async(context, facilitator, "/api", reqs);
+            var resp = await client.GetAsync("/api");
 
-            Assert.That(result.CanContinueRequest, Is.False);
-            Assert.That(context.Response.StatusCode, Is.EqualTo(StatusCodes.Status402PaymentRequired));
+            Assert.That(resp.StatusCode, Is.EqualTo((System.Net.HttpStatusCode)StatusCodes.Status402PaymentRequired));
         }
 
         [Test]
         public async Task MalformedHeader_Returns402()
         {
-            var context = CreateHttpContext(out var sp);
-            context.Request.Path = "/res";
-            context.Request.Headers["X-PAYMENT"] = "not-base64";
             var facilitator = new FakeFacilitatorClient();
             var reqs = CreateRequirements("/res");
+            using var host = BuildHost(facilitator, "/res", reqs);
+            var client = host.GetTestClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "/res");
+            request.Headers.Add("X-PAYMENT", "not-base64");
 
-            var result = await X402Handler.HandleX402Async(context, facilitator, "/res", reqs);
+            var resp = await client.SendAsync(request);
 
-            Assert.That(result.CanContinueRequest, Is.False);
-            Assert.That(context.Response.StatusCode, Is.EqualTo(StatusCodes.Status402PaymentRequired));
+            Assert.That(resp.StatusCode, Is.EqualTo((System.Net.HttpStatusCode)StatusCodes.Status402PaymentRequired));
         }
 
         [Test]
         public async Task ResourceMismatch_Returns402()
         {
-            var context = CreateHttpContext(out var sp);
-            context.Request.Path = "/expected";
-            context.Request.Headers["X-PAYMENT"] = CreateHeaderB64(resource: "/different");
             var facilitator = new FakeFacilitatorClient();
             var reqs = CreateRequirements("/expected");
+            using var host = BuildHost(facilitator, "/expected", reqs);
+            var client = host.GetTestClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "/expected");
+            request.Headers.Add("X-PAYMENT", CreateHeaderB64(resource: "/different"));
 
-            var result = await X402Handler.HandleX402Async(context, facilitator, "/expected", reqs);
+            var resp = await client.SendAsync(request);
 
-            Assert.That(result.CanContinueRequest, Is.False);
-            Assert.That(context.Response.StatusCode, Is.EqualTo(StatusCodes.Status402PaymentRequired));
+            Assert.That(resp.StatusCode, Is.EqualTo((System.Net.HttpStatusCode)StatusCodes.Status402PaymentRequired));
         }
 
         [Test]
         public async Task InvalidVerification_Returns402()
         {
-            var context = CreateHttpContext(out var sp);
-            context.Request.Path = "/r";
-            context.Request.Headers["X-PAYMENT"] = CreateHeaderB64(resource: "/r");
             var facilitator = new FakeFacilitatorClient
             {
                 VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = false, InvalidReason = "bad" })
             };
             var reqs = CreateRequirements("/r");
+            using var host = BuildHost(facilitator, "/r", reqs);
+            var client = host.GetTestClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "/r");
+            request.Headers.Add("X-PAYMENT", CreateHeaderB64(resource: "/r"));
 
-            var result = await X402Handler.HandleX402Async(context, facilitator, "/r", reqs);
+            var resp = await client.SendAsync(request);
 
-            Assert.That(result.CanContinueRequest, Is.False);
-            Assert.That(context.Response.StatusCode, Is.EqualTo(StatusCodes.Status402PaymentRequired));
+            Assert.That(resp.StatusCode, Is.EqualTo((System.Net.HttpStatusCode)StatusCodes.Status402PaymentRequired));
         }
 
         [Test]
         public async Task Optimistic_SettlementSuccess_AddsHeader_AndContinue()
         {
-            var context = CreateHttpContext(out var sp);
-            context.Request.Path = "/ok";
-            context.Request.Headers["X-PAYMENT"] = CreateHeaderB64(resource: "/ok", from: "0xabc");
             var facilitator = new FakeFacilitatorClient
             {
                 VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
                 SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xdead", Network = req.Network })
             };
             var reqs = CreateRequirements("/ok");
+            using var host = BuildHost(facilitator, "/ok", reqs, SettlementMode.Optimistic);
+            var client = host.GetTestClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "/ok");
+            request.Headers.Add("X-PAYMENT", CreateHeaderB64(resource: "/ok", from: "0xabc"));
 
-            var result = await X402Handler.HandleX402Async(context, facilitator, "/ok", reqs, SettlementMode.Optimistic);
-            Assert.That(result.CanContinueRequest, Is.True);
+            var resp = await client.SendAsync(request);
 
-            await context.Response.StartAsync();
-            Assert.That(context.Response.Headers.ContainsKey("X-PAYMENT-RESPONSE"), Is.True);
-            Assert.That(context.Response.Headers["Access-Control-Expose-Headers"].ToString(), Does.Contain("X-PAYMENT-RESPONSE"));
+            Assert.That(resp.IsSuccessStatusCode, Is.True);
+            Assert.That(resp.Headers.Contains("X-PAYMENT-RESPONSE"), Is.True);
+            Assert.That(string.Join(',', resp.Headers.GetValues("Access-Control-Expose-Headers")), Does.Contain("X-PAYMENT-RESPONSE"));
         }
 
         [Test]
-        public async Task Optimistic_SettlementFailure_OnStarting_Writes200()
+        public async Task Optimistic_SettlementFailure_OnRequest_Writes200()
         {
-            var context = CreateHttpContext(out var sp);
-            context.Request.Path = "/fail";
-            context.Request.Headers["X-PAYMENT"] = CreateHeaderB64(resource: "/fail");
             var facilitator = new FakeFacilitatorClient
             {
                 VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
                 SettleAsyncImpl = (_, _) => Task.FromResult(new SettlementResponse { Success = false, ErrorReason = "settle failed" })
             };
             var reqs = CreateRequirements("/fail");
+            using var host = BuildHost(facilitator, "/fail", reqs, SettlementMode.Optimistic);
+            var client = host.GetTestClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "/fail");
+            request.Headers.Add("X-PAYMENT", CreateHeaderB64(resource: "/fail"));
 
-            var result = await X402Handler.HandleX402Async(context, facilitator, "/fail", reqs, SettlementMode.Optimistic);
-            Assert.That(result.CanContinueRequest, Is.True);
-
-            await context.Response.StartAsync();
-            Assert.That(context.Response.StatusCode, Is.EqualTo(StatusCodes.Status200OK));
+            var resp = await client.SendAsync(request);
+            Assert.That(resp.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.OK));
         }
 
         [Test]
         public async Task Pessimistic_SettlementFailure_Returns402_AndCannotContinue()
         {
-            var context = CreateHttpContext(out var sp);
-            context.Request.Path = "/pess-fail";
-            context.Request.Headers["X-PAYMENT"] = CreateHeaderB64(resource: "/pess-fail");
             var facilitator = new FakeFacilitatorClient
             {
                 VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
                 SettleAsyncImpl = (_, _) => Task.FromResult(new SettlementResponse { Success = false, ErrorReason = "not enough" })
             };
             var reqs = CreateRequirements("/pess-fail");
+            using var host = BuildHost(facilitator, "/pess-fail", reqs, SettlementMode.Pessimistic);
+            var client = host.GetTestClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "/pess-fail");
+            request.Headers.Add("X-PAYMENT", CreateHeaderB64(resource: "/pess-fail"));
 
-            var result = await X402Handler.HandleX402Async(context, facilitator, "/pess-fail", reqs, SettlementMode.Pessimistic);
+            var resp = await client.SendAsync(request);
 
-            Assert.That(result.CanContinueRequest, Is.False);
-            Assert.That(context.Response.StatusCode, Is.EqualTo(StatusCodes.Status402PaymentRequired));
+            Assert.That(resp.StatusCode, Is.EqualTo((System.Net.HttpStatusCode)StatusCodes.Status402PaymentRequired));
         }
 
         [Test]
         public async Task Pessimistic_SettlementSuccess_AddsHeaderAndContinue()
         {
-            var context = CreateHttpContext(out var sp);
-            context.Request.Path = "/pess-ok";
-            context.Request.Headers["X-PAYMENT"] = CreateHeaderB64(resource: "/pess-ok", from: "0xabc");
             bool callbackCalled = false;
             var facilitator = new FakeFacilitatorClient
             {
@@ -222,13 +252,21 @@ namespace x402.Tests
                 SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xbeef", Network = req.Network })
             };
             var reqs = CreateRequirements("/pess-ok");
+            using var host = BuildHost(
+                facilitator,
+                "/pess-ok",
+                reqs,
+                SettlementMode.Pessimistic,
+                onSettlement: (ctx, sr) => { callbackCalled = true; return Task.CompletedTask; });
+            var client = host.GetTestClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "/pess-ok");
+            request.Headers.Add("X-PAYMENT", CreateHeaderB64(resource: "/pess-ok", from: "0xabc"));
 
-            var result = await X402Handler.HandleX402Async(context, facilitator, "/pess-ok", reqs, SettlementMode.Pessimistic, onSettlement: (ctx, sr) => { callbackCalled = true; return Task.CompletedTask; });
-            Assert.That(result.CanContinueRequest, Is.True);
+            var resp = await client.SendAsync(request);
+
+            Assert.That(resp.IsSuccessStatusCode, Is.True);
             Assert.That(callbackCalled, Is.True);
-
-            await context.Response.StartAsync();
-            Assert.That(context.Response.Headers.ContainsKey("X-PAYMENT-RESPONSE"), Is.True);
+            Assert.That(resp.Headers.Contains("X-PAYMENT-RESPONSE"), Is.True);
         }
     }
 }

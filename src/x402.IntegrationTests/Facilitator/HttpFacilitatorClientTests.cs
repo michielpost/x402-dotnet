@@ -58,7 +58,7 @@ namespace x402.Tests.Facilitator
                 Asset = "USDC",
                 MaxAmountRequired = "10000",
                 PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
-                Resource = "https://nos.nl/api",
+                Resource = "https://test/api",
                 Network = "base-sepolia",
                 MimeType = "application/json",
                 Description = "test payment",
