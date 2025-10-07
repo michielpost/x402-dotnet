@@ -123,7 +123,8 @@ There is a sample website and mock Settlement server included.
 Contributions are welcome. Fork this repository and send a pull request if you have something useful to add.
 
 
-## Tools
+## Links
 Useful tools when developing x402 solutions:
 - https://proxy402.com/fetch
+- Specifications: https://github.com/coinbase/x402/blob/main/specs/x402-specification.md
 
