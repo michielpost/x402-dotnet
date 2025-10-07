@@ -52,7 +52,7 @@ namespace x402
                 //If resource is included in the payload it must match the URL path
                 var resource = payload.Payload.Resource;
 
-                if (!string.Equals(resource, path, StringComparison.Ordinal))
+                if (!string.IsNullOrEmpty(resource) && !string.Equals(resource, path, StringComparison.Ordinal))
                 {
                     logger.LogWarning("Resource mismatch: payload {PayloadResource} vs request {RequestPath}", resource, path);
                     await Respond402Async(context, paymentRequirements, "resource mismatch").ConfigureAwait(false);
