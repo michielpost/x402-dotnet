@@ -59,7 +59,7 @@ app.UsePaymentMiddleware(paymentOptions);
 
 ```
 
-## Coinbase
+## Coinbase Facilitator
 To use the Coinbase Facilitator, install [x402.Coinbase](https://nuget.org/packages/x402.Coinbase)
 
 ```cs
@@ -77,12 +77,12 @@ Add to appsettings.json:
 ```
 
 
-## Faciliators
+## Facilitators
 List of facilitators you can use:
 - https://api.cdp.coinbase.com/platform/v2/x402/ (Coinbase, requires API key)
 - https://facilitator.payai.network
 - https://facilitator.mogami.tech/
-- https://facilitator.mcpay.tech (Proxy Faciliator)
+- https://facilitator.mcpay.tech (Proxy Facilitator)
 
 
 ## Development
