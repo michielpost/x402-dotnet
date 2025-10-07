@@ -48,7 +48,7 @@ namespace x402.SampleWeb.Controllers
             var request = this.HttpContext.Request;
             var fullUrl = $"{request.Scheme}://{request.Host}{request.Path}{request.QueryString}";
 
-            var result = await X402Handler.HandleX402Async(this.HttpContext, facilitator, fullUrl,
+            var x402Result = await X402Handler.HandleX402Async(this.HttpContext, facilitator, fullUrl,
                 new Models.PaymentRequirements
                 {
                     Asset = "USDC",
@@ -58,13 +58,13 @@ namespace x402.SampleWeb.Controllers
                     PayTo = "0x"
                 });
 
-            if (!result)
+            if (!x402Result.CanContinueRequest)
             {
                 return new EmptyResult(); // Response already written by HandleX402Async, so just exit
             }
 
 
-            return Content($"Dynamic protected for {amount}");
+            return Content($"Dynamic protected for {amount}, paid by: {x402Result.VerificationResponse?.Payer}");
         }
     }
 }

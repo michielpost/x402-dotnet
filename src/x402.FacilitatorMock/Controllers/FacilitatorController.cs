@@ -21,9 +21,12 @@ public class FacilitatorController : ControllerBase
         if (req.X402Version != 1)
             return VerificationError(FacilitatorErrorCodes.InvalidX402Version);
 
+        var payer = req.PaymentPayload.ExtractPayerFromPayload();
+
         return new()
         {
-            IsValid = true
+            IsValid = true,
+            Payer = payer
         };
     }
 
@@ -40,9 +43,14 @@ public class FacilitatorController : ControllerBase
     [Route("settle")]
     public SettlementResponse Settle([FromBody] FacilitatorRequest req)
     {
+        var payer = req.PaymentPayload.ExtractPayerFromPayload();
+
         return new()
         {
             Success = true,
+            Payer = payer,
+            Network = req.PaymentRequirements.Network,
+            Transaction = "0xFacilitatorMockServer"
         };
     }
 

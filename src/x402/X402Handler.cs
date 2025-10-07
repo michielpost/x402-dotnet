@@ -20,7 +20,7 @@ namespace x402
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
         };
 
-        public static async Task<bool> HandleX402Async(HttpContext context, IFacilitatorClient facilitator, string path, PaymentRequirements paymentRequirements)
+        public static async Task<HandleX402Result> HandleX402Async(HttpContext context, IFacilitatorClient facilitator, string path, PaymentRequirements paymentRequirements)
         {
             var logger = context.RequestServices.GetRequiredService<ILogger<X402Handler>>();
             logger.LogDebug("HandleX402 invoked for path {Path}", path);
@@ -31,12 +31,12 @@ namespace x402
             {
                 logger.LogInformation("No X-PAYMENT header present for path {Path}; responding 402", path);
                 await Respond402Async(context, paymentRequirements, null).ConfigureAwait(false);
-                return false;
+                return new HandleX402Result(false);
             }
 
             //Handle payment verification
             PaymentPayloadHeader? payload = null;
-            VerificationResponse vr;
+            VerificationResponse? vr = null;
             try
             {
                 payload = PaymentPayloadHeader.FromHeader(header);
@@ -51,7 +51,7 @@ namespace x402
                     {
                         logger.LogWarning("Resource mismatch: payload {PayloadResource} vs request {RequestPath}", resource, path);
                         await Respond402Async(context, paymentRequirements, "resource mismatch").ConfigureAwait(false);
-                        return false;
+                        return new HandleX402Result(false, $"Resource mismatch: payload {resource} vs request {path}");
                     }
                 }
 
@@ -63,28 +63,28 @@ namespace x402
                 // Malformed payment header - client error
                 logger.LogWarning("Malformed X-PAYMENT header for path {Path}", path);
                 await Respond402Async(context, paymentRequirements, "Malformed X-PAYMENT header").ConfigureAwait(false);
-                return false;
+                return new HandleX402Result(false, "Malformed X-PAYMENT header", vr);
             }
             catch (IOException ex)
             {
                 // Network/communication error with facilitator - server error
                 logger.LogError(ex, "Payment verification IO error for path {Path}", path);
                 await Respond500Async(context, "Payment verification failed: " + ex.Message).ConfigureAwait(false);
-                return false;
+                return new HandleX402Result(false, $"Payment verification failed: {ex.Message}", vr);
             }
             catch (Exception)
             {
                 // Other unexpected errors - server error
                 logger.LogError("Unexpected error during payment verification for path {Path}", path);
                 await Respond500Async(context, "Internal server error during payment verification").ConfigureAwait(false);
-                return false;
+                return new HandleX402Result(false, $"Internal server error during payment verification", vr);
             }
 
             if (!vr.IsValid)
             {
                 logger.LogInformation("Verification invalid for path {Path}: {Reason}", path, vr.InvalidReason);
                 await Respond402Async(context, paymentRequirements, vr.InvalidReason).ConfigureAwait(false);
-                return false;
+                return new HandleX402Result(false, vr.InvalidReason, vr);
             }
 
             //Settlement writes a header, it must be written before any other content
@@ -143,7 +143,7 @@ namespace x402
             });
 
             logger.LogDebug("Payment verified; proceeding to response for path {Path}", path);
-            return true;
+            return new HandleX402Result(true, null, vr);
         }
 
         /// <summary>
