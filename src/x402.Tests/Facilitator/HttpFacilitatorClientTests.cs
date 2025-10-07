@@ -1,15 +1,11 @@
-﻿namespace x402.Tests.Facilitator
-{
-    using Microsoft.Extensions.Configuration;
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Logging.Abstractions;
-    using Microsoft.Extensions.Options;
-    using NUnit.Framework;
-    using System.Net.Http;
-    using System.Threading.Tasks;
-    using x402.Facilitator;
-    using x402.Models;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
+using x402.Facilitator;
+using x402.Models;
 
+namespace x402.Tests.Facilitator
+{
     [TestFixture]
     public class HttpFacilitatorClientTests
     {
@@ -32,8 +28,8 @@
 
             var httpFactory = provider.GetRequiredService<IHttpClientFactory>();
 
-            var apiUrl = "https://facilitator.payai.network";
-            //var apiUrl = "https://facilitator.mogami.tech";
+            //var apiUrl = "https://facilitator.payai.network";
+            var apiUrl = "https://facilitator.mogami.tech";
             //var apiUrl = "https://facilitator.mcpay.tech";
 
             var httpClient = new HttpClient();

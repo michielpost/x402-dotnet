@@ -1,14 +1,12 @@
-﻿namespace x402.Coinbase.Tests
-{
-    using Microsoft.Extensions.Configuration;
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Options;
-    using NUnit.Framework;
-    using System.Net.Http;
-    using System.Threading.Tasks;
-    using x402.Coinbase.Models;
-    using x402.Models;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using x402.Coinbase.Models;
+using x402.Models;
 
+
+namespace x402.Coinbase.Tests
+{
     [TestFixture]
     public class CoinbaseFacilitatorClientTests
     {

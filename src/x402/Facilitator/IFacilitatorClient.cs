@@ -32,6 +32,5 @@ namespace x402.Facilitator
         /// <returns></returns>
         Task<List<FacilitatorKind>> SupportedAsync();
 
-
     }
 }

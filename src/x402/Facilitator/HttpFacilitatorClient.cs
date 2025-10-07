@@ -10,7 +10,7 @@ namespace x402.Facilitator
     {
         private readonly HttpClient httpClient;
         private readonly ILogger<HttpFacilitatorClient> logger;
-        private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+        protected static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
         {
             WriteIndented = true,
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
@@ -26,6 +26,22 @@ namespace x402.Facilitator
             this.logger = logger;
         }
 
+        /// <summary>
+        /// Allows derived clients to adjust the URL for a given relative path and HTTP method.
+        /// Default behavior is to return the relative path unchanged (uses HttpClient.BaseAddress).
+        /// </summary>
+        /// <param name="relativePath">A path like "/verify" or "/settle".</param>
+        /// <param name="method">HTTP method for the request.</param>
+        /// <returns>URL or relative path to pass to HttpRequestMessage.</returns>
+        protected virtual string BuildUrl(string relativePath, HttpMethod method) => relativePath;
+
+        /// <summary>
+        /// Allows derived clients to modify the outgoing request (e.g., add headers).
+        /// Default behavior is no-op.
+        /// </summary>
+        /// <param name="request">The request to be sent.</param>
+        protected virtual void PrepareRequest(HttpRequestMessage request) { }
+
 
         public async Task<VerificationResponse> VerifyAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements req)
         {
@@ -37,7 +53,13 @@ namespace x402.Facilitator
                 PaymentRequirements = req
             };
 
-            var response = await httpClient.PostAsJsonAsync($"/verify", body);
+            var url = BuildUrl("/verify", HttpMethod.Post);
+            using var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = JsonContent.Create(body, options: JsonOptions)
+            };
+            PrepareRequest(request);
+            var response = await httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
@@ -65,7 +87,13 @@ namespace x402.Facilitator
                 PaymentRequirements = req
             };
 
-            var response = await httpClient.PostAsJsonAsync($"/settle", body);
+            var url = BuildUrl("/settle", HttpMethod.Post);
+            using var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = JsonContent.Create(body, options: JsonOptions)
+            };
+            PrepareRequest(request);
+            var response = await httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
@@ -87,7 +115,10 @@ namespace x402.Facilitator
         public async Task<List<FacilitatorKind>> SupportedAsync()
         {
             logger.LogDebug("Requesting supported facilitator kinds");
-            using var response = await httpClient.GetAsync($"/supported");
+            var url = BuildUrl("/supported", HttpMethod.Get);
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            PrepareRequest(request);
+            using var response = await httpClient.SendAsync(request);
 
             if (!response.IsSuccessStatusCode)
             {
