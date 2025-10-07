@@ -1,10 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using x402.Facilitator;
 using x402.Facilitator.Models;
 using x402.Models;
@@ -24,6 +22,8 @@ namespace x402
 
         public static async Task<bool> HandleX402(HttpContext context, IFacilitatorClient facilitator, string path, PaymentRequirements paymentRequirements)
         {
+            var logger = context.RequestServices.GetRequiredService<ILogger<X402Handler>>();
+
             string? header = context.Request.Headers["X-PAYMENT"].FirstOrDefault();
 
             //No payment, return 402
@@ -80,55 +80,55 @@ namespace x402
             }
 
             //Settlement writes a header, it must be written before any other content
-            //context.Response.OnStarting(async () =>
-            //{
-            //    //Start settlement
-            //    try
-            //    {
-            //        SettlementResponse sr = await facilitator.SettleAsync(payload, paymentRequirements);
-            //        if (sr == null || !sr.Success)
-            //        {
-            //            // Settlement failed - return 402 if headers not sent yet
-            //            if (!context.Response.HasStarted)
-            //            {
-            //                string errorMsg = sr != null && sr.ErrorReason != null ? sr.ErrorReason : FacilitatorErrorCodes.UnexpectedSettleError;
-            //                await Respond402Async(context, paymentRequirements, errorMsg);
-            //            }
-            //            return;
-            //        }
+            context.Response.OnStarting(async () =>
+            {
+                //Start settlement
+                try
+                {
+                    SettlementResponse sr = await facilitator.SettleAsync(payload, paymentRequirements);
+                    if (sr == null || !sr.Success)
+                    {
+                        // Settlement failed - return 402 if headers not sent yet
+                        if (!context.Response.HasStarted)
+                        {
+                            string errorMsg = sr != null && sr.ErrorReason != null ? sr.ErrorReason : FacilitatorErrorCodes.UnexpectedSettleError;
+                            await Respond402Async(context, paymentRequirements, errorMsg);
+                        }
+                        return;
+                    }
 
-            //        // Settlement succeeded - add settlement response header (base64-encoded JSON)
-            //        try
-            //        {
-            //            // Extract payer from payment payload (wallet address of person making payment)
-            //            string? payer = payload.ExtractPayerFromPayload();
+                    // Settlement succeeded - add settlement response header (base64-encoded JSON)
+                    try
+                    {
+                        // Extract payer from payment payload (wallet address of person making payment)
+                        string? payer = payload.ExtractPayerFromPayload();
 
-            //            string base64Header = CreatePaymentResponseHeader(sr, payer);
-            //            context.Response.Headers.Append("X-PAYMENT-RESPONSE", base64Header);
+                        string base64Header = CreatePaymentResponseHeader(sr, payer);
+                        context.Response.Headers.Append("X-PAYMENT-RESPONSE", base64Header);
 
-            //            // Set CORS header to expose X-PAYMENT-RESPONSE to browser clients
-            //            context.Response.Headers.Append("Access-Control-Expose-Headers", "X-PAYMENT-RESPONSE");
-            //        }
-            //        catch (Exception)
-            //        {
-            //            // If header creation fails, return 500
-            //            if (!context.Response.HasStarted)
-            //            {
-            //                await Respond500Async(context, "Failed to create settlement response header");
-            //            }
-            //            return;
-            //        }
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        // Network/communication errors during settlement - return 402
-            //        if (!context.Response.HasStarted)
-            //        {
-            //            await Respond402Async(context, paymentRequirements, "settlement error: " + ex.Message);
-            //        }
-            //        return;
-            //    }
-            //});
+                        // Set CORS header to expose X-PAYMENT-RESPONSE to browser clients
+                        context.Response.Headers.Append("Access-Control-Expose-Headers", "X-PAYMENT-RESPONSE");
+                    }
+                    catch (Exception)
+                    {
+                        // If header creation fails, return 500
+                        if (!context.Response.HasStarted)
+                        {
+                            await Respond500Async(context, "Failed to create settlement response header");
+                        }
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Network/communication errors during settlement - return 402
+                    if (!context.Response.HasStarted)
+                    {
+                        await Respond402Async(context, paymentRequirements, "settlement error: " + ex.Message);
+                    }
+                    return;
+                }
+            });
 
             return true;
         }

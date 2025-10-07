@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using x402.Facilitator;
 using x402.Models;
 
@@ -10,6 +11,7 @@ namespace x402
     public class PaymentMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly ILogger<PaymentMiddleware> logger;
         private readonly PaymentMiddlewareOptions paymentMiddlewareOptions;
         private readonly IFacilitatorClient facilitator;
 
@@ -20,9 +22,11 @@ namespace x402
         /// <param name="paymentMiddlewareOptions">Configuration options</param>
         /// <exception cref="ArgumentNullException"></exception>
         public PaymentMiddleware(RequestDelegate next,
+            ILogger<PaymentMiddleware> logger,
             PaymentMiddlewareOptions paymentMiddlewareOptions)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
+            this.logger = logger;
             this.paymentMiddlewareOptions = paymentMiddlewareOptions;
             this.facilitator = paymentMiddlewareOptions.Facilitator;
         }

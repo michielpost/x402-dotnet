@@ -2,6 +2,7 @@
 {
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Logging.Abstractions;
     using Microsoft.Extensions.Options;
     using NUnit.Framework;
     using System.Net.Http;
@@ -38,7 +39,7 @@
             var httpClient = new HttpClient();
             httpClient.BaseAddress = new Uri(apiUrl);
 
-            client = new HttpFacilitatorClient(httpClient);
+            client = new HttpFacilitatorClient(httpClient, new NullLogger<HttpFacilitatorClient>());
         }
 
         [Test]

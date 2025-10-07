@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using x402.Enums;
 using x402.Facilitator;
 using x402.Models;
@@ -59,8 +60,10 @@ namespace x402.Attributes
 
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<PaymentRequiredAttribute>>();
+            var facilitator = context.HttpContext.RequestServices.GetRequiredService<IFacilitatorClient>();
+           
             var request = context.HttpContext.Request;
-
             string path = request.Path.Value + request.QueryString.Value;
 
             PaymentRequirements? paymentRequirements = new PaymentRequirements
@@ -75,9 +78,6 @@ namespace x402.Attributes
                 Scheme = this.Scheme,
                 MaxTimeoutSeconds = 30
             };
-
-
-            var facilitator = context.HttpContext.RequestServices.GetRequiredService<IFacilitatorClient>();
 
             bool canContinue = await X402Handler.HandleX402(context.HttpContext, facilitator, path, paymentRequirements);
             if (!canContinue)

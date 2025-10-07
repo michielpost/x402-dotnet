@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using Microsoft.Extensions.Logging;
+using System.Net.Http.Json;
 using System.Text.Json;
 using x402.Facilitator.Models;
 using x402.Models;
@@ -8,7 +9,7 @@ namespace x402.Facilitator
     public class HttpFacilitatorClient : IFacilitatorClient
     {
         private readonly HttpClient httpClient;
-
+        private readonly ILogger<HttpFacilitatorClient> logger;
         private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
         {
             WriteIndented = true,
@@ -19,9 +20,10 @@ namespace x402.Facilitator
         /// Creates a new HTTP facilitator client.
         /// </summary>
         /// <param name="baseUrl">The base URL of the facilitator service (trailing slash will be removed)</param>
-        public HttpFacilitatorClient(HttpClient httpClient)
+        public HttpFacilitatorClient(HttpClient httpClient, ILogger<HttpFacilitatorClient> logger)
         {
             this.httpClient = httpClient;
+            this.logger = logger;
         }
 
 
