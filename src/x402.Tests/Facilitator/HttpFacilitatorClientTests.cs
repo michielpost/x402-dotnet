@@ -26,14 +26,14 @@ namespace x402.Tests.Facilitator
 
             var provider = services.BuildServiceProvider();
 
-            var httpFactory = provider.GetRequiredService<IHttpClientFactory>();
-
             //var apiUrl = "https://facilitator.payai.network";
             var apiUrl = "https://facilitator.mogami.tech";
             //var apiUrl = "https://facilitator.mcpay.tech";
 
-            var httpClient = new HttpClient();
-            httpClient.BaseAddress = new Uri(apiUrl);
+            var httpClient = new HttpClient
+            {
+                BaseAddress = new Uri(apiUrl)
+            };
 
             client = new HttpFacilitatorClient(httpClient, new NullLogger<HttpFacilitatorClient>());
         }
@@ -45,7 +45,7 @@ namespace x402.Tests.Facilitator
 
             Assert.That(kinds, Is.Not.Null);
             Assert.That(kinds.Count, Is.GreaterThan(0));
-            TestContext.WriteLine($"Supported kinds: {string.Join(", ", kinds.Select(k => k.ToString()))}");
+            TestContext.Out.WriteLine($"Supported kinds: {string.Join(", ", kinds.Select(k => k.ToString()))}");
         }
 
         [Test]
@@ -72,7 +72,7 @@ namespace x402.Tests.Facilitator
             var result = await client.VerifyAsync(payload, requirements);
 
             Assert.That(result, Is.Not.Null);
-            TestContext.WriteLine($"Verify result: IsValid={result.IsValid}");
+            TestContext.Out.WriteLine($"Verify result: IsValid={result.IsValid}");
         }
 
         [Test]
@@ -94,7 +94,7 @@ namespace x402.Tests.Facilitator
             var result = await client.SettleAsync(payload, requirements);
 
             Assert.That(result, Is.Not.Null);
-            TestContext.WriteLine($"Settle result: Success={result.Success}");
+            TestContext.Out.WriteLine($"Settle result: Success={result.Success}");
         }
     }
 }

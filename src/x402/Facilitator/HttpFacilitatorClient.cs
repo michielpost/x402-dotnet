@@ -59,15 +59,15 @@ namespace x402.Facilitator
                 Content = JsonContent.Create(body, options: JsonOptions)
             };
             PrepareRequest(request);
-            var response = await httpClient.SendAsync(request);
+            var response = await httpClient.SendAsync(request).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync();
+                var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 logger.LogWarning("Verification request failed with status {StatusCode}: {Content}", (int)response.StatusCode, content);
                 throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {content}");
             }
 
-            var result = await response.Content.ReadFromJsonAsync<VerificationResponse>(JsonOptions);
+            var result = await response.Content.ReadFromJsonAsync<VerificationResponse>(JsonOptions).ConfigureAwait(false);
             if (result is null)
             {
                 logger.LogError("Failed to deserialize verification response for resource {Resource}", req.Resource);
@@ -93,15 +93,15 @@ namespace x402.Facilitator
                 Content = JsonContent.Create(body, options: JsonOptions)
             };
             PrepareRequest(request);
-            var response = await httpClient.SendAsync(request);
+            var response = await httpClient.SendAsync(request).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync();
+                var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 logger.LogWarning("Settlement request failed with status {StatusCode}: {Content}", (int)response.StatusCode, content);
                 throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {content}");
             }
 
-            var result = await response.Content.ReadFromJsonAsync<SettlementResponse>(JsonOptions);
+            var result = await response.Content.ReadFromJsonAsync<SettlementResponse>(JsonOptions).ConfigureAwait(false);
             if (result is null)
             {
                 logger.LogError("Failed to deserialize settlement response for resource {Resource}", req.Resource);
@@ -118,16 +118,16 @@ namespace x402.Facilitator
             var url = BuildUrl("/supported", HttpMethod.Get);
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             PrepareRequest(request);
-            using var response = await httpClient.SendAsync(request);
+            using var response = await httpClient.SendAsync(request).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync();
+                var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 logger.LogWarning("Supported kinds request failed with status {StatusCode}: {Content}", (int)response.StatusCode, content);
                 throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {content}");
             }
 
-            var map = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>(JsonOptions);
+            var map = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>(JsonOptions).ConfigureAwait(false);
 
             if (map is null || !map.TryGetValue("kinds", out var kindsObj))
             {

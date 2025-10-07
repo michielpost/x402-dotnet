@@ -31,12 +31,12 @@ namespace x402.Models
         /// <summary>
         /// The resource path.
         /// </summary>
-        public required string Resource { get; set; }
+        public string Resource { get; set; } = string.Empty;
 
         /// <summary>
         /// The MIME type of the resource.
         /// </summary>
-        public required string MimeType { get; set; }
+        public string MimeType { get; set; } = string.Empty;
 
         /// <summary>
         /// The pay-to wallet address.
@@ -48,7 +48,7 @@ namespace x402.Models
         /// </summary>
         public int MaxTimeoutSeconds { get; set; } = 10;
 
-        public required string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
         
         public OutputSchema? OutputSchema { get; set; }
         public Extra? Extra { get; set; }

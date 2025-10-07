@@ -67,7 +67,7 @@ namespace x402.Attributes
             string path = request.Path.Value + request.QueryString.Value;
             logger.LogDebug("PaymentRequiredAttribute invoked for path {Path}", path);
 
-            PaymentRequirements? paymentRequirements = new PaymentRequirements
+            var paymentRequirements = new PaymentRequirements
             {
                 Asset = this.Asset,
                 Description = this.Description,
@@ -81,7 +81,7 @@ namespace x402.Attributes
             };
             logger.LogInformation("Built payment requirements for path {Path}: scheme {Scheme}, asset {Asset}", path, paymentRequirements.Scheme, paymentRequirements.Asset);
 
-            bool canContinue = await X402Handler.HandleX402(context.HttpContext, facilitator, path, paymentRequirements);
+            bool canContinue = await X402Handler.HandleX402Async(context.HttpContext, facilitator, path, paymentRequirements).ConfigureAwait(false);
             if (!canContinue)
             {
                 logger.LogWarning("Payment not satisfied for path {Path}; stopping execution", path);

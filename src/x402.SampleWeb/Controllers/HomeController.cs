@@ -1,11 +1,20 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System;
 using x402.Attributes;
+using x402.Facilitator;
 
 namespace x402.SampleWeb.Controllers
 {
     [Route("{controller}")]
     public class HomeController : Controller
     {
+        private readonly IFacilitatorClient facilitator;
+
+        public HomeController(IFacilitatorClient facilitator)
+        {
+            this.facilitator = facilitator;
+        }
+
         /// <summary>
         /// Protected by Middleware
         /// </summary>
@@ -30,6 +39,32 @@ namespace x402.SampleWeb.Controllers
         public IActionResult Protected()
         {
             return Content("Protected");
+        }
+
+        [HttpGet]
+        [Route("dynamic")]
+        public async Task<IActionResult> Dynamic(string amount)
+        {
+            var request = this.HttpContext.Request;
+            var fullUrl = $"{request.Scheme}://{request.Host}{request.Path}{request.QueryString}";
+
+            var result = await X402Handler.HandleX402Async(this.HttpContext, facilitator, fullUrl,
+                new Models.PaymentRequirements
+                {
+                    Asset = "USDC",
+                    Description = "Dynamic payment",
+                    Network = "base-sepolia",
+                    MaxAmountRequired = amount,
+                    PayTo = "0x"
+                });
+
+            if (!result)
+            {
+                return new EmptyResult(); // Response already written by HandleX402Async, so just exit
+            }
+
+
+            return Content($"Dynamic protected for {amount}");
         }
     }
 }

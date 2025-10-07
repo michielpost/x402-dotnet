@@ -52,7 +52,7 @@ namespace x402
             }
 
             logger.LogInformation("Enforcing x402 payment for path {Path} with scheme {Scheme} asset {Asset}", path, paymentRequirements.Scheme, paymentRequirements.Asset);
-            bool canContinue = await X402Handler.HandleX402(context, facilitator, path, paymentRequirements);
+            bool canContinue = await X402Handler.HandleX402Async(context, facilitator, path, paymentRequirements).ConfigureAwait(false);
             if (!canContinue)
             {
                 logger.LogWarning("Payment not satisfied for path {Path}; responding with 402/500 already handled", path);
