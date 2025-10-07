@@ -15,6 +15,9 @@
         /// </summary>
         public string? Transaction { get; set; }
 
+        /// <summary>
+        /// Address of the payer's wallet
+        /// </summary>
         public string? Payer { get; set; }
 
         /// <summary>

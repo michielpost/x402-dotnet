@@ -37,7 +37,7 @@ namespace x402
             if (string.IsNullOrEmpty(header))
             {
                 logger.LogInformation("No X-PAYMENT header present for path {Path}; responding 402", path);
-                await Respond402Async(context, paymentRequirements, null).ConfigureAwait(false);
+                await Respond402Async(context, paymentRequirements, "X-PAYMENT header is required").ConfigureAwait(false);
                 return new HandleX402Result(false);
             }
 
@@ -49,17 +49,14 @@ namespace x402
                 payload = PaymentPayloadHeader.FromHeader(header);
                 logger.LogDebug("Parsed X-PAYMENT header for path {Path}", path);
 
-                // If resource is included in the payload it must match the URL path
-                if (payload.Payload.TryGetValue("resource", out object? value))
-                {
-                    var resource = value?.ToString();
+                //If resource is included in the payload it must match the URL path
+                var resource = payload.Payload.Resource;
 
-                    if (!string.Equals(resource, path, StringComparison.Ordinal))
-                    {
-                        logger.LogWarning("Resource mismatch: payload {PayloadResource} vs request {RequestPath}", resource, path);
-                        await Respond402Async(context, paymentRequirements, "resource mismatch").ConfigureAwait(false);
-                        return new HandleX402Result(false, $"Resource mismatch: payload {resource} vs request {path}");
-                    }
+                if (!string.Equals(resource, path, StringComparison.Ordinal))
+                {
+                    logger.LogWarning("Resource mismatch: payload {PayloadResource} vs request {RequestPath}", resource, path);
+                    await Respond402Async(context, paymentRequirements, "resource mismatch").ConfigureAwait(false);
+                    return new HandleX402Result(false, $"Resource mismatch: payload {resource} vs request {path}");
                 }
 
                 vr = await facilitator.VerifyAsync(payload, paymentRequirements).ConfigureAwait(false);

@@ -48,7 +48,7 @@ namespace x402.Tests
             var actionContext = new ActionContext(httpContext, routeData, new ControllerActionDescriptor());
             var filters = new List<IFilterMetadata>();
             var actionArguments = new Dictionary<string, object?>();
-            return new ActionExecutingContext(actionContext, filters, actionArguments, controller: null);
+            return new ActionExecutingContext(actionContext, filters, actionArguments, controller: new object());
         }
 
         [Test]
@@ -78,7 +78,7 @@ namespace x402.Tests
             await attr.OnActionExecutionAsync(context, () =>
             {
                 nextCalled = true;
-                return Task.FromResult(new ActionExecutedContext(context, new List<IFilterMetadata>(), controller: null));
+                return Task.FromResult(new ActionExecutedContext(context, new List<IFilterMetadata>(), controller: new object()));
             });
 
             Assert.That(nextCalled, Is.False);
@@ -132,7 +132,7 @@ namespace x402.Tests
             await attr.OnActionExecutionAsync(context, () =>
             {
                 nextCalled = true;
-                return Task.FromResult(new ActionExecutedContext(context, new List<IFilterMetadata>(), controller: null));
+                return Task.FromResult(new ActionExecutedContext(context, new List<IFilterMetadata>(), controller: new object()));
             });
 
             Assert.That(nextCalled, Is.True);

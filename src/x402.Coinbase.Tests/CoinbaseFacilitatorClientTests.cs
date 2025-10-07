@@ -1,10 +1,7 @@
 using Microsoft.Extensions.Options;
-using System;
-using NUnit.Framework;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using x402.Coinbase;
 using x402.Coinbase.Models;
 using x402.Facilitator.Models;
 using x402.Models;
@@ -14,6 +11,14 @@ namespace x402.Coinbase.Tests
     [TestFixture]
     public class CoinbaseFacilitatorClientTests
     {
+        private readonly PaymentPayloadHeader emptyPayloadHeader = new PaymentPayloadHeader()
+        {
+            X402Version = 1,
+            Payload = new Payload()
+            {
+                Authorization = new x402.Models.Authorization()
+            }
+        };
         private sealed class FakeHandler : HttpMessageHandler
         {
             public Func<HttpRequestMessage, HttpResponseMessage>? Impl { get; set; }
@@ -67,7 +72,7 @@ namespace x402.Coinbase.Tests
 
             var client = new CoinbaseFacilitatorClient(httpClient, options);
 
-            var result = await client.VerifyAsync(new PaymentPayloadHeader { X402Version = 1 }, CreateReqs("/r"));
+            var result = await client.VerifyAsync(emptyPayloadHeader, CreateReqs("/r"));
 
             Assert.That(result.IsValid, Is.True);
             Assert.That(capturedUrl, Is.EqualTo("https://api.example.com/verify"));

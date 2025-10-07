@@ -40,7 +40,7 @@ namespace x402.Coinbase.Tests
 
             Assert.That(kinds, Is.Not.Null);
             Assert.That(kinds.Count, Is.GreaterThan(0));
-            TestContext.WriteLine($"Supported kinds: {string.Join(", ", kinds.Select(k => k.ToString()))}");
+            TestContext.Out.WriteLine($"Supported kinds: {string.Join(", ", kinds.Select(k => k.ToString()))}");
         }
 
         [Test]
@@ -57,17 +57,16 @@ namespace x402.Coinbase.Tests
                 Network = "base-sepolia",
                 MimeType = "application/json",
                 Description = "test payment",
-                OutputSchema = new OutputSchema
+                OutputSchema = new
                 {
                     Data = "string"
-                },
-                Extra = new Extra()
+                }
             };
 
             var result = await client.VerifyAsync(payload, requirements);
 
             Assert.That(result, Is.Not.Null);
-            TestContext.WriteLine($"Verify result: IsValid={result.IsValid}");
+            TestContext.Out.WriteLine($"Verify result: IsValid={result.IsValid}");
         }
 
         [Test]
@@ -89,7 +88,7 @@ namespace x402.Coinbase.Tests
             var result = await client.SettleAsync(payload, requirements);
 
             Assert.That(result, Is.Not.Null);
-            TestContext.WriteLine($"Settle result: Success={result.Success}");
+            TestContext.Out.WriteLine($"Settle result: Success={result.Success}");
         }
     }
 }

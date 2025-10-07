@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Text.Json.Serialization;
 using x402.Enums;
 
 namespace x402.Models
@@ -25,9 +24,9 @@ namespace x402.Models
         public string? Network { get; set; }
 
         /// <summary>
-        /// The parsed payload as a dictionary.
+        /// The parsed payload
         /// </summary>
-        public Dictionary<string, object> Payload { get; set; } = new Dictionary<string, object>();
+        public required Payload Payload { get; set; }
 
         /// <summary>
         /// Parses the payment payload from the base64-encoded header.
@@ -61,36 +60,55 @@ namespace x402.Models
         /// </summary>
         public string? ExtractPayerFromPayload()
         {
-            try
-            {
-                // Convert the generic payload dict to a typed ExactSchemePayload
-                string payloadJson = JsonSerializer.Serialize(Payload);
-
-                JsonSerializerOptions jsonOptions = new(JsonSerializerDefaults.Web);
-                ExactSchemePayload? exactPayload = JsonSerializer.Deserialize<ExactSchemePayload>(payloadJson, jsonOptions);
-                return exactPayload?.Authorization?.From;
-            }
-            catch (Exception)
-            {
-                // If conversion fails, fall back to manual extraction for compatibility
-                try
-                {
-                    if (Payload.TryGetValue("authorization", out var authorizationObj) &&
-                        authorizationObj is Dictionary<string, object> authorization)
-                    {
-                        if (authorization.TryGetValue("from", out var fromObj) &&
-                            fromObj is string from)
-                        {
-                            return from;
-                        }
-                    }
-                }
-                catch
-                {
-                    // Ignore any extraction errors
-                }
-                return null;
-            }
+            return Payload?.Authorization?.From;
         }
+    }
+
+    public class Payload
+    {
+        /// <summary>
+        /// EIP-712 signature for authorization
+        /// </summary>
+        public string Signature { get; set; } = string.Empty;
+
+        /// <summary>
+        /// EIP-3009 authorization parameter
+        /// </summary>
+        public required Authorization Authorization { get; set; }
+
+        public string? Resource { get; set; }
+    }
+
+    public class Authorization
+    {
+        /// <summary>
+        /// Payer's wallet address
+        /// </summary>
+        public string From { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 	Recipient's wallet address
+        /// </summary>
+        public string To { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Payment amount in atomic units
+        /// </summary>
+        public string Value { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Unix timestamp when authorization becomes valid
+        /// </summary>
+        public string ValidAfter { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Unix timestamp when authorization expires
+        /// </summary>
+        public string ValidBefore { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 32-byte random nonce to prevent replay attacks
+        /// </summary>
+        public string Nonce { get; set; } = string.Empty;
     }
 }

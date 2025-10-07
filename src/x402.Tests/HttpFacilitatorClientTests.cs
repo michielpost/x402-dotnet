@@ -11,6 +11,15 @@ namespace x402.Tests
     [TestFixture]
     public class HttpFacilitatorClientTests
     {
+        private readonly PaymentPayloadHeader emptyPayloadHeader = new PaymentPayloadHeader()
+        {
+            X402Version = 1,
+            Payload = new Payload()
+            {
+                Authorization = new Models.Authorization()
+            }
+        };
+
         private sealed class FakeHandler : HttpMessageHandler
         {
             public Func<HttpRequestMessage, HttpResponseMessage>? Impl { get; set; }
@@ -56,7 +65,7 @@ namespace x402.Tests
                 return msg;
             });
 
-            var result = await client.VerifyAsync(new PaymentPayloadHeader { X402Version = 1 }, CreateReqs());
+            var result = await client.VerifyAsync(emptyPayloadHeader, CreateReqs());
             Assert.That(result.IsValid, Is.True);
         }
 
@@ -68,7 +77,7 @@ namespace x402.Tests
                 Content = new StringContent("oops")
             });
 
-            Assert.ThrowsAsync<HttpRequestException>(async () => await client.VerifyAsync(new PaymentPayloadHeader { X402Version = 1 }, CreateReqs()));
+            Assert.ThrowsAsync<HttpRequestException>(async () => await client.VerifyAsync(emptyPayloadHeader, CreateReqs()));
         }
 
         [Test]
@@ -85,7 +94,7 @@ namespace x402.Tests
                 return msg;
             });
 
-            var result = await client.SettleAsync(new PaymentPayloadHeader { X402Version = 1 }, CreateReqs());
+            var result = await client.SettleAsync(emptyPayloadHeader, CreateReqs());
             Assert.That(result.Success, Is.True);
             Assert.That(result.Transaction, Is.EqualTo("0xabc"));
         }
@@ -97,7 +106,7 @@ namespace x402.Tests
             {
                 Content = new StringContent("fail")
             });
-            Assert.ThrowsAsync<HttpRequestException>(async () => await client.SettleAsync(new PaymentPayloadHeader { X402Version = 1 }, CreateReqs()));
+            Assert.ThrowsAsync<HttpRequestException>(async () => await client.SettleAsync(emptyPayloadHeader, CreateReqs()));
         }
 
         [Test]

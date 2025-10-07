@@ -6,7 +6,7 @@ using x402.Facilitator.Models;
 namespace x402.SampleWeb.Controllers
 {
     [Route("{controller}")]
-    public class HomeController : Controller
+    public class HomeController : ControllerBase
     {
         private readonly IFacilitatorClient facilitator;
 
@@ -69,9 +69,11 @@ namespace x402.SampleWeb.Controllers
             return Content($"Dynamic protected for {amount}, paid by: {x402Result.VerificationResponse?.Payer}");
         }
 
-        private async Task OnSettlement(HttpContext context, SettlementResponse response)
+        private Task OnSettlement(HttpContext context, SettlementResponse response)
         {
             Console.WriteLine("Settlement completed: " + response.Success);
+
+            return Task.CompletedTask;
         }
 
     }
