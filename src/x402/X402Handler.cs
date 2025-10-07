@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
+using x402.Enums;
 using x402.Facilitator;
 using x402.Facilitator.Models;
 using x402.Models;
@@ -20,7 +21,13 @@ namespace x402
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
         };
 
-        public static async Task<HandleX402Result> HandleX402Async(HttpContext context, IFacilitatorClient facilitator, string path, PaymentRequirements paymentRequirements)
+        public static async Task<HandleX402Result> HandleX402Async(
+            HttpContext context,
+            IFacilitatorClient facilitator,
+            string path,
+            PaymentRequirements paymentRequirements,
+            SettlementMode settlementMode = SettlementMode.Optimistic,
+            Func<HttpContext, SettlementResponse, Task>? onSettlement = null)
         {
             var logger = context.RequestServices.GetRequiredService<ILogger<X402Handler>>();
             logger.LogDebug("HandleX402 invoked for path {Path}", path);
@@ -87,13 +94,51 @@ namespace x402
                 return new HandleX402Result(false, vr.InvalidReason, vr);
             }
 
-            //Settlement writes a header, it must be written before any other content
+            // Optional pessimistic settlement in the main flow
+            SettlementResponse? preSettledResponse = null;
+            if (settlementMode == SettlementMode.Pessimistic)
+            {
+                try
+                {
+                    preSettledResponse = await facilitator.SettleAsync(payload, paymentRequirements).ConfigureAwait(false);
+                    if (preSettledResponse == null || !preSettledResponse.Success)
+                    {
+                        string errorMsg = preSettledResponse != null && preSettledResponse.ErrorReason != null
+                            ? preSettledResponse.ErrorReason
+                            : FacilitatorErrorCodes.UnexpectedSettleError;
+                        logger.LogWarning("Pessimistic settlement failed for path {Path}: {Reason}", path, errorMsg);
+                        await Respond402Async(context, paymentRequirements, errorMsg).ConfigureAwait(false);
+                        return new HandleX402Result(false, errorMsg, vr);
+                    }
+
+                    // Invoke callback early when available
+                    if (onSettlement != null)
+                    {
+                        try
+                        {
+                            await onSettlement(context, preSettledResponse).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, "onSettlement callback threw for path {Path}", path);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Pessimistic settlement error for path {Path}", path);
+                    await Respond402Async(context, paymentRequirements, "settlement error: " + ex.Message).ConfigureAwait(false);
+                    return new HandleX402Result(false, "settlement error: " + ex.Message, vr);
+                }
+            }
+
+            // Settlement header must be written before any other content
             context.Response.OnStarting(async () =>
             {
                 //Start settlement
                 try
                 {
-                    SettlementResponse sr = await facilitator.SettleAsync(payload, paymentRequirements).ConfigureAwait(false);
+                    SettlementResponse sr = preSettledResponse ?? await facilitator.SettleAsync(payload, paymentRequirements).ConfigureAwait(false);
                     if (sr == null || !sr.Success)
                     {
                         // Settlement failed - return 402 if headers not sent yet
@@ -118,6 +163,19 @@ namespace x402
                         // Set CORS header to expose X-PAYMENT-RESPONSE to browser clients
                         context.Response.Headers.Append("Access-Control-Expose-Headers", "X-PAYMENT-RESPONSE");
                         logger.LogInformation("Settlement succeeded for path {Path}; response header appended (payer={Payer})", path, payer);
+
+                        // Invoke callback when settlement completes (optimistic path)
+                        if (preSettledResponse == null && onSettlement != null)
+                        {
+                            try
+                            {
+                                await onSettlement(context, sr).ConfigureAwait(false);
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.LogError(ex, "onSettlement callback threw for path {Path}", path);
+                            }
+                        }
                     }
                     catch (Exception)
                     {
@@ -143,7 +201,7 @@ namespace x402
             });
 
             logger.LogDebug("Payment verified; proceeding to response for path {Path}", path);
-            return new HandleX402Result(true, null, vr);
+            return new HandleX402Result(preSettledResponse?.Success ?? true, null, vr);
         }
 
         /// <summary>

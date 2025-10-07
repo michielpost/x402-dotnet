@@ -41,6 +41,8 @@ namespace x402.Attributes
         public string Description { get; set; } = string.Empty;
         public string MimeType { get; set; } = string.Empty;
 
+        public SettlementMode SettlementMode { get; set; } = SettlementMode.Optimistic;
+
         /// <summary>
         /// Creates a payment required attribute with the specified price.
         /// </summary>
@@ -81,7 +83,7 @@ namespace x402.Attributes
             };
             logger.LogInformation("Built payment requirements for path {Path}: scheme {Scheme}, asset {Asset}", path, paymentRequirements.Scheme, paymentRequirements.Asset);
 
-            var x402Result = await X402Handler.HandleX402Async(context.HttpContext, facilitator, path, paymentRequirements).ConfigureAwait(false);
+            var x402Result = await X402Handler.HandleX402Async(context.HttpContext, facilitator, path, paymentRequirements, SettlementMode).ConfigureAwait(false);
             if (!x402Result.CanContinueRequest)
             {
                 logger.LogWarning("Payment not satisfied for path {Path}; stopping execution", path);

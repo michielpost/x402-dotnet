@@ -1,4 +1,5 @@
-﻿using x402.Facilitator;
+﻿using x402.Enums;
+using x402.Facilitator;
 
 namespace x402.Models
 {
@@ -13,5 +14,7 @@ namespace x402.Models
 
         public string? DefaultPayToAddress { get; set; }
         public string? DefaultNetwork { get; set; }
+
+        public SettlementMode SettlementMode { get; set; } = SettlementMode.Optimistic;
     }
 }

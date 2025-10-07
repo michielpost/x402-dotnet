@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System;
 using x402.Attributes;
 using x402.Facilitator;
+using x402.Facilitator.Models;
 
 namespace x402.SampleWeb.Controllers
 {
@@ -56,7 +56,9 @@ namespace x402.SampleWeb.Controllers
                     Network = "base-sepolia",
                     MaxAmountRequired = amount,
                     PayTo = "0x"
-                });
+                },
+                Enums.SettlementMode.Optimistic,
+                OnSettlement);
 
             if (!x402Result.CanContinueRequest)
             {
@@ -66,5 +68,11 @@ namespace x402.SampleWeb.Controllers
 
             return Content($"Dynamic protected for {amount}, paid by: {x402Result.VerificationResponse?.Payer}");
         }
+
+        private async Task OnSettlement(HttpContext context, SettlementResponse response)
+        {
+            Console.WriteLine("Settlement completed: " + response.Success);
+        }
+
     }
 }

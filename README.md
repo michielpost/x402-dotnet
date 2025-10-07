@@ -32,6 +32,36 @@ builder.Services.AddHttpClient<IFacilitatorClient, HttpFacilitatorClient>(client
  }
 
 ```
+Directly in an API Controller
+```cs
+[HttpGet]
+[Route("dynamic")]
+public async Task<IActionResult> Dynamic(string amount)
+{
+    var request = this.HttpContext.Request;
+    var fullUrl = $"{request.Scheme}://{request.Host}{request.Path}{request.QueryString}";
+
+    var x402Result = await X402Handler.HandleX402Async(this.HttpContext, facilitator, fullUrl,
+        new Models.PaymentRequirements
+        {
+            Asset = "USDC",
+            Description = "Dynamic payment",
+            Network = "base-sepolia",
+            MaxAmountRequired = amount,
+            PayTo = "0x"
+        },
+        Enums.SettlementMode.Optimistic,
+        OnSettlement);
+
+    if (!x402Result.CanContinueRequest)
+    {
+        return new EmptyResult(); // Response already written by HandleX402Async, so just exit
+    }
+
+    //Continue with the request
+}
+```
+
 
 Or use the Middleware to require payment for a list of URLs
 ```cs
@@ -90,6 +120,9 @@ There is a sample website and mock Settlement server included.
 - Start the Aspire project: `x402-dotnet.AppHost`
 - Navigate to the sample website `https://localhost:7154/`
 - Use the `x402.SampleWeb.http` for sample web requests
+
+## Contributions
+Contributions are welcome. Fork this repository and send a pull request if you have something useful to add.
 
 
 ## Tools
