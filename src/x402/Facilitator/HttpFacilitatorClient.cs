@@ -29,6 +29,7 @@ namespace x402.Facilitator
 
         public async Task<VerificationResponse> VerifyAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements req)
         {
+            logger.LogInformation("Verifying payment payload for resource {Resource} with scheme {Scheme} and asset {Asset}", req.Resource, req.Scheme, req.Asset);
             var body = new FacilitatorRequest
             {
                 X402Version = 1,
@@ -39,19 +40,24 @@ namespace x402.Facilitator
             var response = await httpClient.PostAsJsonAsync($"/verify", body);
             if (!response.IsSuccessStatusCode)
             {
-                throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+                var content = await response.Content.ReadAsStringAsync();
+                logger.LogWarning("Verification request failed with status {StatusCode}: {Content}", (int)response.StatusCode, content);
+                throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {content}");
             }
 
             var result = await response.Content.ReadFromJsonAsync<VerificationResponse>(JsonOptions);
             if (result is null)
             {
+                logger.LogError("Failed to deserialize verification response for resource {Resource}", req.Resource);
                 throw new InvalidOperationException("Failed to deserialize verification response");
             }
+            logger.LogInformation("Verification result for resource {Resource}: IsValid={IsValid} Reason={Reason}", req.Resource, result.IsValid, result.InvalidReason);
             return result;
         }
 
         public async Task<SettlementResponse> SettleAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements req)
         {
+            logger.LogInformation("Settling payment for resource {Resource} on network {Network} to {PayTo}", req.Resource, req.Network, req.PayTo);
             var body = new FacilitatorRequest
             {
                 X402Version = 1,
@@ -62,25 +68,32 @@ namespace x402.Facilitator
             var response = await httpClient.PostAsJsonAsync($"/settle", body);
             if (!response.IsSuccessStatusCode)
             {
-                throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+                var content = await response.Content.ReadAsStringAsync();
+                logger.LogWarning("Settlement request failed with status {StatusCode}: {Content}", (int)response.StatusCode, content);
+                throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {content}");
             }
 
             var result = await response.Content.ReadFromJsonAsync<SettlementResponse>(JsonOptions);
             if (result is null)
             {
+                logger.LogError("Failed to deserialize settlement response for resource {Resource}", req.Resource);
                 throw new InvalidOperationException("Failed to deserialize settlement response");
             }
+            logger.LogInformation("Settlement result for resource {Resource}: Success={Success} Tx={Tx}", req.Resource, result.Success, result.Transaction);
             return result;
 
         }
 
         public async Task<List<FacilitatorKind>> SupportedAsync()
         {
+            logger.LogDebug("Requesting supported facilitator kinds");
             using var response = await httpClient.GetAsync($"/supported");
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+                var content = await response.Content.ReadAsStringAsync();
+                logger.LogWarning("Supported kinds request failed with status {StatusCode}: {Content}", (int)response.StatusCode, content);
+                throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {content}");
             }
 
             var map = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>(JsonOptions);
@@ -93,7 +106,7 @@ namespace x402.Facilitator
             // Re-serialize then deserialize properly as List<Kind>
             var kindsJson = JsonSerializer.Serialize(kindsObj, JsonOptions);
             var kinds = JsonSerializer.Deserialize<List<FacilitatorKind>>(kindsJson, JsonOptions) ?? new List<FacilitatorKind>();
-
+            logger.LogInformation("Retrieved {Count} supported facilitator kinds", kinds.Count);
             return kinds;
         }
     }

@@ -23,12 +23,13 @@ namespace x402
         public static async Task<bool> HandleX402(HttpContext context, IFacilitatorClient facilitator, string path, PaymentRequirements paymentRequirements)
         {
             var logger = context.RequestServices.GetRequiredService<ILogger<X402Handler>>();
-
+            logger.LogDebug("HandleX402 invoked for path {Path}", path);
             string? header = context.Request.Headers["X-PAYMENT"].FirstOrDefault();
 
             //No payment, return 402
             if (string.IsNullOrEmpty(header))
             {
+                logger.LogInformation("No X-PAYMENT header present for path {Path}; responding 402", path);
                 await Respond402Async(context, paymentRequirements, null);
                 return false;
             }
@@ -39,6 +40,7 @@ namespace x402
             try
             {
                 payload = PaymentPayloadHeader.FromHeader(header);
+                logger.LogDebug("Parsed X-PAYMENT header for path {Path}");
 
                 // If resource is included in the payload it must match the URL path
                 if (payload.Payload.ContainsKey("resource"))
@@ -47,34 +49,40 @@ namespace x402
 
                     if (!string.Equals(resource, path, StringComparison.Ordinal))
                     {
+                        logger.LogWarning("Resource mismatch: payload {PayloadResource} vs request {RequestPath}", resource, path);
                         await Respond402Async(context, paymentRequirements, "resource mismatch");
                         return false;
                     }
                 }
 
                 vr = await facilitator.VerifyAsync(payload, paymentRequirements);
+                logger.LogInformation("Verification completed for path {Path}: IsValid={IsValid}", path, vr.IsValid);
             }
             catch (ArgumentException)
             {
                 // Malformed payment header - client error
+                logger.LogWarning("Malformed X-PAYMENT header for path {Path}");
                 await Respond402Async(context, paymentRequirements, "Malformed X-PAYMENT header");
                 return false;
             }
             catch (IOException ex)
             {
                 // Network/communication error with facilitator - server error
+                logger.LogError(ex, "Payment verification IO error for path {Path}");
                 await Respond500Async(context, "Payment verification failed: " + ex.Message);
                 return false;
             }
             catch (Exception)
             {
                 // Other unexpected errors - server error
+                logger.LogError("Unexpected error during payment verification for path {Path}");
                 await Respond500Async(context, "Internal server error during payment verification");
                 return false;
             }
 
             if (!vr.IsValid)
             {
+                logger.LogInformation("Verification invalid for path {Path}: {Reason}", path, vr.InvalidReason);
                 await Respond402Async(context, paymentRequirements, vr.InvalidReason);
                 return false;
             }
@@ -92,6 +100,7 @@ namespace x402
                         if (!context.Response.HasStarted)
                         {
                             string errorMsg = sr != null && sr.ErrorReason != null ? sr.ErrorReason : FacilitatorErrorCodes.UnexpectedSettleError;
+                            logger.LogWarning("Settlement failed for path {Path}: {Reason}", path, errorMsg);
                             await Respond402Async(context, paymentRequirements, errorMsg);
                         }
                         return;
@@ -108,12 +117,14 @@ namespace x402
 
                         // Set CORS header to expose X-PAYMENT-RESPONSE to browser clients
                         context.Response.Headers.Append("Access-Control-Expose-Headers", "X-PAYMENT-RESPONSE");
+                        logger.LogInformation("Settlement succeeded for path {Path}; response header appended (payer={Payer})", path, payer);
                     }
                     catch (Exception)
                     {
                         // If header creation fails, return 500
                         if (!context.Response.HasStarted)
                         {
+                            logger.LogError("Failed to create settlement response header for path {Path}", path);
                             await Respond500Async(context, "Failed to create settlement response header");
                         }
                         return;
@@ -124,12 +135,14 @@ namespace x402
                     // Network/communication errors during settlement - return 402
                     if (!context.Response.HasStarted)
                     {
+                        logger.LogError(ex, "Settlement error for path {Path}");
                         await Respond402Async(context, paymentRequirements, "settlement error: " + ex.Message);
                     }
                     return;
                 }
             });
 
+            logger.LogDebug("Payment verified; proceeding to response for path {Path}", path);
             return true;
         }
 

@@ -34,27 +34,33 @@ namespace x402
         public async Task InvokeAsync(HttpContext context)
         {
             string path = context.Request.Path.Value + context.Request.QueryString.Value;
+            logger.LogDebug("PaymentMiddleware invoked for path {Path}", path);
 
             PaymentRequirements? paymentRequirements = null;
 
             if (paymentRequirements == null && (paymentMiddlewareOptions.PaymentRequirements?.TryGetValue(path, out var tablePrice) ?? false))
             {
+                logger.LogInformation("Payment requirements found for path {Path}; building requirements", path);
                 paymentRequirements = BuildRequirements(path, tablePrice, paymentMiddlewareOptions.DefaultNetwork, paymentMiddlewareOptions.DefaultPayToAddress);
             }
 
             if (paymentRequirements == null)
             {
+                logger.LogDebug("No payment required for path {Path}; continuing pipeline", path);
                 await _next(context);
                 return;
             }
 
+            logger.LogInformation("Enforcing x402 payment for path {Path} with scheme {Scheme} asset {Asset}", path, paymentRequirements.Scheme, paymentRequirements.Asset);
             bool canContinue = await X402Handler.HandleX402(context, facilitator, path, paymentRequirements);
             if (!canContinue)
             {
+                logger.LogWarning("Payment not satisfied for path {Path}; responding with 402/500 already handled", path);
                 return;
             }
 
             //Payment verified, continue to next middleware
+            logger.LogDebug("Payment verified for path {Path}; continuing to next middleware", path);
             await _next(context);
         }
 
