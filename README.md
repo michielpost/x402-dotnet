@@ -20,7 +20,7 @@ builder.Services.AddHttpClient<IFacilitatorClient, HttpFacilitatorClient>(client
 });
 ```
 
-// Use the MVC Attribute
+Use the MVC Attribute
 ```cs
 // Use the Payment Required Attribute
  [HttpGet]
