@@ -111,7 +111,7 @@ namespace x402.Tests
                 payload = new Dictionary<string, object?>
                 {
                     { "authorization", new Dictionary<string, object?> { { "from", "0xabc" } } },
-                    { "resource", "/ok" }
+                    { "resource", ":///ok" }
                 }
             }, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
             var headerB64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(headerJson));

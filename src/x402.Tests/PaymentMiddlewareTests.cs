@@ -141,7 +141,7 @@ namespace x402.Tests
             using var host = BuildHost(options);
             var client = host.GetTestClient();
             var request = new HttpRequestMessage(HttpMethod.Get, "/payok");
-            request.Headers.Add("X-PAYMENT", CreateHeaderB64("/payok"));
+            request.Headers.Add("X-PAYMENT", CreateHeaderB64("http://localhost/payok"));
             var resp = await client.SendAsync(request);
             Assert.That(resp.IsSuccessStatusCode, Is.True);
             Assert.That(resp.Headers.Contains("X-PAYMENT-RESPONSE"), Is.True);
