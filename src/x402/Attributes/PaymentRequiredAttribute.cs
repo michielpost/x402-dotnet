@@ -81,7 +81,7 @@ namespace x402.Attributes
                 PayTo = this.PayTo,
                 Resource = fullUrl,
                 Scheme = this.Scheme,
-                MaxTimeoutSeconds = 30
+                MaxTimeoutSeconds = 60
             };
             logger.LogInformation("Built payment requirements for path {Path}: scheme {Scheme}, asset {Asset}", fullUrl, paymentRequirements.Scheme, paymentRequirements.Asset);
 

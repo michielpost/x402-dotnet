@@ -87,7 +87,7 @@ namespace x402
                 Resource = fullUrl,
                 MimeType = paymentRequirements.MimeType,
                 PayTo = paymentRequirements.PayTo ?? defaultPayToAddress ?? throw new ArgumentNullException(nameof(paymentRequirements.PayTo)),
-                MaxTimeoutSeconds = 30,
+                MaxTimeoutSeconds = 60,
                 Description = paymentRequirements.Description
             };
             return pr;

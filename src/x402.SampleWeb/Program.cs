@@ -21,18 +21,21 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 
-#if DEBUG
-builder.Services.AddHttpClient<IFacilitatorClient, HttpFacilitatorClient>(client =>
+
+var facilitatorUrl = builder.Configuration["FacilitatorUrl"];
+if(!string.IsNullOrEmpty(facilitatorUrl))
 {
-    client.BaseAddress = new Uri("https://localhost:7141");
-});
-#else
-
-// Coinbase facilitator client
-builder.Services.Configure<CoinbaseOptions>(builder.Configuration.GetSection(nameof(CoinbaseOptions)));
-builder.Services.AddHttpClient<IFacilitatorClient, CoinbaseFacilitatorClient>();
-
-#endif
+    builder.Services.AddHttpClient<IFacilitatorClient, HttpFacilitatorClient>(client =>
+    {
+        client.BaseAddress = new Uri(facilitatorUrl);
+    });
+}
+else
+{
+    // Coinbase facilitator client
+    builder.Services.Configure<CoinbaseOptions>(builder.Configuration.GetSection(nameof(CoinbaseOptions)));
+    builder.Services.AddHttpClient<IFacilitatorClient, CoinbaseFacilitatorClient>();
+}
 
 var app = builder.Build();
 
