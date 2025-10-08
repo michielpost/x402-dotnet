@@ -1,5 +1,7 @@
 # x402-dotnet
-x402 Payment Protocol implementation for .Net
+
+![x402 payments enabled](images/x402-button-small.png)  
+**x402 Payment Protocol implementation for .Net**
 
 Install the `x402` package from NuGet:
 - [x402](https://nuget.org/packages/x402)
@@ -105,6 +107,15 @@ Add to appsettings.json:
    "ApiKeySecret": "YOUR_COINBASE_API_KEY_SECRET"
  }
 ```
+
+## How to test?
+Follow these steps to test a x402 payment on the sample website hosted on Azure:
+- Get some `USDC` tokens on the `base-sepolia` network from the [Coinbase Faucet](https://faucet.circle.com/)
+- Use the x402 Debug Tool: https://proxy402.com/fetch
+- Enter an API endpoint from the [test website](https://x402-dotnet.azurewebsites.net/), for example: `https://x402-dotnet.azurewebsites.net/resource/middleware`
+- Connect your wallet
+- Click Pay
+- Payment will complete and show the result: `Protected by middleware`
 
 
 ## Facilitators

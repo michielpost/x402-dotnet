@@ -85,6 +85,7 @@ var paymentOptions = new x402.Models.PaymentMiddlewareOptions
 
 app.UsePaymentMiddleware(paymentOptions);
 
+app.UseStaticFiles();
 app.MapRazorPages();
 app.MapControllers();
 app.UseSwagger();
