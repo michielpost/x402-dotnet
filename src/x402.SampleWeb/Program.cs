@@ -20,6 +20,17 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new() { Title = "x402-dotnet sample", Version = "v1" });
 });
 
+// Add CORS to allow testing from https://proxy402.com/fetch
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy
+            .AllowAnyOrigin()   // allow any domain
+            .AllowAnyMethod()   // allow GET, POST, PUT, DELETE, etc.
+            .AllowAnyHeader();  // allow all headers
+    });
+});
 
 
 var facilitatorUrl = builder.Configuration["FacilitatorUrl"];
@@ -38,6 +49,9 @@ else
 }
 
 var app = builder.Build();
+
+// Use CORS before endpoints
+app.UseCors("AllowAll");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
