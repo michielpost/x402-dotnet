@@ -29,10 +29,10 @@ Use the `PaymentRequired` Attribute
 // Use the Payment Required Attribute
  [HttpGet]
  [Route("protected")]
- [PaymentRequired("1", "0x00..Asset..Address", "0xYourWalletAddressHere", "base-sepolia")]
- public IActionResult Protected()
+[PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0xYourAddressHere", "base-sepolia")]
+ public SampleResult Protected()
  {
-     return Content("Protected");
+      return new SampleResult { Title = "Protected by PaymentRequired Attribute" };
  }
 
 ```
@@ -48,11 +48,12 @@ public async Task<IActionResult> Dynamic(string amount)
     var x402Result = await X402Handler.HandleX402Async(this.HttpContext, facilitator, fullUrl,
         new Models.PaymentRequirements
         {
-            Asset = "USDC",
+            Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e", //USDC on base-sepolia
             Description = "Dynamic payment",
             Network = "base-sepolia",
             MaxAmountRequired = amount,
-            PayTo = "0x"
+            PayTo = "0xYourAddress",
+            Resource = fullUrl,
         });
 
     if (!x402Result.CanContinueRequest)
@@ -80,7 +81,7 @@ var paymentOptions = new x402.Models.PaymentMiddlewareOptions
                 {
                     Scheme = x402.Enums.PaymentScheme.Exact,
                     MaxAmountRequired = 1000000,
-                    Asset = "0x......", // Contract address of asset
+                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e", // Contract address of asset
                     MimeType = "application/json"
                 }
             }
