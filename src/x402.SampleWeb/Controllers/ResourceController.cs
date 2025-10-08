@@ -58,6 +58,7 @@ namespace x402.SampleWeb.Controllers
                     Network = "base-sepolia",
                     MaxAmountRequired = amount,
                     PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
+                    Resource = fullUrl,
                 },
                 Enums.SettlementMode.Optimistic,
                 OnSettlement);

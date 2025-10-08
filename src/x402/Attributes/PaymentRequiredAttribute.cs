@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using x402.Enums;
@@ -66,8 +67,9 @@ namespace x402.Attributes
             var facilitator = context.HttpContext.RequestServices.GetRequiredService<IFacilitatorClient>();
            
             var request = context.HttpContext.Request;
-            string path = request.Path.Value + request.QueryString.Value;
-            logger.LogDebug("PaymentRequiredAttribute invoked for path {Path}", path);
+            var fullUrl = $"{request.Scheme}://{request.Host}{request.Path}{request.QueryString}";
+
+            logger.LogDebug("PaymentRequiredAttribute invoked for path {Path}", fullUrl);
 
             var paymentRequirements = new PaymentRequirements
             {
@@ -77,20 +79,20 @@ namespace x402.Attributes
                 MimeType = this.MimeType,
                 Network = this.Network,
                 PayTo = this.PayTo,
-                Resource = path,
+                Resource = fullUrl,
                 Scheme = this.Scheme,
                 MaxTimeoutSeconds = 30
             };
-            logger.LogInformation("Built payment requirements for path {Path}: scheme {Scheme}, asset {Asset}", path, paymentRequirements.Scheme, paymentRequirements.Asset);
+            logger.LogInformation("Built payment requirements for path {Path}: scheme {Scheme}, asset {Asset}", fullUrl, paymentRequirements.Scheme, paymentRequirements.Asset);
 
-            var x402Result = await X402Handler.HandleX402Async(context.HttpContext, facilitator, path, paymentRequirements, SettlementMode).ConfigureAwait(false);
+            var x402Result = await X402Handler.HandleX402Async(context.HttpContext, facilitator, fullUrl, paymentRequirements, SettlementMode).ConfigureAwait(false);
             if (!x402Result.CanContinueRequest)
             {
-                logger.LogWarning("Payment not satisfied for path {Path}; stopping execution", path);
+                logger.LogWarning("Payment not satisfied for path {Path}; stopping execution", fullUrl);
                 return;
             }
 
-            logger.LogDebug("Payment verified for path {Path}; executing next action", path);
+            logger.LogDebug("Payment verified for path {Path}; executing next action", fullUrl);
             await next();
         }
 
