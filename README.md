@@ -27,13 +27,13 @@ builder.Services.AddHttpClient<IFacilitatorClient, HttpFacilitatorClient>(client
 Use the `PaymentRequired` Attribute
 ```cs
 // Use the Payment Required Attribute
- [HttpGet]
- [Route("protected")]
+[HttpGet]
+[Route("protected")]
 [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0xYourAddressHere", "base-sepolia")]
- public SampleResult Protected()
- {
-      return new SampleResult { Title = "Protected by PaymentRequired Attribute" };
- }
+public SampleResult Protected()
+{
+    return new SampleResult { Title = "Protected by PaymentRequired Attribute" };
+}
 
 ```
 Directly in an API Controller
