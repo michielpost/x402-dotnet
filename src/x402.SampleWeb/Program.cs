@@ -21,14 +21,18 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 
+#if DEBUG
 builder.Services.AddHttpClient<IFacilitatorClient, HttpFacilitatorClient>(client =>
 {
     client.BaseAddress = new Uri("https://localhost:7141");
 });
+#else
 
 // Coinbase facilitator client
 builder.Services.Configure<CoinbaseOptions>(builder.Configuration.GetSection(nameof(CoinbaseOptions)));
-//builder.Services.AddHttpClient<IFacilitatorClient, CoinbaseFacilitatorClient>();
+builder.Services.AddHttpClient<IFacilitatorClient, CoinbaseFacilitatorClient>();
+
+#endif
 
 var app = builder.Build();
 
