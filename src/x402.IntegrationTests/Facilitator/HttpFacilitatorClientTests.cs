@@ -27,8 +27,9 @@ namespace x402.Tests.Facilitator
             var provider = services.BuildServiceProvider();
 
             //var apiUrl = "https://facilitator.payai.network";
-            var apiUrl = "https://facilitator.mogami.tech";
+            //var apiUrl = "https://facilitator.mogami.tech";
             //var apiUrl = "https://facilitator.mcpay.tech";
+            var apiUrl = "https://facilitator.daydreams.systems/";
 
             var httpClient = new HttpClient
             {

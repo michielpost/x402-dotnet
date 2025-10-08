@@ -26,9 +26,9 @@ namespace x402.SampleWeb.Controllers
                     LastUpdated = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                     Resource = "/",
                     Type = "http",
-                     Accepts = new List<Models.PaymentRequirements>
+                     Accepts = new List<x402.Models.PaymentRequirements>
                      {
-                         new Models.PaymentRequirements
+                         new x402.Models.PaymentRequirements
                          {
                             Asset = "USDC",
                             MaxAmountRequired = "1",

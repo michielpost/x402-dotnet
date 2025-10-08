@@ -33,34 +33,41 @@ namespace x402
 
         public async Task InvokeAsync(HttpContext context)
         {
-            string path = context.Request.Path.Value + context.Request.QueryString.Value;
-            logger.LogDebug("PaymentMiddleware invoked for path {Path}", path);
+            string path = (context.Request.Path.Value ?? string.Empty).ToLowerInvariant();
+            string pathAndQuery = (context.Request.Path.Value + context.Request.QueryString.Value).ToLowerInvariant();
+            logger.LogDebug("PaymentMiddleware invoked for path {Path}", pathAndQuery);
 
             PaymentRequirements? paymentRequirements = null;
+            
+            var paymentConfig = paymentMiddlewareOptions.PaymentRequirements
+                .Where(x => x.Key == path && !x.Value.EnableQueryStringMatching
+                            || x.Key == pathAndQuery && x.Value.EnableQueryStringMatching)
+                    .Select(x => x.Value)
+                .FirstOrDefault();
 
-            if (paymentRequirements == null && (paymentMiddlewareOptions.PaymentRequirements?.TryGetValue(path, out var tablePrice) ?? false))
+            if (paymentConfig != null)
             {
-                logger.LogInformation("Payment requirements found for path {Path}; building requirements", path);
-                paymentRequirements = BuildRequirements(path, tablePrice, paymentMiddlewareOptions.DefaultNetwork, paymentMiddlewareOptions.DefaultPayToAddress);
+                logger.LogInformation("Payment requirements found for path {Path}; building requirements", pathAndQuery);
+                paymentRequirements = BuildRequirements(pathAndQuery, paymentConfig, paymentMiddlewareOptions.DefaultNetwork, paymentMiddlewareOptions.DefaultPayToAddress);
             }
 
             if (paymentRequirements == null)
             {
-                logger.LogDebug("No payment required for path {Path}; continuing pipeline", path);
+                logger.LogDebug("No payment required for path {Path}; continuing pipeline", pathAndQuery);
                 await _next(context);
                 return;
             }
 
-            logger.LogInformation("Enforcing x402 payment for path {Path} with scheme {Scheme} asset {Asset}", path, paymentRequirements.Scheme, paymentRequirements.Asset);
-            var x402Result = await X402Handler.HandleX402Async(context, facilitator, path, paymentRequirements, paymentMiddlewareOptions.SettlementMode).ConfigureAwait(false);
+            logger.LogInformation("Enforcing x402 payment for path {Path} with scheme {Scheme} asset {Asset}", pathAndQuery, paymentRequirements.Scheme, paymentRequirements.Asset);
+            var x402Result = await X402Handler.HandleX402Async(context, facilitator, pathAndQuery, paymentRequirements, paymentMiddlewareOptions.SettlementMode).ConfigureAwait(false);
             if (!x402Result.CanContinueRequest)
             {
-                logger.LogWarning("Payment not satisfied for path {Path}; responding with 402/500 already handled", path);
+                logger.LogWarning("Payment not satisfied for path {Path}; responding with 402/500 already handled", pathAndQuery);
                 return;
             }
 
             //Payment verified, continue to next middleware
-            logger.LogDebug("Payment verified for path {Path}; continuing to next middleware", path);
+            logger.LogDebug("Payment verified for path {Path}; continuing to next middleware", pathAndQuery);
             await _next(context);
         }
 

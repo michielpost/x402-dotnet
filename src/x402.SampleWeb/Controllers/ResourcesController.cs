@@ -2,15 +2,17 @@
 using x402.Attributes;
 using x402.Facilitator;
 using x402.Facilitator.Models;
+using x402.SampleWeb.Models;
 
 namespace x402.SampleWeb.Controllers
 {
-    [Route("{controller}")]
-    public class HomeController : ControllerBase
+    [ApiController]
+    [Route("[controller]")]
+    public class ResourcesController : ControllerBase
     {
         private readonly IFacilitatorClient facilitator;
 
-        public HomeController(IFacilitatorClient facilitator)
+        public ResourcesController(IFacilitatorClient facilitator)
         {
             this.facilitator = facilitator;
         }
@@ -20,36 +22,36 @@ namespace x402.SampleWeb.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [Route("/")]
-        public IActionResult Index()
+        [Route("middleware")]
+        public SampleResult Middleware()
         {
-            return Content("Test");
+            return new SampleResult { Title = "Protected by middleware"};
         }
 
         [HttpGet]
         [Route("free")]
-        public IActionResult Free()
+        public SampleResult Free()
         {
-            return Content("Free");
+            return new SampleResult { Title = "Free Resource"};
         }
 
         [HttpGet]
         [Route("protected")]
         [PaymentRequired("1", "USDC", "0x", "base-sepolia")]
-        public IActionResult Protected()
+        public SampleResult Protected()
         {
-            return Content("Protected");
+            return new SampleResult { Title = "Protected by PaymentRequired Attribute" };
         }
 
         [HttpGet]
         [Route("dynamic")]
-        public async Task<IActionResult> Dynamic(string amount)
+        public async Task<SampleResult?> Dynamic(string amount)
         {
             var request = this.HttpContext.Request;
             var fullUrl = $"{request.Scheme}://{request.Host}{request.Path}{request.QueryString}";
 
             var x402Result = await X402Handler.HandleX402Async(this.HttpContext, facilitator, fullUrl,
-                new Models.PaymentRequirements
+                new x402.Models.PaymentRequirements
                 {
                     Asset = "USDC",
                     Description = "Dynamic payment",
@@ -62,11 +64,10 @@ namespace x402.SampleWeb.Controllers
 
             if (!x402Result.CanContinueRequest)
             {
-                return new EmptyResult(); // Response already written by HandleX402Async, so just exit
+                return null;
             }
 
-
-            return Content($"Dynamic protected for {amount}, paid by: {x402Result.VerificationResponse?.Payer}");
+            return new SampleResult { Title = $"Dynamic protected for {amount}, paid by: {x402Result.VerificationResponse?.Payer}" };
         }
 
         private Task OnSettlement(HttpContext context, SettlementResponse response)

@@ -13,6 +13,12 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "x402-dotnet sample", Version = "v1" });
+});
+
+
 builder.Services.AddHttpClient<IFacilitatorClient, HttpFacilitatorClient>(client =>
 {
     client.BaseAddress = new Uri("https://localhost:7141");
@@ -42,7 +48,7 @@ var paymentOptions = new x402.Models.PaymentMiddlewareOptions
     DefaultNetwork = "base-sepolia",
     PaymentRequirements = new Dictionary<string, x402.Models.PaymentRequirementsConfig>()
         {
-            {  "/", new x402.Models.PaymentRequirementsConfig
+            {  "/resources/middleware", new x402.Models.PaymentRequirementsConfig
                 {
                     Scheme = x402.Enums.PaymentScheme.Exact,
                     MaxAmountRequired = 1000000,
@@ -56,5 +62,10 @@ var paymentOptions = new x402.Models.PaymentMiddlewareOptions
 app.UsePaymentMiddleware(paymentOptions);
 
 app.MapControllers();
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "x402-dotnet sample");
+});
 
 app.Run();

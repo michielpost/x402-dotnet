@@ -41,7 +41,10 @@ namespace x402.Models
 
         public string Description { get; set; } = string.Empty;
 
-
+        /// <summary>
+        /// Set to true to enable matching routes based on query string parameters.
+        /// </summary>
+        public bool EnableQueryStringMatching { get; set; }
 
     }
 }
