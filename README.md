@@ -1,17 +1,22 @@
 # x402-dotnet
 
 ![x402 payments enabled](images/x402-button-small.png)  
-**x402 Payment Protocol implementation for .Net**
+**x402 Payment Protocol implementation for .Net**  
+More info about x402: https://www.x402.org
 
-Install the `x402` package from NuGet:
+Install the `x402` packages from NuGet:
 - [x402](https://nuget.org/packages/x402)
 - [x402.Coinbase](https://nuget.org/packages/x402)
 
 
-Features:
-- Add a x402 compatible paywall to any URL
-- Easily use an attribute to handle payments for your API methods
-- Handle payment settlement using a remote server
+**Features:**
+- Add an x402-compatible paywall to any URL  
+- Easily use an attribute to handle payments for your API methods  
+- Add URLs that require payment using the middleware  
+- Support advanced scenarios by calling the `X402Handler` in your API controller  
+- Handle payment settlement using any remote facilitator  
+- Optionally use the Coinbase facilitator (with API key)
+
 
 ## How to use?
 
@@ -131,7 +136,7 @@ List of facilitators you can use:
 There is a sample website and mock Settlement server included.  
 - Start the Aspire project: `x402-dotnet.AppHost`
 - Navigate to the sample website `https://localhost:7154/`
-- Use the `x402.SampleWeb.http` for sample web requests
+- Use `x402.SampleWeb.http` for sample web requests
 
 ## Contributions
 Contributions are welcome. Fork this repository and send a pull request if you have something useful to add.
