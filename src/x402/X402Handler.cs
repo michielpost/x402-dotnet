@@ -76,10 +76,10 @@ namespace x402
                 await Respond500Async(context, "Payment verification failed: " + ex.Message).ConfigureAwait(false);
                 return new HandleX402Result(false, $"Payment verification failed: {ex.Message}", vr);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // Other unexpected errors - server error
-                logger.LogError("Unexpected error during payment verification for path {Path}", path);
+                logger.LogError(ex, "Unexpected error during payment verification for path {Path}", path);
                 await Respond500Async(context, "Internal server error during payment verification").ConfigureAwait(false);
                 return new HandleX402Result(false, $"Internal server error during payment verification", vr);
             }
