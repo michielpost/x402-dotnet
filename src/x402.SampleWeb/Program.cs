@@ -46,16 +46,16 @@ var facilitator = app.Services.GetRequiredService<IFacilitatorClient>();
 var paymentOptions = new x402.Models.PaymentMiddlewareOptions
 {
     Facilitator = facilitator,
-    DefaultPayToAddress = "0xYourWalletAddressHere", // Replace with your actual wallet address
+    DefaultPayToAddress = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", // Replace with your actual wallet address
     DefaultNetwork = "base-sepolia",
     PaymentRequirements = new Dictionary<string, x402.Models.PaymentRequirementsConfig>()
         {
             {  "/resource/middleware", new x402.Models.PaymentRequirementsConfig
                 {
                     Scheme = x402.Enums.PaymentScheme.Exact,
-                    MaxAmountRequired = 1000000,
-                    Asset = "USDC",
-                    MimeType = "application/json"
+                    MaxAmountRequired = "1000",
+                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                    MimeType = "application/json",
                 }
             }
         },

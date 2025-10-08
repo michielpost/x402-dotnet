@@ -26,18 +26,18 @@ namespace x402.SampleWeb.Controllers
                 new Item
                 {
                     LastUpdated = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                    Resource = "/",
+                    Resource = "/resource/middleware",
                     Type = "http",
-                     Accepts = new List<x402.Models.PaymentRequirements>
-                     {
-                         new x402.Models.PaymentRequirements
-                         {
-                            Asset = "USDC",
-                            MaxAmountRequired = "1",
-                            Network = "base-sepolia",
-                            PayTo = "0xTODO"
-                         }
-                     }
+                    Accepts = new List<x402.Models.PaymentRequirements>
+                    {
+                        new x402.Models.PaymentRequirements
+                        {
+                        Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                        MaxAmountRequired = "1000",
+                        Network = "base-sepolia",
+                        PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37"
+                        }
+                    }
                 }
             }
             };

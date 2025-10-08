@@ -27,7 +27,7 @@ namespace x402.Models
         /// <summary>
         /// The maximum amount required in atomic units.
         /// </summary>
-        public required BigInteger MaxAmountRequired { get; set; }
+        public required string MaxAmountRequired { get; set; }
 
         /// <summary>
         /// The asset symbol (e.g., "USDC").

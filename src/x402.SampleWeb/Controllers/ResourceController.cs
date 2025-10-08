@@ -37,7 +37,7 @@ namespace x402.SampleWeb.Controllers
 
         [HttpGet]
         [Route("protected")]
-        [PaymentRequired("1", "USDC", "0x", "base-sepolia")]
+        [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", "base-sepolia")]
         public SampleResult Protected()
         {
             return new SampleResult { Title = "Protected by PaymentRequired Attribute" };
@@ -53,11 +53,11 @@ namespace x402.SampleWeb.Controllers
             var x402Result = await X402Handler.HandleX402Async(this.HttpContext, facilitator, fullUrl,
                 new x402.Models.PaymentRequirements
                 {
-                    Asset = "USDC",
+                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                     Description = "Dynamic payment",
                     Network = "base-sepolia",
                     MaxAmountRequired = amount,
-                    PayTo = "0x",
+                    PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
                 },
                 Enums.SettlementMode.Optimistic,
                 OnSettlement);

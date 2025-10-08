@@ -98,7 +98,7 @@ namespace x402.Tests
                     ["/pay"] = new PaymentRequirementsConfig
                     {
                         Scheme = PaymentScheme.Exact,
-                        MaxAmountRequired = new System.Numerics.BigInteger(1),
+                        MaxAmountRequired = "100000",
                         Asset = "USDC",
                         MimeType = "application/json",
                         Description = "unit"
@@ -130,7 +130,7 @@ namespace x402.Tests
                     ["/payok"] = new PaymentRequirementsConfig
                     {
                         Scheme = PaymentScheme.Exact,
-                        MaxAmountRequired = new System.Numerics.BigInteger(1),
+                        MaxAmountRequired = "100000",
                         Asset = "USDC",
                         MimeType = "application/json",
                         Description = "unit"

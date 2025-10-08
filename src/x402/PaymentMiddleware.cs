@@ -80,7 +80,7 @@ namespace x402
             {
                 Scheme = paymentRequirements.Scheme,
                 Network = paymentRequirements.Network ?? defaultNetwork ?? throw new ArgumentNullException(nameof(paymentRequirements.Network)),
-                MaxAmountRequired = paymentRequirements.MaxAmountRequired.ToString(),
+                MaxAmountRequired = paymentRequirements.MaxAmountRequired,
                 Asset = paymentRequirements.Asset,
                 Resource = path,
                 MimeType = paymentRequirements.MimeType,
