@@ -3,10 +3,12 @@ x402 Payment Protocol implementation for .Net
 
 Install the `x402` package from NuGet:
 - [x402](https://nuget.org/packages/x402)
+- [x402.Coinbase](https://nuget.org/packages/x402)
 
 
 Features:
 - Add a x402 compatible paywall to any URL
+- Easily use an attribute to handle payments for your API methods
 - Handle payment settlement using a remote server
 
 ## How to use?
@@ -20,7 +22,7 @@ builder.Services.AddHttpClient<IFacilitatorClient, HttpFacilitatorClient>(client
 });
 ```
 
-Use the MVC Attribute
+Use the `PaymentRequired` Attribute
 ```cs
 // Use the Payment Required Attribute
  [HttpGet]
@@ -61,7 +63,7 @@ public async Task<IActionResult> Dynamic(string amount)
 ```
 
 
-Or use the Middleware to require payment for a list of URLs
+Or use the `PaymentMiddleware` to require payment for a list of URLs
 ```cs
 // Add Middleware
 var facilitator = app.Services.GetRequiredService<IFacilitatorClient>();

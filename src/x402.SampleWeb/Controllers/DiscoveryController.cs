@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 using x402.Facilitator;
 
 namespace x402.SampleWeb.Controllers
@@ -9,6 +10,7 @@ namespace x402.SampleWeb.Controllers
     {
         [HttpGet]
         [Route("resources")]
+        [SwaggerIgnore]
         public DiscoveryResponse Discovery([FromQuery] string? type = null, [FromQuery] int limit = 20, [FromQuery] int offset = 0)
         {
             return new()

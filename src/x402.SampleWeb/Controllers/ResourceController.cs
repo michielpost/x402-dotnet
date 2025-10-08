@@ -8,11 +8,11 @@ namespace x402.SampleWeb.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class ResourcesController : ControllerBase
+    public class ResourceController : ControllerBase
     {
         private readonly IFacilitatorClient facilitator;
 
-        public ResourcesController(IFacilitatorClient facilitator)
+        public ResourceController(IFacilitatorClient facilitator)
         {
             this.facilitator = facilitator;
         }
