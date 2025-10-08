@@ -40,7 +40,7 @@ Directly in an API Controller
 ```cs
 [HttpGet]
 [Route("dynamic")]
-public async Task<IActionResult> Dynamic(string amount)
+public async Task<SampleResult?> Dynamic(string amount)
 {
     var request = this.HttpContext.Request;
     var fullUrl = $"{request.Scheme}://{request.Host}{request.Path}{request.QueryString}";
@@ -58,7 +58,7 @@ public async Task<IActionResult> Dynamic(string amount)
 
     if (!x402Result.CanContinueRequest)
     {
-        return new EmptyResult(); // Response already written by HandleX402Async, so just exit
+        return null; // Response already written by HandleX402Async, so just exit
     }
 
     //Continue with the request
