@@ -1,0 +1,20 @@
+{
+  "name": "x402-dotnet-test",
+  "version": "1.0.0",
+  "description": "Test script for x402 payment integration",
+  "type": "module",
+  "scripts": {
+    "test": "tsx test-payment.ts"
+  },
+  "dependencies": {
+    "@faremeter/fetch": "^0.3.0",
+    "@faremeter/info": "^0.7.0",
+    "@faremeter/payment-solana-exact": "^0.1.1",
+    "@solana/web3.js": "^1.95.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}
