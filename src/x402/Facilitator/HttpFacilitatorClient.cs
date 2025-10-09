@@ -59,6 +59,8 @@ namespace x402.Facilitator
                 Content = JsonContent.Create(body, options: JsonOptions)
             };
             PrepareRequest(request);
+            httpClient.Timeout = TimeSpan.FromSeconds(req.MaxTimeoutSeconds);
+
             var response = await httpClient.SendAsync(request).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
@@ -93,6 +95,8 @@ namespace x402.Facilitator
                 Content = JsonContent.Create(body, options: JsonOptions)
             };
             PrepareRequest(request);
+            httpClient.Timeout = TimeSpan.FromSeconds(req.MaxTimeoutSeconds);
+
             var response = await httpClient.SendAsync(request).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
@@ -118,6 +122,8 @@ namespace x402.Facilitator
             var url = BuildUrl("/supported", HttpMethod.Get);
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             PrepareRequest(request);
+            httpClient.Timeout = TimeSpan.FromSeconds(20);
+
             using var response = await httpClient.SendAsync(request).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
