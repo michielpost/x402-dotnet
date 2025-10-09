@@ -13,7 +13,9 @@
         /// <summary>
         /// The transaction hash, if successful.
         /// </summary>
-        public string? Transaction { get; set; }
+        public string? TxHash { get; set; }
+
+        public string? Transaction => TxHash;
 
         /// <summary>
         /// Address of the payer's wallet
@@ -23,11 +25,15 @@
         /// <summary>
         /// The network ID, if successful.
         /// </summary>
-        public string? Network { get; set; }
+        public string? NetworkId { get; set; }
+
+        public string? Network => NetworkId;
 
         /// <summary>
         /// Error message, if not successful.
         /// </summary>
-        public string? ErrorReason { get; set; }
+        public string? Error { get; set; }
+
+        public string? ErrorReason => Error;
     }
 }

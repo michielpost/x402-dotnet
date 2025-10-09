@@ -29,6 +29,11 @@ namespace x402.Models
         public required Payload Payload { get; set; }
 
         /// <summary>
+        /// The raw base64-encoded header string
+        /// </summary>
+        public string? RawHeader { get; set; }
+
+        /// <summary>
         /// Parses the payment payload from the base64-encoded header.
         /// </summary>
         /// <param name="header">The X-PAYMENT header value.</param>
@@ -47,6 +52,7 @@ namespace x402.Models
                 {
                     throw new ArgumentException("Invalid JSON in header");
                 }
+                payload.RawHeader = header;
                 return payload;
             }
             catch (Exception ex)
@@ -67,14 +73,19 @@ namespace x402.Models
     public class Payload
     {
         /// <summary>
-        /// EIP-712 signature for authorization
+        /// EIP-712 signature for authorization (EVM chains)
         /// </summary>
-        public string Signature { get; set; } = string.Empty;
+        public string? Signature { get; set; }
 
         /// <summary>
-        /// EIP-3009 authorization parameter
+        /// EIP-3009 authorization parameter (EVM chains)
         /// </summary>
-        public required Authorization Authorization { get; set; }
+        public Authorization? Authorization { get; set; }
+
+        /// <summary>
+        /// Solana transaction (base64 encoded)
+        /// </summary>
+        public string? Transaction { get; set; }
 
         public string? Resource { get; set; }
     }

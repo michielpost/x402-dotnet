@@ -31,13 +31,37 @@ namespace x402
         {
             var logger = context.RequestServices.GetRequiredService<ILogger<X402Handler>>();
             logger.LogDebug("HandleX402 invoked for path {Path}", path);
+
+            if (facilitator is CorbitsFacilitatorClient corbitsFacilitator)
+            {
+                try
+                {
+                    var updatedRequirements = await corbitsFacilitator.AcceptsAsync(new List<PaymentRequirements> { paymentRequirements }).ConfigureAwait(false);
+                    var matchingRequirement = FindMatchingPaymentRequirements(updatedRequirements, paymentRequirements, logger);
+
+                    if (matchingRequirement != null)
+                    {
+                        paymentRequirements = matchingRequirement;
+                        logger.LogInformation("Updated payment requirements from facilitator /accepts");
+                    }
+                    else if (updatedRequirements.Count > 0)
+                    {
+                        logger.LogWarning("No exact match found from facilitator /accepts, using original requirements");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to get updated requirements from facilitator /accepts");
+                }
+            }
+
             string? header = context.Request.Headers["X-PAYMENT"].FirstOrDefault();
 
             //No payment, return 402
             if (string.IsNullOrEmpty(header))
             {
                 logger.LogInformation("No X-PAYMENT header present for path {Path}; responding 402", path);
-                await Respond402Async(context, paymentRequirements, "X-PAYMENT header is required").ConfigureAwait(false);
+                await Respond402Async(context, facilitator, paymentRequirements, "X-PAYMENT header is required").ConfigureAwait(false);
                 return new HandleX402Result(false);
             }
 
@@ -55,7 +79,7 @@ namespace x402
                 if (!string.IsNullOrEmpty(resource) && !string.Equals(resource, path, StringComparison.Ordinal))
                 {
                     logger.LogWarning("Resource mismatch: payload {PayloadResource} vs request {RequestPath}", resource, path);
-                    await Respond402Async(context, paymentRequirements, "resource mismatch").ConfigureAwait(false);
+                    await Respond402Async(context, facilitator, paymentRequirements, "resource mismatch").ConfigureAwait(false);
                     return new HandleX402Result(false, $"Resource mismatch: payload {resource} vs request {path}");
                 }
 
@@ -66,7 +90,7 @@ namespace x402
             {
                 // Malformed payment header - client error
                 logger.LogWarning("Malformed X-PAYMENT header for path {Path}", path);
-                await Respond402Async(context, paymentRequirements, "Malformed X-PAYMENT header").ConfigureAwait(false);
+                await Respond402Async(context, facilitator, paymentRequirements, "Malformed X-PAYMENT header").ConfigureAwait(false);
                 return new HandleX402Result(false, "Malformed X-PAYMENT header", vr);
             }
             catch (IOException ex)
@@ -87,7 +111,7 @@ namespace x402
             if (!vr.IsValid)
             {
                 logger.LogInformation("Verification invalid for path {Path}: {Reason}", path, vr.InvalidReason);
-                await Respond402Async(context, paymentRequirements, vr.InvalidReason).ConfigureAwait(false);
+                await Respond402Async(context, facilitator, paymentRequirements, vr.InvalidReason).ConfigureAwait(false);
                 return new HandleX402Result(false, vr.InvalidReason, vr);
             }
 
@@ -104,7 +128,7 @@ namespace x402
                             ? preSettledResponse.ErrorReason
                             : FacilitatorErrorCodes.UnexpectedSettleError;
                         logger.LogWarning("Pessimistic settlement failed for path {Path}: {Reason}", path, errorMsg);
-                        await Respond402Async(context, paymentRequirements, errorMsg).ConfigureAwait(false);
+                        await Respond402Async(context, facilitator, paymentRequirements, errorMsg).ConfigureAwait(false);
                         return new HandleX402Result(false, errorMsg, vr);
                     }
 
@@ -124,7 +148,7 @@ namespace x402
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "Pessimistic settlement error for path {Path}", path);
-                    await Respond402Async(context, paymentRequirements, "settlement error: " + ex.Message).ConfigureAwait(false);
+                    await Respond402Async(context, facilitator, paymentRequirements, "settlement error: " + ex.Message).ConfigureAwait(false);
                     return new HandleX402Result(false, "settlement error: " + ex.Message, vr);
                 }
             }
@@ -153,7 +177,7 @@ namespace x402
                         // In optimistic mode, do not alter the response status/body
                         if (settlementMode == SettlementMode.Pessimistic && !context.Response.HasStarted)
                         {
-                            await Respond402Async(context, paymentRequirements, errorMsg).ConfigureAwait(false);
+                            await Respond402Async(context, facilitator, paymentRequirements, errorMsg).ConfigureAwait(false);
                         }
                         return;
                     }
@@ -201,7 +225,7 @@ namespace x402
                     if (settlementMode == SettlementMode.Pessimistic && !context.Response.HasStarted)
                     {
                         logger.LogError(ex, "Settlement error for path {Path}", path);
-                        await Respond402Async(context, paymentRequirements, "settlement error: " + ex.Message).ConfigureAwait(false);
+                        await Respond402Async(context, facilitator, paymentRequirements, "settlement error: " + ex.Message).ConfigureAwait(false);
                     }
                     return;
                 }
@@ -230,8 +254,10 @@ namespace x402
         /// <summary>
         /// Write a JSON 402 response.
         /// </summary>
-        private static Task Respond402Async(HttpContext context, PaymentRequirements paymentRequirements, string? error)
+        private static async Task Respond402Async(HttpContext context, IFacilitatorClient facilitator, PaymentRequirements paymentRequirements, string? error)
         {
+            var logger = context.RequestServices.GetRequiredService<ILogger<X402Handler>>();
+
             context.Response.StatusCode = StatusCodes.Status402PaymentRequired;
             context.Response.ContentType = "application/json";
 
@@ -243,7 +269,41 @@ namespace x402
             };
 
             string json = JsonSerializer.Serialize(prr, jsonOptions);
-            return context.Response.WriteAsync(json);
+            await context.Response.WriteAsync(json).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Finds a matching payment requirement from a list based on network, scheme, and asset.
+        /// </summary>
+        private static PaymentRequirements? FindMatchingPaymentRequirements(
+            List<PaymentRequirements> accepts,
+            PaymentRequirements target,
+            ILogger logger)
+        {
+            List<PaymentRequirements> possible;
+
+            if (!string.IsNullOrEmpty(target.Asset))
+            {
+                possible = accepts.Where(x =>
+                    x.Network == target.Network &&
+                    x.Scheme == target.Scheme &&
+                    x.Asset == target.Asset
+                ).ToList();
+            }
+            else
+            {
+                possible = accepts.Where(x =>
+                    x.Network == target.Network &&
+                    x.Scheme == target.Scheme
+                ).ToList();
+            }
+
+            if (possible.Count > 1)
+            {
+                logger.LogWarning("Found {Count} ambiguous matching requirements for payment", possible.Count);
+            }
+
+            return possible.FirstOrDefault();
         }
 
         private static Task Respond500Async(HttpContext context, string errorMsg)

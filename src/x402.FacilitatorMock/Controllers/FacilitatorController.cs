@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using x402.Facilitator;
 using x402.Facilitator.Models;
+using x402.Models;
 
 namespace x402.FacilitatorMock.Controllers;
 
@@ -22,7 +23,8 @@ public class FacilitatorController : ControllerBase
         if (req.X402Version != 1)
             return VerificationError(FacilitatorErrorCodes.InvalidX402Version);
 
-        var payer = req.PaymentPayload.ExtractPayerFromPayload();
+        var paymentHeader = req.PaymentHeader as PaymentPayloadHeader;
+        var payer = paymentHeader?.ExtractPayerFromPayload();
 
         return new()
         {
@@ -44,14 +46,15 @@ public class FacilitatorController : ControllerBase
     [Route("settle")]
     public SettlementResponse Settle([FromBody] FacilitatorRequest req)
     {
-        var payer = req.PaymentPayload.ExtractPayerFromPayload();
+        var paymentHeader = req.PaymentHeader as PaymentPayloadHeader;
+        var payer = paymentHeader?.ExtractPayerFromPayload();
 
         return new()
         {
             Success = true,
             Payer = payer,
-            Network = req.PaymentRequirements.Network,
-            Transaction = "0xFacilitatorMockServer"
+            NetworkId = req.PaymentRequirements.Network,
+            TxHash = "0xFacilitatorMockServer"
         };
     }
 

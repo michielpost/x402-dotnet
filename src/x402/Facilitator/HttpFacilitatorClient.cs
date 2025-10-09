@@ -42,14 +42,21 @@ namespace x402.Facilitator
         /// <param name="request">The request to be sent.</param>
         protected virtual void PrepareRequest(HttpRequestMessage request) { }
 
+        /// <summary>
+        /// Allows derived clients to customize how the payment header is sent to the facilitator.
+        /// Default behavior returns the parsed PaymentPayloadHeader object.
+        /// </summary>
+        /// <param name="paymentPayload">The parsed payment payload header.</param>
+        /// <returns>The value to use for the PaymentHeader field in the request.</returns>
+        protected virtual object GetPaymentHeaderForRequest(PaymentPayloadHeader paymentPayload) => paymentPayload;
 
-        public async Task<VerificationResponse> VerifyAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements req)
+        public virtual async Task<VerificationResponse> VerifyAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements req)
         {
             logger.LogInformation("Verifying payment payload for resource {Resource} with scheme {Scheme} and asset {Asset}", req.Resource, req.Scheme, req.Asset);
             var body = new FacilitatorRequest
             {
                 X402Version = 1,
-                PaymentPayload = paymentPayload,
+                PaymentHeader = GetPaymentHeaderForRequest(paymentPayload),
                 PaymentRequirements = req
             };
 
@@ -83,7 +90,7 @@ namespace x402.Facilitator
             var body = new FacilitatorRequest
             {
                 X402Version = 1,
-                PaymentPayload = paymentPayload,
+                PaymentHeader = GetPaymentHeaderForRequest(paymentPayload),
                 PaymentRequirements = req
             };
 
@@ -101,7 +108,8 @@ namespace x402.Facilitator
                 throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {content}");
             }
 
-            var result = await response.Content.ReadFromJsonAsync<SettlementResponse>(JsonOptions).ConfigureAwait(false);
+            var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var result = JsonSerializer.Deserialize<SettlementResponse>(responseBody, JsonOptions);
             if (result is null)
             {
                 logger.LogError("Failed to deserialize settlement response for resource {Resource}", req.Resource);

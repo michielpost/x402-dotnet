@@ -37,7 +37,7 @@ namespace x402.SampleWeb.Controllers
 
         [HttpGet]
         [Route("protected")]
-        [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", "base-sepolia")]
+        [PaymentRequired("1000", "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "corzHctjX9Wtcrkfxz3Se8zdXqJYCaamWcQA7vwKF7Q", "solana-mainnet-beta")]
         public SampleResult Protected()
         {
             return new SampleResult { Title = "Protected by PaymentRequired Attribute" };
@@ -53,11 +53,11 @@ namespace x402.SampleWeb.Controllers
             var x402Result = await X402Handler.HandleX402Async(this.HttpContext, facilitator, fullUrl,
                 new x402.Models.PaymentRequirements
                 {
-                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                    Asset = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
                     Description = "Dynamic payment",
-                    Network = "base-sepolia",
+                    Network = "solana-mainnet-beta",
                     MaxAmountRequired = amount,
-                    PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
+                    PayTo = "corzHctjX9Wtcrkfxz3Se8zdXqJYCaamWcQA7vwKF7Q",
                     Resource = fullUrl,
                 },
                 Enums.SettlementMode.Optimistic,

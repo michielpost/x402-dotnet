@@ -60,7 +60,7 @@ namespace x402.Models
         /// <summary>
         /// Scheme-specific additional information
         /// </summary>
-        public object? Extra { get; set; }
+        public Dictionary<string, object> Extra { get; set; } = new();
 
     }
 }

@@ -36,7 +36,7 @@ builder.Services.AddCors(options =>
 var facilitatorUrl = builder.Configuration["FacilitatorUrl"];
 if(!string.IsNullOrEmpty(facilitatorUrl))
 {
-    builder.Services.AddHttpClient<IFacilitatorClient, HttpFacilitatorClient>(client =>
+    builder.Services.AddHttpClient<IFacilitatorClient, CorbitsFacilitatorClient>(client =>
     {
         client.BaseAddress = new Uri(facilitatorUrl);
     });
@@ -67,15 +67,15 @@ var facilitator = app.Services.GetRequiredService<IFacilitatorClient>();
 var paymentOptions = new x402.Models.PaymentMiddlewareOptions
 {
     Facilitator = facilitator,
-    DefaultPayToAddress = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", // Replace with your actual wallet address
-    DefaultNetwork = "base-sepolia",
+    DefaultPayToAddress = "corzHctjX9Wtcrkfxz3Se8zdXqJYCaamWcQA7vwKF7Q",
+    DefaultNetwork = "solana-mainnet-beta",
     PaymentRequirements = new Dictionary<string, x402.Models.PaymentRequirementsConfig>()
         {
             {  "/resource/middleware", new x402.Models.PaymentRequirementsConfig
                 {
                     Scheme = x402.Enums.PaymentScheme.Exact,
                     MaxAmountRequired = "1000",
-                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                    Asset = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
                     MimeType = "application/json",
                     Description = "Payment Required"
                 }

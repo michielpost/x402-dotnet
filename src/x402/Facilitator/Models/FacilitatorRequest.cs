@@ -12,7 +12,7 @@ namespace x402.Facilitator.Models
         /// </summary>
         public int X402Version { get; set; }
 
-        public required PaymentPayloadHeader PaymentPayload { get; set; }
+        public required object PaymentHeader { get; set; }
 
         /// <summary>
         /// List of accepted payment requirements.
