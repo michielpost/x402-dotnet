@@ -131,6 +131,8 @@ List of facilitators you can use:
 - https://facilitator.mogami.tech/
 - https://facilitator.mcpay.tech (Proxy Facilitator)
 
+View more facilitators and their status on https://x402dev.com
+
 
 ## Development
 There is a sample website and mock Settlement server included.  
