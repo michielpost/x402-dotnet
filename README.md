@@ -1,6 +1,6 @@
 # x402-dotnet
 
-![x402 payments enabled](images/x402-button-small.png)  
+![x402 payments enabled](https://github.com/michielpost/x402-dotnet/raw/master/images/x402-button-small.png)  
 **x402 Payment Protocol implementation for .Net**  
 More info about x402: https://www.x402.org
 

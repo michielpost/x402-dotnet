@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using System.Net;
 using System.Net.Http.Json;
@@ -70,7 +71,7 @@ namespace x402.Coinbase.Tests
                 ApiKeySecret = Convert.ToBase64String(new byte[64])
             });
 
-            var client = new CoinbaseFacilitatorClient(httpClient, options);
+            var client = new CoinbaseFacilitatorClient(httpClient, options, NullLoggerFactory.Instance);
 
             var result = await client.VerifyAsync(emptyPayloadHeader, CreateReqs("/r"));
 

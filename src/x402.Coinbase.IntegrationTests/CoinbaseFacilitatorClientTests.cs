@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using x402.Coinbase.Models;
 using x402.Models;
@@ -30,7 +31,7 @@ namespace x402.Coinbase.Tests
 
             var coinbaseOptions = provider.GetRequiredService<IOptions<CoinbaseOptions>>();
 
-            client = new CoinbaseFacilitatorClient(new HttpClient(), coinbaseOptions);
+            client = new CoinbaseFacilitatorClient(new HttpClient(), coinbaseOptions, NullLoggerFactory.Instance);
         }
 
         [Test]
