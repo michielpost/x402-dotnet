@@ -5,7 +5,8 @@ namespace x402.Client
 {
     public interface IX402Wallet
     {
-        public List<AssetAllowance> AssetAllowances { get; set; }
+        List<AssetAllowance> AssetAllowances { get; set; }
+        bool IgnoreAllowances { get; set; }
 
         /// <summary>
         /// Given a list of payment requirements, returns one that can be fulfilled,

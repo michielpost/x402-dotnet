@@ -25,7 +25,8 @@ namespace x402.Client.Tests
 
             var client = new HttpClient(handler);
 
-            var response = await client.GetAsync("https://x402-dotnet.azurewebsites.net/Resource/protected");
+            //var response = await client.GetAsync("https://x402-dotnet.azurewebsites.net/Resource/protected");
+            var response = await client.GetAsync("https://localhost:7154/resource/protected");
             Console.WriteLine($"Final: {(int)response.StatusCode} {response.ReasonPhrase}");
         }
     }
