@@ -5,7 +5,8 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <IsPackable>false</IsPackable>
+	<IsTestProject>false</IsTestProject>
+	<IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

@@ -26,6 +26,7 @@ namespace x402.Client.Tests.Wallet
                         Value = "TEST_PAYMENT",
                         From = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
                         To = requirement.PayTo,
+                          
                     }
                 },
             };

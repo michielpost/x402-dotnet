@@ -60,7 +60,13 @@ namespace x402.Models
         /// <summary>
         /// Scheme-specific additional information
         /// </summary>
-        public object? Extra { get; set; }
+        public PaymentRequirementsExtra? Extra { get; set; }
 
+    }
+
+    public class PaymentRequirementsExtra
+    {
+        public string? Name { get; set; }
+        public string? Version { get; set; }
     }
 }

@@ -26,6 +26,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="Nethereum.HdWallet" Version="5.0.0" />
+	  <PackageReference Include="Nethereum.Hex" Version="5.0.0" />
+	  <PackageReference Include="Nethereum.Signer" Version="5.0.0" />
+	  <PackageReference Include="Nethereum.Signer.EIP712" Version="5.0.0" />
+	  <PackageReference Include="Nethereum.Web3" Version="5.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <ProjectReference Include="..\x402\x402.csproj" />
 	</ItemGroup>
 
