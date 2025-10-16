@@ -1,5 +1,5 @@
 ﻿using x402.Client.Models;
-using x402.Models;
+using x402.Core.Models;
 
 namespace x402.Client
 {

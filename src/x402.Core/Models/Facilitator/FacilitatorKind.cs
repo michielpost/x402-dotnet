@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace x402.Facilitator.Models
+namespace x402.Core.Models.Facilitator
 {
     public record FacilitatorKind(
      [property: JsonPropertyName("scheme")] string Scheme,

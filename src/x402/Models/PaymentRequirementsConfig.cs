@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using x402.Enums;
+﻿using x402.Core.Enums;
 
 namespace x402.Models
 {

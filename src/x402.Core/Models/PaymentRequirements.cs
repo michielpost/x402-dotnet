@@ -1,7 +1,6 @@
-﻿using System;
-using x402.Enums;
+﻿using x402.Core.Enums;
 
-namespace x402.Models
+namespace x402.Core.Models
 {
     /// <summary>
     /// Represents the requirements for a payment.

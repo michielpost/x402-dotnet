@@ -5,8 +5,8 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <IsPackable>false</IsPackable>
-    <UserSecretsId>6c56b094-fa97-4e31-b3da-2914804fec94</UserSecretsId>
+	<IsTestProject>false</IsTestProject>
+	<IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,8 +14,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.10" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.10" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
     <PackageReference Include="NUnit" Version="4.4.0" />
     <PackageReference Include="NUnit.Analyzers" Version="4.10.0">
@@ -26,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\x402.Coinbase\x402.Coinbase.csproj" />
+    <ProjectReference Include="..\x402.Client.EVM\x402.Client.EVM.csproj" />
   </ItemGroup>
 
   <ItemGroup>

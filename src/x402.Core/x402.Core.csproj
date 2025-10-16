@@ -8,7 +8,7 @@
 		<Version>0.0.4</Version>
 		<Authors>Michiel Post</Authors>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<Description>x402 Payment Required Client implementation for .net</Description>
+		<Description>x402 Payment Required implementation for .net</Description>
 		<PackageProjectUrl>https://github.com/michielpost/x402-dotnet</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/michielpost/x402-dotnet</RepositoryUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -23,11 +23,6 @@
 	<ItemGroup>
 		<None Include="../../images/x402-icon-blue.png" Pack="true" PackagePath="\" />
 		<None Include="../../README.md" Pack="true" PackagePath="\" />
-	</ItemGroup>
-
-
-	<ItemGroup>
-	  <ProjectReference Include="..\x402.Core\x402.Core.csproj" />
 	</ItemGroup>
 
 </Project>

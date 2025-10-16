@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Filters;
+﻿using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using x402.Enums;
+using x402.Core.Enums;
+using x402.Core.Models;
 using x402.Facilitator;
-using x402.Models;
 
 namespace x402.Attributes
 {
@@ -65,7 +64,7 @@ namespace x402.Attributes
         {
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<PaymentRequiredAttribute>>();
             var facilitator = context.HttpContext.RequestServices.GetRequiredService<IFacilitatorClient>();
-           
+
             var request = context.HttpContext.Request;
             var fullUrl = $"{request.Scheme}://{request.Host}{request.Path}{request.QueryString}";
 

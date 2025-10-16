@@ -1,6 +1,4 @@
-﻿using x402.Models;
-
-namespace x402.Facilitator.Models
+﻿namespace x402.Core.Models.Facilitator
 {
     /// <summary>
     /// Request to facilitator
@@ -19,6 +17,6 @@ namespace x402.Facilitator.Models
         /// </summary>
         public required PaymentRequirements PaymentRequirements { get; set; }
 
-       
+
     }
 }

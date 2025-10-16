@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace x402.JsonConverters
+namespace x402.Core.JsonConverters
 {
     public class LowercaseEnumConverter<TEnum> : JsonConverter<TEnum> where TEnum : struct, Enum
     {

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using x402.Facilitator;
+using x402.Core.Models;
+using x402.Core.Models.Facilitator;
 
 namespace x402.SampleWeb.Controllers
 {
@@ -28,9 +29,9 @@ namespace x402.SampleWeb.Controllers
                     LastUpdated = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                     Resource = "/resource/middleware",
                     Type = "http",
-                    Accepts = new List<x402.Models.PaymentRequirements>
+                    Accepts = new List<PaymentRequirements>
                     {
-                        new x402.Models.PaymentRequirements
+                        new PaymentRequirements
                         {
                         Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                         MaxAmountRequired = "1000",

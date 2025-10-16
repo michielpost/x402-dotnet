@@ -3,10 +3,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using x402.Coinbase.Models;
-using x402.Models;
+using x402.Core.Models;
 
 
-namespace x402.Coinbase.Tests
+namespace x402.Coinbase.IntegrationTests
 {
     [TestFixture]
     public class CoinbaseFacilitatorClientTests

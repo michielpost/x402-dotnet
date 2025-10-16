@@ -1,9 +1,7 @@
-using x402.Client;
-using x402.Client.EVM;
-using x402.Enums;
-using x402.Models;
+using x402.Core.Enums;
+using x402.Core.Models;
 
-namespace x402.Client.Tests
+namespace x402.Client.EVM.Tests
 {
     public class EVMWalletTests
     {

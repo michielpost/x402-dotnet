@@ -1,6 +1,7 @@
 using x402;
 using x402.Coinbase;
 using x402.Coinbase.Models;
+using x402.Core.Enums;
 using x402.Facilitator;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,7 +35,7 @@ builder.Services.AddCors(options =>
 
 
 var facilitatorUrl = builder.Configuration["FacilitatorUrl"];
-if(!string.IsNullOrEmpty(facilitatorUrl))
+if (!string.IsNullOrEmpty(facilitatorUrl))
 {
     builder.Services.AddHttpClient<IFacilitatorClient, HttpFacilitatorClient>(client =>
     {
@@ -73,7 +74,7 @@ var paymentOptions = new x402.Models.PaymentMiddlewareOptions
         {
             {  "/resource/middleware", new x402.Models.PaymentRequirementsConfig
                 {
-                    Scheme = x402.Enums.PaymentScheme.Exact,
+                    Scheme = PaymentScheme.Exact,
                     MaxAmountRequired = "1000",
                     Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                     MimeType = "application/json",

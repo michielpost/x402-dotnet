@@ -29,4 +29,8 @@
 	<None Include="../../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\x402.Core\x402.Core.csproj" />
+  </ItemGroup>
+
 </Project>

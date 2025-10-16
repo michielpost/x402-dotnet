@@ -1,5 +1,5 @@
 ﻿using System.Text.Json;
-using x402.Models.Responses;
+using x402.Core.Models.Responses;
 
 namespace x402.Client
 {

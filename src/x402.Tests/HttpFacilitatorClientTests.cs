@@ -2,9 +2,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using x402.Core.Enums;
+using x402.Core.Models;
+using x402.Core.Models.Facilitator;
 using x402.Facilitator;
-using x402.Facilitator.Models;
-using x402.Models;
 
 namespace x402.Tests
 {
@@ -16,7 +17,7 @@ namespace x402.Tests
             X402Version = 1,
             Payload = new Payload()
             {
-                Authorization = new Models.Authorization()
+                Authorization = new()
             }
         };
 
@@ -47,7 +48,7 @@ namespace x402.Tests
             Network = "base-sepolia",
             PayTo = "0x0000000000000000000000000000000000000001",
             Resource = resource,
-            Scheme = x402.Enums.PaymentScheme.Exact,
+            Scheme = PaymentScheme.Exact,
             MaxTimeoutSeconds = 30
         };
 

@@ -1,4 +1,4 @@
-﻿using x402.Enums;
+﻿using x402.Core.Enums;
 using x402.Facilitator;
 
 namespace x402.Models

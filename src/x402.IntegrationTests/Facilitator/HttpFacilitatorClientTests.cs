@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using x402.Core.Models;
 using x402.Facilitator;
-using x402.Models;
 
-namespace x402.Tests.Facilitator
+namespace x402.IntegrationTests.Facilitator
 {
     [TestFixture]
     public class HttpFacilitatorClientTests

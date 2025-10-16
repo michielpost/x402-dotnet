@@ -1,12 +1,10 @@
 ﻿using Nethereum.ABI.EIP712;
-using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Signer;
 using Nethereum.Signer.EIP712;
-using Newtonsoft.Json;
 using System.Numerics;
 using System.Security.Cryptography;
-using x402.Models;
+using x402.Core.Models;
 
 namespace x402.Client.EVM
 {
@@ -83,7 +81,7 @@ namespace x402.Client.EVM
             var eip712Signer = new Eip712TypedDataSigner();
             string signature = eip712Signer.SignTypedDataV4(message, typedData, ecKey);
 
-            Console.WriteLine($"Signature (65-byte hex): {signature}");
+            //Console.WriteLine($"Signature (65-byte hex): {signature}");
 
             // ------------------------------
             // 6) Recover signer to verify
@@ -143,34 +141,5 @@ namespace x402.Client.EVM
             };
         }
 
-    }
-
-
-    [Struct("TransferWithAuthorization")]
-    public class TransferWithAuthorization
-    {
-        [Parameter("address", "from", order: 1)]
-        [JsonProperty("from")]
-        public virtual required string From { get; set; }
-
-        [Parameter("address", "to", order: 2)]
-        [JsonProperty("to")]
-        public virtual required string To { get; set; }
-
-        [Parameter("uint256", "value", order: 3)]
-        [JsonProperty("value")]
-        public virtual BigInteger Value { get; set; }
-
-        [Parameter("uint256", "validAfter", order: 4)]
-        [JsonProperty("validAfter")]
-        public virtual BigInteger ValidAfter { get; set; }
-
-        [Parameter("uint256", "validBefore", order: 5)]
-        [JsonProperty("validBefore")]
-        public virtual BigInteger ValidBefore { get; set; }
-
-        [Parameter("bytes32", "nonce", order: 6)]
-        [JsonProperty("nonce")]
-        public virtual byte[]? Nonce { get; set; }
     }
 }

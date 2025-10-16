@@ -1,5 +1,5 @@
 ﻿using x402.Client.Models;
-using x402.Models;
+using x402.Core.Models;
 
 namespace x402.Client.Tests.Wallet
 {
@@ -26,7 +26,7 @@ namespace x402.Client.Tests.Wallet
                         Value = "1",
                         From = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
                         To = requirement.PayTo,
-                          
+
                     }
                 },
             };

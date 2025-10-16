@@ -1,4 +1,4 @@
-﻿namespace x402.Models.Responses
+﻿namespace x402.Core.Models.Responses
 {
     /// <summary>
     /// Response for 402 Payment Required.

@@ -1,4 +1,4 @@
-﻿namespace x402.Facilitator.Models
+﻿namespace x402.Core.Models.Facilitator
 {
     public class FacilitatorErrorCodes
     {

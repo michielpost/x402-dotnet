@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
+<PropertyGroup>
 		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
@@ -24,10 +24,19 @@
 		<None Include="../../images/x402-icon-blue.png" Pack="true" PackagePath="\" />
 		<None Include="../../README.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
-
-
+	
+	
 	<ItemGroup>
-	  <ProjectReference Include="..\x402.Core\x402.Core.csproj" />
+	  <PackageReference Include="Nethereum.HdWallet" Version="5.0.0" />
+	  <PackageReference Include="Nethereum.Hex" Version="5.0.0" />
+	  <PackageReference Include="Nethereum.Signer" Version="5.0.0" />
+	  <PackageReference Include="Nethereum.Signer.EIP712" Version="5.0.0" />
+	  <PackageReference Include="Nethereum.Web3" Version="5.0.0" />
 	</ItemGroup>
+
+
+  <ItemGroup>
+    <ProjectReference Include="..\x402.Client\x402.Client.csproj" />
+  </ItemGroup>
 
 </Project>

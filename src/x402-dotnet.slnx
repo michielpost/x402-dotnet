@@ -6,13 +6,16 @@
     <Project Path="x402.SampleWeb/x402.SampleWeb.csproj" />
   </Folder>
   <Folder Name="/Tests/">
+    <Project Path="x402.Client.EVM.Tests/x402.Client.EVM.Tests.csproj" Id="923302bb-db20-4b24-bc49-8ceb0eda1d57" />
     <Project Path="x402.Client.Tests/x402.Client.Tests.csproj" Id="da00bb3e-6aa9-4b47-8c2e-754f36ed545c" />
     <Project Path="x402.Coinbase.IntegrationTests/x402.Coinbase.IntegrationTests.csproj" Id="cc74718e-04db-48a0-a896-df8497f50600" />
     <Project Path="x402.Coinbase.Tests/x402.Coinbase.Tests.csproj" Id="061588bc-c7a7-4a57-a2e8-d6c979edeead" />
     <Project Path="x402.IntegrationTests/x402.IntegrationTests.csproj" Id="b256dd0a-9b44-4ed2-841b-fc093453ca69" />
     <Project Path="x402.Tests/x402.Tests.csproj" Id="f4a52ff8-e5f6-4a34-aa2f-f7f38a8ddc82" />
   </Folder>
+  <Project Path="x402.Client.EVM/x402.Client.EVM.csproj" Id="efd446b8-3f9a-4b2e-b360-c79b1d390bb4" />
   <Project Path="x402.Client/x402.Client.csproj" Id="8894227d-ca9d-44b7-b822-49f8c76be1d4" />
   <Project Path="x402.Coinbase/x402.Coinbase.csproj" Id="e5c0ff35-3e08-4994-a2f1-b375d6f5a1b5" />
+  <Project Path="x402.Core/x402.Core.csproj" Id="4bcd596f-d9fd-4303-96a3-82597c871a22" />
   <Project Path="x402/x402.csproj" />
 </Solution>

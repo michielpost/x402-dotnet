@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using x402.Core.Models;
 using x402.Facilitator;
 using x402.Models;
 
@@ -39,7 +40,7 @@ namespace x402
             logger.LogDebug("PaymentMiddleware invoked for path {Path}", resourceFullUrl);
 
             PaymentRequirements? paymentRequirements = null;
-            
+
             var paymentConfig = paymentMiddlewareOptions.PaymentRequirements
                 .Where(x => x.Key == protectedPath && !x.Value.EnableQueryStringMatching
                             || x.Key == protectedPathAndQuery && x.Value.EnableQueryStringMatching)
