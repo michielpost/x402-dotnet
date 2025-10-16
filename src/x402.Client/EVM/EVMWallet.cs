@@ -1,9 +1,9 @@
-﻿using NBitcoin;
-using Nethereum.ABI.EIP712;
-using Nethereum.HdWallet;
+﻿using Nethereum.ABI.EIP712;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Signer;
 using Nethereum.Signer.EIP712;
+using System.Numerics;
 using System.Security.Cryptography;
 using x402.Models;
 
@@ -32,59 +32,6 @@ namespace x402.Client.EVM
 
         }
 
-        static string GenerateBytes32NonceHex()
-        {
-            // generate 32 random bytes and return 0x-prefixed hex
-            var bytes = new byte[32];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(bytes);
-            }
-            return "0x" + bytes.ToHex();
-        }
-
-        static TypedData<Domain> BuildEip3009TypedData(string tokenName, string tokenVersion, ulong chainId, string verifyingContract)
-        {
-            var domain = new Domain
-            {
-                Name = tokenName,
-                Version = tokenVersion,
-                ChainId = chainId,
-                VerifyingContract = verifyingContract
-            };
-
-            var types = new Dictionary<string, MemberDescription[]>
-    {
-        {
-            "EIP712Domain", new []
-            {
-                new MemberDescription { Name = "name", Type = "string" },
-                new MemberDescription { Name = "version", Type = "string" },
-                new MemberDescription { Name = "chainId", Type = "uint256" },
-                new MemberDescription { Name = "verifyingContract", Type = "address" }
-            }
-        },
-        {
-            "TransferWithAuthorization", new []
-            {
-                new MemberDescription { Name = "from", Type = "address" },
-                new MemberDescription { Name = "to", Type = "address" },
-                new MemberDescription { Name = "value", Type = "uint256" },
-                new MemberDescription { Name = "validAfter", Type = "uint256" },
-                new MemberDescription { Name = "validBefore", Type = "uint256" },
-                new MemberDescription { Name = "nonce", Type = "bytes32" }
-            }
-        }
-    };
-
-            return new TypedData<Domain>
-            {
-                Domain = domain,
-                Types = types,
-                PrimaryType = "TransferWithAuthorization"
-            };
-        }
-
         protected override Task<PaymentPayloadHeader> CreateHeaderAsync(PaymentRequirements requirement, CancellationToken cancellationToken)
         {
             // ------------------------------
@@ -98,14 +45,16 @@ namespace x402.Client.EVM
 
             string from = account.Address;
             // value should be token units in smallest denomination (uint256). For demo, use a small number.
-            var value = new Nethereum.Hex.HexTypes.HexBigInteger(1000);
+            var amount = BigInteger.Parse(requirement.MaxAmountRequired);
+            var value = new Nethereum.Hex.HexTypes.HexBigInteger(amount);
 
             // Validity window: use unix timestamps
-            ulong validAfter = (ulong)DateTimeOffset.UtcNow.ToUnixTimeSeconds(); // valid immediately
-            ulong validBefore = (ulong)DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 3600; // valid for 1 hour
+            ulong validAfter = (ulong)DateTimeOffset.UtcNow.AddSeconds(60).ToUnixTimeSeconds(); // valid immediately
+            ulong validBefore = (ulong)DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds(); // valid for 15 minutes
 
             // Create a proper bytes32 nonce: 32 random bytes -> 0x-prefixed hex
             string nonce = GenerateBytes32NonceHex();
+            var nonceByte = GenerateBytes32Nonce();
 
             // ------------------------------
             // 4) Build EIP-712 typed data for EIP-3009
@@ -119,17 +68,27 @@ namespace x402.Client.EVM
             {
                 { "from", from },
                 { "to", to },
-                { "value", value.Value.ToString() },
+                { "value", (int)value.Value },
                 { "validAfter", validAfter },
                 { "validBefore", validBefore },
                 { "nonce", nonce } // bytes32 hex string
             };
+            //var message = new TransferWithAuthorization
+            //{
+            //    From = from,
+            //    To = to,
+            //    Value = amount,
+            //    ValidAfter = validAfter,
+            //    ValidBefore = validBefore,
+            //    Nonce = nonceByte
+            //};
 
             // ------------------------------
             // 5) Sign the typed data (EIP-712 v4)
             // ------------------------------
             var eip712Signer = new Eip712TypedDataSigner();
             var ecKey = new EthECKey(privateKey, true);
+
             string signature = eip712Signer.SignTypedDataV4(message, typedData, ecKey);
             Console.WriteLine($"Signature (65-byte hex): {signature}");
 
@@ -163,5 +122,70 @@ namespace x402.Client.EVM
 
             return Task.FromResult(header);
         }
+
+        private static string GenerateBytes32NonceHex()
+        {
+            // generate 32 random bytes and return 0x-prefixed hex
+            var bytes = new byte[32];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(bytes);
+            }
+            return "0x" + bytes.ToHex();
+        }
+
+        private static byte[] GenerateBytes32Nonce()
+        {
+            // generate 32 random bytes and return 0x-prefixed hex
+            var bytes = new byte[32];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(bytes);
+            }
+            return bytes;
+        }
+
+        private static TypedData<Domain> BuildEip3009TypedData(string tokenName, string tokenVersion, ulong chainId, string verifyingContract)
+        {
+            var domain = new Domain
+            {
+                Name = tokenName,
+                Version = tokenVersion,
+                ChainId = chainId,
+                VerifyingContract = verifyingContract
+            };
+
+            return new TypedData<Domain>
+            {
+                Types = MemberDescriptionFactory.GetTypesMemberDescription(typeof(Domain), typeof(TransferWithAuthorization)),
+                Domain = domain,
+                PrimaryType = nameof(TransferWithAuthorization),
+            };
+        }
+
+
+    }
+
+
+    [Struct("TransferWithAuthorization")]
+    public class TransferWithAuthorization
+    {
+        [Parameter("address", "from", order: 1)]
+        public virtual required string From { get; set; }
+
+        [Parameter("address", "to", order: 2)]
+        public virtual required string To { get; set; }
+
+        [Parameter("uint256", "value", order: 3)]
+        public virtual BigInteger Value { get; set; }
+
+        [Parameter("uint256", "validAfter", order: 4)]
+        public virtual BigInteger ValidAfter { get; set; }
+
+        [Parameter("uint256", "validBefore", order: 5)]
+        public virtual BigInteger ValidBefore { get; set; }
+
+        [Parameter("bytes32", "nonce", order: 6)]
+        public virtual byte[]? Nonce { get; set; }
     }
 }

@@ -7,7 +7,11 @@ namespace x402.Client
     {
         private readonly IX402Wallet _wallet;
         private readonly int _maxRetries;
-        private int _globalPaymentsUsed;
+
+        protected static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+        {
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        };
 
         public PaymentRequiredHandler(IX402Wallet wallet, int maxRetries = 1)
         {
@@ -38,11 +42,10 @@ namespace x402.Client
                     break; // wallet can't fulfill any
 
                 paymentsUsedForThisRequest++;
-                _globalPaymentsUsed++;
 
                 var retryRequest = await CloneHttpRequestAsync(request);
 
-                var headerJson = JsonSerializer.Serialize(payment.Header);
+                var headerJson = JsonSerializer.Serialize(payment.Header, JsonOptions);
                 var base64header = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(headerJson));
                 retryRequest.Headers.Add("X-PAYMENT", base64header);
 

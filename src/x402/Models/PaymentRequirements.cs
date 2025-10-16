@@ -1,4 +1,5 @@
-﻿using x402.Enums;
+﻿using System;
+using x402.Enums;
 
 namespace x402.Models
 {
