@@ -57,7 +57,7 @@ namespace x402.Client.Tests
             Assert.That(auth.From!.Length, Is.EqualTo(42)); // 0x + 40 hex chars
             Assert.That(auth.Nonce, Does.StartWith("0x"));
             Assert.That(auth.Nonce!.Length, Is.EqualTo(66)); // 0x + 64 hex chars (bytes32)
-            Assert.That(long.Parse(auth.ValidBefore), Is.GreaterThan(long.Parse(auth.ValidAfter)));
+            Assert.That(ulong.Parse(auth.ValidBefore), Is.GreaterThan(long.Parse(auth.ValidAfter)));
         }
 
         [Test]

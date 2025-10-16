@@ -21,7 +21,7 @@ namespace x402.Client.Tests
 
 
             // Fixed private key (32 bytes hex) for deterministic address; signature will still vary due to nonce/time
-            var wallet = new EVMWallet("0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
+            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
             {
                 IgnoreAllowances = true
             };
@@ -34,7 +34,8 @@ namespace x402.Client.Tests
 
             //var response = await client.GetAsync("https://x402-dotnet.azurewebsites.net/Resource/protected");
             //var response = await client.GetAsync("https://localhost:7154/resource/protected");
-            var response = await client.GetAsync("https://www.x402.org/protected");
+            //var response = await client.GetAsync("https://www.x402.org/protected");
+            var response = await client.GetAsync("https://proxy402.com/Z6lePs160M");
             Console.WriteLine($"Final: {(int)response.StatusCode} {response.ReasonPhrase}");
         }
     }

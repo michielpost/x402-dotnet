@@ -23,7 +23,7 @@ namespace x402.Client.Tests.Wallet
                     Signature = "",
                     Authorization = new Authorization
                     {
-                        Value = "TEST_PAYMENT",
+                        Value = "1",
                         From = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
                         To = requirement.PayTo,
                           
