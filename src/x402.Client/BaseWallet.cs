@@ -8,7 +8,7 @@ namespace x402.Client
         public List<AssetAllowance> AssetAllowances { get; set; } = new();
         public bool IgnoreAllowances { get; set; }
 
-        public async virtual Task<(PaymentRequirements? Requirement, PaymentPayloadHeader? Header)> RequestPaymentAsync(IReadOnlyList<PaymentRequirements> requirements, CancellationToken cancellationToken)
+        public virtual (PaymentRequirements? Requirement, PaymentPayloadHeader? Header) RequestPayment(IReadOnlyList<PaymentRequirements> requirements, CancellationToken cancellationToken)
         {
             var allowedRequirements = requirements
                 .Where(r => AssetAllowances.Any(a =>
@@ -23,11 +23,11 @@ namespace x402.Client
             if (selectedRequirement == null)
                 return (null, null);
 
-            var header = await CreateHeaderAsync(selectedRequirement, cancellationToken).ConfigureAwait(false);
+            var header = CreateHeader(selectedRequirement, cancellationToken);
             return (selectedRequirement, header);
         }
 
-        protected abstract Task<PaymentPayloadHeader> CreateHeaderAsync(PaymentRequirements requirement, CancellationToken cancellationToken);
+        protected abstract PaymentPayloadHeader CreateHeader(PaymentRequirements requirement, CancellationToken cancellationToken);
     }
 }
 

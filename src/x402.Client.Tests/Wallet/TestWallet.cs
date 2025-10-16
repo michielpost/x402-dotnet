@@ -10,7 +10,7 @@ namespace x402.Client.Tests.Wallet
             AssetAllowances = assetAllowances;
         }
 
-        protected override Task<PaymentPayloadHeader> CreateHeaderAsync(PaymentRequirements requirement, CancellationToken cancellationToken)
+        protected override PaymentPayloadHeader CreateHeader(PaymentRequirements requirement, CancellationToken cancellationToken)
         {
             var header = new PaymentPayloadHeader()
             {
@@ -31,7 +31,7 @@ namespace x402.Client.Tests.Wallet
                 },
             };
 
-            return Task.FromResult(header);
+            return header;
         }
     }
 }

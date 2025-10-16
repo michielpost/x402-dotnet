@@ -10,41 +10,31 @@ namespace x402.Client.EVM
 {
     public class EVMWallet : BaseWallet
     {
-        // ------------------------------
-        // 1) Choose chain / network info
-        // ------------------------------
-        // Base Sepolia chain id (testnet): 84532. Example public RPCs: https://sepolia.base.org, https://base-sepolia-rpc.publicnode.com
-        // (Use your own provider / API key in production.) See docs for up-to-date endpoints. 
-        ulong chainId = 84532UL; //TODO: Make dynamic
         byte[] privateKey;
         Nethereum.Web3.Accounts.Account account;
-        private readonly string hexPrivateKey;
 
         public EVMWallet(string hexPrivateKey)
         {
             if (hexPrivateKey.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
                 hexPrivateKey = hexPrivateKey.Substring(2);
 
-            // 2) Convert hex string to byte[]
+            // Convert hex string to byte[]
             privateKey = hexPrivateKey.HexToByteArray();
 
             account = new Nethereum.Web3.Accounts.Account(hexPrivateKey);
-            this.hexPrivateKey = hexPrivateKey;
         }
 
-        protected override Task<PaymentPayloadHeader> CreateHeaderAsync(PaymentRequirements requirement, CancellationToken cancellationToken)
+        protected override PaymentPayloadHeader CreateHeader(PaymentRequirements requirement, CancellationToken cancellationToken)
         {
-            // ------------------------------
-            // 3) Prepare EIP-3009 TransferWithAuthorization fields
-            // ------------------------------
-            // Replace the token address with the ERC20 token contract that implements transferWithAuthorization on Base Sepolia (if any).
+            // Prepare EIP-3009 TransferWithAuthorization fields
             string tokenName = requirement.Extra?.Name ?? string.Empty;
             string tokenVersion = requirement.Extra?.Version ?? string.Empty;
             string tokenContractAddress = requirement.Asset;
             string to = requirement.PayTo;
 
             string from = account.Address;
-            // value should be token units in smallest denomination (uint256). For demo, use a small number.
+
+            // value should be token units in smallest denomination (uint256)
             var amount = BigInteger.Parse(requirement.MaxAmountRequired);
             var value = new Nethereum.Hex.HexTypes.HexBigInteger(amount);
 
@@ -55,14 +45,11 @@ namespace x402.Client.EVM
             // Create a proper bytes32 nonce: 32 random bytes -> 0x-prefixed hex
             var nonceByte = GenerateBytes32Nonce();
 
-            // ------------------------------
-            // 4) Build EIP-712 typed data for EIP-3009
-            // ------------------------------
+            // Build EIP-712 typed data for EIP-3009
+            ulong chainId = 84532UL; //TODO: Make dynamic
             var typedData = BuildEip3009TypedData(tokenName, tokenVersion, chainId, tokenContractAddress);
 
-            // Message object with the authorization values. Note:
-            // - value as numeric string to avoid precision issues
-            // - nonce is bytes32: pass as hex string (0x...)
+            // Message object with the authorization values
             var message = new TransferWithAuthorization
             {
                 From = from,
@@ -73,19 +60,13 @@ namespace x402.Client.EVM
                 Nonce = nonceByte
             };
 
-            // ------------------------------
-            // 5) Sign the typed data (EIP-712 v4)
-            // ------------------------------
-            var ecKey = new EthECKey(hexPrivateKey);
+            //  Sign the typed data (EIP-712 v4)
+            var ecKey = new EthECKey(privateKey, isPrivate: true);
 
             var eip712Signer = new Eip712TypedDataSigner();
             string signature = eip712Signer.SignTypedDataV4(message, typedData, ecKey);
 
-            //Console.WriteLine($"Signature (65-byte hex): {signature}");
-
-            // ------------------------------
-            // 6) Recover signer to verify
-            // ------------------------------
+            // Recover signer to verify
             // var recoveredAddress = eip712Signer.RecoverFromSignatureV4(message, typedData, signature);
             //Console.WriteLine($"Recovered signer address: {recoveredAddress}");
             //Console.WriteLine($"Signer matches 'from' ? {string.Equals(recoveredAddress, from, StringComparison.OrdinalIgnoreCase)}\n");
@@ -103,15 +84,15 @@ namespace x402.Client.EVM
                     {
                         From = from,
                         To = to,
-                        Value = value.Value.ToString(),
+                        Value = value.Value.ToString(), // value as numeric string to avoid precision issues
                         ValidAfter = validAfter.ToString(),
                         ValidBefore = validBefore.ToString(),
-                        Nonce = nonceByte.ToHex(prefix: true),
+                        Nonce = nonceByte.ToHex(prefix: true), //nonce is bytes32: pass as hex string (0x...)
                     }
                 },
             };
 
-            return Task.FromResult(header);
+            return header;
         }
 
         private static byte[] GenerateBytes32Nonce()

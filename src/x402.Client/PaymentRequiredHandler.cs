@@ -36,7 +36,7 @@ namespace x402.Client
                     break; // nothing we can fulfill
 
                 // Ask wallet for payment
-                var payment = await _wallet.RequestPaymentAsync(parsed.Accepts, cancellationToken);
+                var payment = _wallet.RequestPayment(parsed.Accepts, cancellationToken);
 
                 if (payment.Requirement == null || payment.Header == null)
                     break; // wallet can't fulfill any
