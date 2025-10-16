@@ -6,6 +6,7 @@
     <Project Path="x402.SampleWeb/x402.SampleWeb.csproj" />
   </Folder>
   <Folder Name="/Tests/">
+    <Project Path="x402.Client.EVM.IntegrationTests/x402.Client.EVM.IntegrationTests.csproj" Id="0b6f262a-d6a7-421b-9584-8673af556ffa" />
     <Project Path="x402.Client.EVM.Tests/x402.Client.EVM.Tests.csproj" Id="923302bb-db20-4b24-bc49-8ceb0eda1d57" />
     <Project Path="x402.Client.Tests/x402.Client.Tests.csproj" Id="da00bb3e-6aa9-4b47-8c2e-754f36ed545c" />
     <Project Path="x402.Coinbase.IntegrationTests/x402.Coinbase.IntegrationTests.csproj" Id="cc74718e-04db-48a0-a896-df8497f50600" />

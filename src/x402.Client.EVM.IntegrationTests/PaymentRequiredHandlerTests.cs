@@ -1,4 +1,4 @@
-﻿namespace x402.Client.EVM.Tests
+﻿namespace x402.Client.EVM.IntegrationTests
 {
     public class PaymentRequiredHandlerTests
     {
