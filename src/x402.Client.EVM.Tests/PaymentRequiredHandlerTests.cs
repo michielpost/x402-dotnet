@@ -22,7 +22,7 @@
             {
                 IgnoreAllowances = true
             };
-            var handler = new PaymentRequiredHandler(wallet, maxRetries: 1)
+            var handler = new PaymentRequiredHandler(wallet)
             {
                 InnerHandler = new HttpClientHandler()
             };
