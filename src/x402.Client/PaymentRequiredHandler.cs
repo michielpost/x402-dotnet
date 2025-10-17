@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using x402.Client.Events;
 using x402.Core.Models.Responses;
 
 namespace x402.Client
@@ -13,7 +14,11 @@ namespace x402.Client
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
         };
 
-        public PaymentRequiredHandler(IX402Wallet wallet, int maxRetries = 1) 
+        public event EventHandler<PaymentRequiredEventArgs>? PaymentRequiredReceived;
+        public event EventHandler<PaymentSelectedEventArgs>? PaymentSelected;
+        public event EventHandler<PaymentRetryEventArgs>? PaymentRetrying;
+
+        public PaymentRequiredHandler(IX402Wallet wallet, int maxRetries = 1)
             : this(wallet, maxRetries, new HttpClientHandler()) { }
 
         public PaymentRequiredHandler(IX402Wallet wallet, int maxRetries, HttpMessageHandler innerHandler)
@@ -21,49 +26,56 @@ namespace x402.Client
         {
             _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
             _maxRetries = maxRetries;
-
-            InnerHandler = new HttpClientHandler();
         }
-
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var retries = 0;
-            var paymentsUsedForThisRequest = 0;
-
-            HttpResponseMessage response = await base.SendAsync(request, cancellationToken);
+            var response = await base.SendAsync(request, cancellationToken);
 
             while (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired &&
                    retries < _maxRetries)
             {
-                // Parse the 402 into structured form
-                var parsed = await ParsePaymentRequiredResponseAsync(response);
+                var paymentRequiredResponse = await ParsePaymentRequiredResponseAsync(response);
 
-                if (parsed.Accepts.Count == 0)
-                    break; // nothing we can fulfill
+                // Notify subscribers
+                OnPaymentRequiredReceived(new PaymentRequiredEventArgs(request, response, paymentRequiredResponse));
 
-                // Ask wallet for payment
-                var payment = _wallet.RequestPayment(parsed.Accepts, cancellationToken);
+                if (paymentRequiredResponse.Accepts.Count == 0)
+                    break;
+
+                var payment = _wallet.RequestPayment(paymentRequiredResponse.Accepts, cancellationToken);
+
+                // Notify subscribers
+                OnPaymentSelected(new PaymentSelectedEventArgs(request, payment.Requirement, payment.Header, retries + 1));
 
                 if (payment.Requirement == null || payment.Header == null)
-                    break; // wallet can't fulfill any
-
-                paymentsUsedForThisRequest++;
+                    break;
 
                 var retryRequest = await CloneHttpRequestAsync(request);
-
                 var headerJson = JsonSerializer.Serialize(payment.Header, JsonOptions);
                 var base64header = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(headerJson));
                 retryRequest.Headers.Add("X-PAYMENT", base64header);
 
-                response.Dispose(); // clean up old response
-                response = await base.SendAsync(retryRequest, cancellationToken);
+                response.Dispose();
 
                 retries++;
+                OnPaymentRetrying(new PaymentRetryEventArgs(retryRequest, retries));
+
+                response = await base.SendAsync(retryRequest, cancellationToken);
             }
 
             return response;
         }
+
+        protected virtual void OnPaymentRequiredReceived(PaymentRequiredEventArgs e)
+            => PaymentRequiredReceived?.Invoke(this, e);
+
+        protected virtual void OnPaymentSelected(PaymentSelectedEventArgs e)
+            => PaymentSelected?.Invoke(this, e);
+
+        protected virtual void OnPaymentRetrying(PaymentRetryEventArgs e)
+            => PaymentRetrying?.Invoke(this, e);
 
         private static async Task<PaymentRequiredResponse> ParsePaymentRequiredResponseAsync(HttpResponseMessage response)
         {
