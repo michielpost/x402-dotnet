@@ -2,6 +2,7 @@
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Signer;
 using Nethereum.Signer.EIP712;
+using Nethereum.Web3.Accounts;
 using System.Numerics;
 using System.Security.Cryptography;
 using x402.Core.Models;
@@ -10,8 +11,8 @@ namespace x402.Client.EVM
 {
     public class EVMWallet : BaseWallet
     {
+        public Account Account { get; internal set; }
         byte[] privateKey;
-        Nethereum.Web3.Accounts.Account account;
 
         public EVMWallet(string hexPrivateKey)
         {
@@ -21,7 +22,7 @@ namespace x402.Client.EVM
             // Convert hex string to byte[]
             privateKey = hexPrivateKey.HexToByteArray();
 
-            account = new Nethereum.Web3.Accounts.Account(hexPrivateKey);
+            Account = new Nethereum.Web3.Accounts.Account(hexPrivateKey);
         }
 
         protected override PaymentPayloadHeader CreateHeader(PaymentRequirements requirement, CancellationToken cancellationToken)
@@ -32,7 +33,7 @@ namespace x402.Client.EVM
             string tokenContractAddress = requirement.Asset;
             string to = requirement.PayTo;
 
-            string from = account.Address;
+            string from = Account.Address;
 
             // value should be token units in smallest denomination (uint256)
             var amount = BigInteger.Parse(requirement.MaxAmountRequired);

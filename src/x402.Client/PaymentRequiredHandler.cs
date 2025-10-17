@@ -13,11 +13,18 @@ namespace x402.Client
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
         };
 
-        public PaymentRequiredHandler(IX402Wallet wallet, int maxRetries = 1)
+        public PaymentRequiredHandler(IX402Wallet wallet, int maxRetries = 1) 
+            : this(wallet, maxRetries, new HttpClientHandler()) { }
+
+        public PaymentRequiredHandler(IX402Wallet wallet, int maxRetries, HttpMessageHandler innerHandler)
+            : base(innerHandler)
         {
             _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
             _maxRetries = maxRetries;
+
+            InnerHandler = new HttpClientHandler();
         }
+
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {

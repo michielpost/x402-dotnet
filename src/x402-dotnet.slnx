@@ -1,5 +1,9 @@
 <Solution>
-  <Folder Name="/Sample/">
+  <Folder Name="/Samples/" />
+  <Folder Name="/Samples/Client/">
+    <Project Path="X402.Client.ConsoleSample/X402.Client.ConsoleSample.csproj" Id="301ebfe8-5536-47aa-9d95-e6d5f0dbd888" />
+  </Folder>
+  <Folder Name="/Samples/Server/">
     <Project Path="x402-dotnet.AppHost/x402-dotnet.AppHost.csproj" Id="ac4b40a4-37f1-4b1c-b1e8-a072636e5134" />
     <Project Path="x402-dotnet.ServiceDefaults/x402-dotnet.ServiceDefaults.csproj" />
     <Project Path="x402.FacilitatorMock/x402.FacilitatorMock.csproj" />
