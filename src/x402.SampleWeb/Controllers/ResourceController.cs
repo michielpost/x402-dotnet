@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using x402.Attributes;
+using x402.Core.Enums;
+using x402.Core.Models;
+using x402.Core.Models.Facilitator;
 using x402.Facilitator;
-using x402.Facilitator.Models;
 using x402.SampleWeb.Models;
 
 namespace x402.SampleWeb.Controllers
@@ -25,14 +27,14 @@ namespace x402.SampleWeb.Controllers
         [Route("middleware")]
         public SampleResult Middleware()
         {
-            return new SampleResult { Title = "Protected by middleware"};
+            return new SampleResult { Title = "Protected by middleware" };
         }
 
         [HttpGet]
         [Route("free")]
         public SampleResult Free()
         {
-            return new SampleResult { Title = "Free Resource"};
+            return new SampleResult { Title = "Free Resource" };
         }
 
         [HttpGet]
@@ -51,7 +53,7 @@ namespace x402.SampleWeb.Controllers
             var fullUrl = $"{request.Scheme}://{request.Host}{request.Path}{request.QueryString}";
 
             var x402Result = await X402Handler.HandleX402Async(this.HttpContext, facilitator, fullUrl,
-                new x402.Models.PaymentRequirements
+                new PaymentRequirements
                 {
                     Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                     Description = "Dynamic payment",
@@ -60,7 +62,7 @@ namespace x402.SampleWeb.Controllers
                     PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
                     Resource = fullUrl,
                 },
-                Enums.SettlementMode.Optimistic,
+                SettlementMode.Optimistic,
                 OnSettlement);
 
             if (!x402Result.CanContinueRequest)

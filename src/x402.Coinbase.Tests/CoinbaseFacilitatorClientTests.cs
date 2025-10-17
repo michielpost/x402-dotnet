@@ -4,8 +4,9 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using x402.Coinbase.Models;
-using x402.Facilitator.Models;
-using x402.Models;
+using x402.Core.Enums;
+using x402.Core.Models;
+using x402.Core.Models.Facilitator;
 
 namespace x402.Coinbase.Tests
 {
@@ -17,7 +18,7 @@ namespace x402.Coinbase.Tests
             X402Version = 1,
             Payload = new Payload()
             {
-                Authorization = new x402.Models.Authorization()
+                Authorization = new()
             }
         };
         private sealed class FakeHandler : HttpMessageHandler
@@ -39,7 +40,7 @@ namespace x402.Coinbase.Tests
             Network = "base-sepolia",
             PayTo = "0x0000000000000000000000000000000000000001",
             Resource = resource,
-            Scheme = x402.Enums.PaymentScheme.Exact,
+            Scheme = PaymentScheme.Exact,
             MaxTimeoutSeconds = 30
         };
 

@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using x402.Facilitator;
-using x402.Facilitator.Models;
+using x402.Core.Models.Facilitator;
 
 namespace x402.FacilitatorMock.Controllers;
 
@@ -64,5 +63,5 @@ public class FacilitatorController : ControllerBase
              new FacilitatorKind("USDC", "mainnet")
         };
     }
-       
+
 }

@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
-using x402.Enums;
+using x402.Core.Enums;
 
-namespace x402.Models
+namespace x402.Core.Models
 {
     /// <summary>
     /// Payload extracted from the X-PAYMENT header.

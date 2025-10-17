@@ -4,10 +4,10 @@
 **x402 Payment Protocol implementation for .Net**  
 More info about x402: https://www.x402.org
 
+### x402 on the server
 Install the `x402` packages from NuGet:
 - [x402](https://nuget.org/packages/x402)
 - [x402.Coinbase](https://nuget.org/packages/x402)
-
 
 **Features:**
 - Add an x402-compatible paywall to any URL  
@@ -17,6 +17,16 @@ Install the `x402` packages from NuGet:
 - Handle payment settlement using any remote facilitator  
 - Optionally use the Coinbase facilitator (with API key)
 
+### x402 enabled HttpClient
+Install the `x402.Client.EVM` package from NuGet:
+- [x402.Client.EVM](https://nuget.org/packages/x402.Client.EVM)
+
+**Features:**
+- Transparant access x402-protected resources
+- Fully HttpClient compatible
+- Pay using the embedded EVM compatible wallet (Ethereum / Base)
+- Set allowances per request or globally
+- X402.Client.ConsoleSample sample application included
 
 ## How to use?
 
@@ -113,6 +123,26 @@ Add to appsettings.json:
    "ApiKeySecret": "YOUR_COINBASE_API_KEY_SECRET"
  }
 ```
+
+## x402 HttpClient
+
+```cs
+// Fixed private key (32 bytes hex)
+var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", chainId) //84532UL = base-sepolia
+{
+    IgnoreAllowances = true
+};
+
+var handler = new PaymentRequiredHandler(wallet);
+
+var client = new HttpClient(handler);
+var response = await client.GetAsync("https://www.x402.org/protected");
+
+Console.WriteLine($"Final: {(int)response.StatusCode} {response.ReasonPhrase}");
+```
+
+See `X402.Client.ConsoleSample` for a complete example.
+
 
 ## How to test?
 Follow these steps to test a x402 payment on the sample website hosted on Azure:

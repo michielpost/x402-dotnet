@@ -3,11 +3,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
-using x402.Enums;
+using x402.Core.Enums;
+using x402.Core.Models;
+using x402.Core.Models.Facilitator;
+using x402.Core.Models.Responses;
 using x402.Facilitator;
-using x402.Facilitator.Models;
-using x402.Models;
-using x402.Models.Responses;
 
 namespace x402
 {

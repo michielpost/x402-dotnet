@@ -5,9 +5,10 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using x402.Enums;
+using x402.Core.Enums;
+using x402.Core.Models;
+using x402.Core.Models.Facilitator;
 using x402.Facilitator;
-using x402.Facilitator.Models;
 using x402.Models;
 
 namespace x402.Tests

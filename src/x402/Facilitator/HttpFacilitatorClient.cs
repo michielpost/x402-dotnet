@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 using System.Text.Json;
-using x402.Facilitator.Models;
-using x402.Models;
+using x402.Core.Models;
+using x402.Core.Models.Facilitator;
 
 namespace x402.Facilitator
 {

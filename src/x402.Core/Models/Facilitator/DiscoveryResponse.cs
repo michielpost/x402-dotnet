@@ -1,6 +1,4 @@
-﻿using x402.Models;
-
-namespace x402.Facilitator
+﻿namespace x402.Core.Models.Facilitator
 {
     public class DiscoveryResponse
     {
