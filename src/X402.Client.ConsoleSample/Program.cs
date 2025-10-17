@@ -4,7 +4,7 @@ using x402.Client.EVM;
 
 Console.WriteLine("Welcome to the x402 client sample app");
 
-var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
+var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", 84532UL) //base-sepolia chain ID
 {
     IgnoreAllowances = true
 };

@@ -10,15 +10,7 @@
         [Test]
         public async Task TestWithAllowance()
         {
-            //var baseSepoliaAssetId = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
-            //var wallet = new TestWallet(new()
-            //{
-            //     new() { Asset = baseSepoliaAssetId, TotalAllowance = 1_000_000_000, MaxPerRequestAllowance = 1_000_000_000 }
-            //});
-
-
-            // Fixed private key (32 bytes hex) for deterministic address; signature will still vary due to nonce/time
-            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
+            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", 84532UL) //base-sepolia chain ID
             {
                 IgnoreAllowances = true
             };

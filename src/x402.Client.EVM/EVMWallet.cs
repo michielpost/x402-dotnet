@@ -11,10 +11,12 @@ namespace x402.Client.EVM
 {
     public class EVMWallet : BaseWallet
     {
-        public Account Account { get; internal set; }
+        public Account Account { get; }
+        public ulong ChainId { get; }
+
         byte[] privateKey;
 
-        public EVMWallet(string hexPrivateKey)
+        public EVMWallet(string hexPrivateKey, ulong chainId)
         {
             if (hexPrivateKey.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
                 hexPrivateKey = hexPrivateKey.Substring(2);
@@ -23,6 +25,7 @@ namespace x402.Client.EVM
             privateKey = hexPrivateKey.HexToByteArray();
 
             Account = new Nethereum.Web3.Accounts.Account(hexPrivateKey);
+            ChainId = chainId;
         }
 
         protected override PaymentPayloadHeader CreateHeader(PaymentRequirements requirement, CancellationToken cancellationToken)
@@ -47,8 +50,7 @@ namespace x402.Client.EVM
             var nonceByte = GenerateBytes32Nonce();
 
             // Build EIP-712 typed data for EIP-3009
-            ulong chainId = 84532UL; //TODO: Make dynamic
-            var typedData = BuildEip3009TypedData(tokenName, tokenVersion, chainId, tokenContractAddress);
+            var typedData = BuildEip3009TypedData(tokenName, tokenVersion, ChainId, tokenContractAddress);
 
             // Message object with the authorization values
             var message = new TransferWithAuthorization

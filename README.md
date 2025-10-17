@@ -26,6 +26,7 @@ Install the `x402.Client.EVM` package from NuGet:
 - Fully HttpClient compatible
 - Pay using the embedded EVM compatible wallet (Ethereum / Base)
 - Set allowances per request or globally
+- X402.Client.ConsoleSample sample application included
 
 ## How to use?
 
@@ -127,21 +128,20 @@ Add to appsettings.json:
 
 ```cs
 // Fixed private key (32 bytes hex)
-var wallet = new EVMWallet("0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
+var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", chainId) //84532UL = base-sepolia
 {
     IgnoreAllowances = true
 };
 
-var handler = new PaymentRequiredHandler(wallet)
-{
-    InnerHandler = new HttpClientHandler()
-};
+var handler = new PaymentRequiredHandler(wallet);
 
 var client = new HttpClient(handler);
 var response = await client.GetAsync("https://www.x402.org/protected");
 
 Console.WriteLine($"Final: {(int)response.StatusCode} {response.ReasonPhrase}");
 ```
+
+See `X402.Client.ConsoleSample` for a complete example.
 
 
 ## How to test?

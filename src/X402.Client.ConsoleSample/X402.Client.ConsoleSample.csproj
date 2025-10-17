@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\x402.Client.EVM\x402.Client.EVM.csproj" />
-    <ProjectReference Include="..\x402.Client\x402.Client.csproj" />
   </ItemGroup>
 
 </Project>
