@@ -45,6 +45,14 @@ namespace x402.SampleWeb.Controllers
             return new SampleResult { Title = "Protected by PaymentRequired Attribute" };
         }
 
+        [HttpPost]
+        [Route("protected")]
+        [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", "base-sepolia")]
+        public SampleResult ProtectedPost([FromBody] SampleRequest req)
+        {
+            return new SampleResult { Title = "Protected by PaymentRequired Attribute" };
+        }
+
         [HttpGet]
         [Route("dynamic")]
         public async Task<SampleResult?> Dynamic(string amount)
