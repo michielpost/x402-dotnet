@@ -26,12 +26,30 @@ namespace x402
             IFacilitatorClient facilitator,
             string path,
             PaymentRequirements paymentRequirements,
+            bool discoverable,
             SettlementMode settlementMode = SettlementMode.Optimistic,
             Func<HttpContext, SettlementResponse, Task>? onSettlement = null)
         {
             var logger = context.RequestServices.GetRequiredService<ILogger<X402Handler>>();
             logger.LogDebug("HandleX402 invoked for path {Path}", path);
             string? header = context.Request.Headers["X-PAYMENT"].FirstOrDefault();
+
+            //If discoverable, add context
+            if (discoverable)
+            {
+                //var discoveryInfo = null;
+                if (paymentRequirements.OutputSchema == null)
+                    paymentRequirements.OutputSchema = new();
+
+                Input input = new Input
+                {
+                    Discoverable = true,
+                    Type = "http",
+                    Method = context.Request.Method
+                };
+
+                paymentRequirements.OutputSchema.Input = input;
+            }
 
             //No payment, return 402
             if (string.IsNullOrEmpty(header))

@@ -51,6 +51,7 @@ namespace x402.Tests
                                 facilitator,
                                 path,
                                 requirements,
+                                true,
                                 mode,
                                 onSettlement).ConfigureAwait(false);
 

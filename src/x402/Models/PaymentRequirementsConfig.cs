@@ -45,5 +45,9 @@ namespace x402.Models
         /// </summary>
         public bool EnableQueryStringMatching { get; set; }
 
+        /// <summary>
+        /// List endpoint with facilitator discovery service when set to true.
+        /// </summary>
+        public bool Discoverable { get; set; }
     }
 }

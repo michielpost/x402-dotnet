@@ -13,7 +13,7 @@ var handler = new PaymentRequiredHandler(wallet);
 handler.PaymentRequiredReceived += (_, e) =>
 {
     Console.WriteLine($"402 received for {e.Request.RequestUri}");
-   
+
     //Console.WriteLine($"Payment Required: {JsonSerializer.Serialize(e.PaymentRequiredResponse)}");
 
 };

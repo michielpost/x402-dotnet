@@ -182,7 +182,7 @@ namespace x402.Facilitator
             }
 
             var result = await response.Content.ReadFromJsonAsync<DiscoveryResponse>(JsonOptions, cancellationToken).ConfigureAwait(false);
-            
+
             return result ?? new();
         }
     }

@@ -44,6 +44,11 @@ namespace x402.Attributes
         public SettlementMode SettlementMode { get; set; } = SettlementMode.Optimistic;
 
         /// <summary>
+        /// List endpoint with facilitator discovery service when set to true.
+        /// </summary>
+        public bool Discoverable { get; set; }
+
+        /// <summary>
         /// Creates a payment required attribute with the specified price.
         /// </summary>
         /// <param name="price">Payment amount in atomic units as string.</param>
@@ -84,7 +89,7 @@ namespace x402.Attributes
             };
             logger.LogInformation("Built payment requirements for path {Path}: scheme {Scheme}, asset {Asset}", fullUrl, paymentRequirements.Scheme, paymentRequirements.Asset);
 
-            var x402Result = await X402Handler.HandleX402Async(context.HttpContext, facilitator, fullUrl, paymentRequirements, SettlementMode).ConfigureAwait(false);
+            var x402Result = await X402Handler.HandleX402Async(context.HttpContext, facilitator, fullUrl, paymentRequirements, Discoverable, SettlementMode).ConfigureAwait(false);
             if (!x402Result.CanContinueRequest)
             {
                 logger.LogWarning("Payment not satisfied for path {Path}; stopping execution", fullUrl);

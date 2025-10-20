@@ -39,7 +39,7 @@ namespace x402.SampleWeb.Controllers
 
         [HttpGet]
         [Route("protected")]
-        [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", "base-sepolia")]
+        [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", "base-sepolia", Discoverable = true)]
         public SampleResult Protected()
         {
             return new SampleResult { Title = "Protected by PaymentRequired Attribute" };
@@ -47,7 +47,7 @@ namespace x402.SampleWeb.Controllers
 
         [HttpPost]
         [Route("protected")]
-        [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", "base-sepolia")]
+        [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", "base-sepolia", Discoverable = true)]
         public SampleResult ProtectedPost([FromBody] SampleRequest req)
         {
             return new SampleResult { Title = "Protected by PaymentRequired Attribute" };
@@ -70,6 +70,7 @@ namespace x402.SampleWeb.Controllers
                     PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
                     Resource = fullUrl,
                 },
+                discoverable: true,
                 SettlementMode.Optimistic,
                 OnSettlement);
 

@@ -78,7 +78,8 @@ var paymentOptions = new x402.Models.PaymentMiddlewareOptions
                     MaxAmountRequired = "1000",
                     Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                     MimeType = "application/json",
-                    Description = "Payment Required"
+                    Description = "Payment Required",
+                    Discoverable = true
                 }
             }
         },

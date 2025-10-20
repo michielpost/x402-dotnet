@@ -83,12 +83,12 @@ namespace x402.Core.Models
         public string Type { get; set; } = "http";
 
         //public BodyFields BodyFields { get; set; }
-       
+
         //public string BodyType { get; set; }
         //public string Description { get; set; }
         //public bool Required { get; set; }
     }
 
-    
+
 
 }
