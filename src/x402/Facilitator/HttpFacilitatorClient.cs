@@ -43,7 +43,7 @@ namespace x402.Facilitator
         protected virtual void PrepareRequest(HttpRequestMessage request) { }
 
 
-        public async Task<VerificationResponse> VerifyAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements req)
+        public async Task<VerificationResponse> VerifyAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements req, CancellationToken cancellationToken = default)
         {
             logger.LogInformation("Verifying payment payload for resource {Resource} with scheme {Scheme} and asset {Asset}", req.Resource, req.Scheme, req.Asset);
             var body = new FacilitatorRequest
@@ -61,15 +61,15 @@ namespace x402.Facilitator
             PrepareRequest(request);
             httpClient.Timeout = TimeSpan.FromSeconds(req.MaxTimeoutSeconds);
 
-            var response = await httpClient.SendAsync(request).ConfigureAwait(false);
+            var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 logger.LogWarning("Verification request failed with status {StatusCode}: {Content}", (int)response.StatusCode, content);
                 throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {content}");
             }
 
-            var result = await response.Content.ReadFromJsonAsync<VerificationResponse>(JsonOptions).ConfigureAwait(false);
+            var result = await response.Content.ReadFromJsonAsync<VerificationResponse>(JsonOptions, cancellationToken).ConfigureAwait(false);
             if (result is null)
             {
                 logger.LogError("Failed to deserialize verification response for resource {Resource}", req.Resource);
@@ -79,7 +79,7 @@ namespace x402.Facilitator
             return result;
         }
 
-        public async Task<SettlementResponse> SettleAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements req)
+        public async Task<SettlementResponse> SettleAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements req, CancellationToken cancellationToken = default)
         {
             logger.LogInformation("Settling payment for resource {Resource} on network {Network} to {PayTo}", req.Resource, req.Network, req.PayTo);
             var body = new FacilitatorRequest
@@ -97,15 +97,15 @@ namespace x402.Facilitator
             PrepareRequest(request);
             httpClient.Timeout = TimeSpan.FromSeconds(req.MaxTimeoutSeconds);
 
-            var response = await httpClient.SendAsync(request).ConfigureAwait(false);
+            var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 logger.LogWarning("Settlement request failed with status {StatusCode}: {Content}", (int)response.StatusCode, content);
                 throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {content}");
             }
 
-            var result = await response.Content.ReadFromJsonAsync<SettlementResponse>(JsonOptions).ConfigureAwait(false);
+            var result = await response.Content.ReadFromJsonAsync<SettlementResponse>(JsonOptions, cancellationToken).ConfigureAwait(false);
             if (result is null)
             {
                 logger.LogError("Failed to deserialize settlement response for resource {Resource}", req.Resource);
@@ -116,7 +116,7 @@ namespace x402.Facilitator
 
         }
 
-        public async Task<List<FacilitatorKind>> SupportedAsync()
+        public async Task<List<FacilitatorKind>> SupportedAsync(CancellationToken cancellationToken = default)
         {
             logger.LogDebug("Requesting supported facilitator kinds");
             var url = BuildUrl("/supported", HttpMethod.Get);
@@ -124,16 +124,16 @@ namespace x402.Facilitator
             PrepareRequest(request);
             httpClient.Timeout = TimeSpan.FromSeconds(20);
 
-            using var response = await httpClient.SendAsync(request).ConfigureAwait(false);
+            using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 logger.LogWarning("Supported kinds request failed with status {StatusCode}: {Content}", (int)response.StatusCode, content);
                 throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {content}");
             }
 
-            var map = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>(JsonOptions).ConfigureAwait(false);
+            var map = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>(JsonOptions, cancellationToken).ConfigureAwait(false);
 
             if (map is null || !map.TryGetValue("kinds", out var kindsObj))
             {

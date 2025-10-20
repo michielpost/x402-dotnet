@@ -22,19 +22,19 @@ namespace x402.Tests
             public Func<PaymentPayloadHeader, PaymentRequirements, Task<VerificationResponse>>? VerifyAsyncImpl { get; set; }
             public Func<PaymentPayloadHeader, PaymentRequirements, Task<SettlementResponse>>? SettleAsyncImpl { get; set; }
 
-            public Task<VerificationResponse> VerifyAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements requirements)
+            public Task<VerificationResponse> VerifyAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements requirements, CancellationToken cancellationToken = default)
             {
                 if (VerifyAsyncImpl != null) return VerifyAsyncImpl(paymentPayload, requirements);
                 return Task.FromResult(new VerificationResponse { IsValid = true });
             }
 
-            public Task<SettlementResponse> SettleAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements requirements)
+            public Task<SettlementResponse> SettleAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements requirements, CancellationToken cancellationToken = default)
             {
                 if (SettleAsyncImpl != null) return SettleAsyncImpl(paymentPayload, requirements);
                 return Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xabc", Network = requirements.Network });
             }
 
-            public Task<List<FacilitatorKind>> SupportedAsync()
+            public Task<List<FacilitatorKind>> SupportedAsync(CancellationToken cancellationToken = default)
             {
                 return Task.FromResult(new List<FacilitatorKind>());
             }

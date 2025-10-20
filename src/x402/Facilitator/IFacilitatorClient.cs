@@ -15,22 +15,25 @@ namespace x402.Facilitator
         /// </summary>
         /// <param name="paymentPayload">The X-PAYMENT header value transformed into a payload.</param>
         /// <param name="requirements">The payment requirements.</param>
+        /// <param name="cancellationToken">Optional cancellation token to cancel the operation.</param>
         /// <returns>Verification response.</returns>
-        Task<VerificationResponse> VerifyAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements requirements);
+        Task<VerificationResponse> VerifyAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements requirements, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Settles a verified payment.
         /// </summary>
         /// <param name="paymentPayload">The X-PAYMENT header value transformed into a payload.</param>
         /// <param name="requirements">The payment requirements.</param>
+        /// <param name="cancellationToken">Optional cancellation token to cancel the operation.</param>
         /// <returns>Settlement response.</returns>
-        Task<SettlementResponse> SettleAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements requirements);
+        Task<SettlementResponse> SettleAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements requirements, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Retrieves the set of payment kinds supported by this facilitator.
         /// </summary>
+        /// <param name="cancellationToken">Optional cancellation token to cancel the operation.</param>
         /// <returns></returns>
-        Task<List<FacilitatorKind>> SupportedAsync();
+        Task<List<FacilitatorKind>> SupportedAsync(CancellationToken cancellationToken = default);
 
     }
 }
