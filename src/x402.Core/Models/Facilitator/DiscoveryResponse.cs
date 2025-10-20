@@ -1,4 +1,6 @@
-﻿namespace x402.Core.Models.Facilitator
+﻿using System.Diagnostics;
+
+namespace x402.Core.Models.Facilitator
 {
     public class DiscoveryResponse
     {
@@ -7,20 +9,15 @@
         public Pagination Pagination { get; set; } = new();
     }
 
+    [DebuggerDisplay("{Type} - {Resource}")]
     public class Item
     {
         public string Resource { get; set; } = string.Empty;
         public string Type { get; set; } = "http";
         public int X402Version { get; set; } = 1;
         public List<PaymentRequirements> Accepts { get; set; } = new();
-        public required long LastUpdated { get; set; }
-        public Metadata? Metadata { get; set; }
-    }
-
-    public class Metadata
-    {
-        public string? Category { get; set; }
-        public string? Provider { get; set; }
+        public required DateTimeOffset LastUpdated { get; set; }
+        public object? Metadata { get; set; }
     }
 
     public class Pagination

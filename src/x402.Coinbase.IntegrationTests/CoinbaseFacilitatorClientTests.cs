@@ -91,5 +91,14 @@ namespace x402.Coinbase.IntegrationTests
             Assert.That(result, Is.Not.Null);
             TestContext.Out.WriteLine($"Settle result: Success={result.Success}");
         }
+
+        [Test]
+        public async Task DiscoveryAsync_ShouldReturnResources()
+        {
+            var result = await client.DiscoveryAsync();
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Items.Count, Is.GreaterThan(0));
+        }
     }
 }
