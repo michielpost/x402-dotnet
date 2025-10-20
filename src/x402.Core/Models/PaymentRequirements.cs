@@ -50,7 +50,7 @@ namespace x402.Core.Models
         /// <summary>
         /// JSON schema describing the response format
         /// </summary>
-        public OutputSchema OutputSchema { get; set; } = new();
+        public OutputSchema? OutputSchema { get; set; }
 
         /// <summary>
         /// The maximum timeout in seconds.
@@ -79,7 +79,7 @@ namespace x402.Core.Models
     public class Input
     {
         public bool Discoverable { get; set; } = true;
-        public string Method { get; set; } = "GET";
+        public string? Method { get; set; }
         public string Type { get; set; } = "http";
 
         //public BodyFields BodyFields { get; set; }

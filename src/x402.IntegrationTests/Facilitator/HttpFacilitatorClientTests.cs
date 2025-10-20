@@ -63,10 +63,7 @@ namespace x402.IntegrationTests.Facilitator
                 Network = "base-sepolia",
                 MimeType = "application/json",
                 Description = "test payment",
-                OutputSchema = new
-                {
-                    Data = "string"
-                }
+                OutputSchema = null
             };
 
             var result = await client.VerifyAsync(payload, requirements);

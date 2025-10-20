@@ -37,6 +37,11 @@ namespace x402.Tests
             {
                 return Task.FromResult(new List<FacilitatorKind>());
             }
+
+            public Task<DiscoveryResponse> DiscoveryAsync(string? type = null, int? limit = null, int? offset = null, CancellationToken cancellationToken = default)
+            {
+                return Task.FromResult(new DiscoveryResponse { Items = new List<DiscoveryItem>() });
+            }
         }
 
         private static ActionExecutingContext CreateActionExecutingContext(IServiceProvider services, string path = "/pay")

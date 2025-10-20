@@ -24,7 +24,7 @@ namespace x402.FacilitatorMock.Controllers
                 },
                 Items = new()
             {
-                new Item
+                new DiscoveryItem
                 {
                     LastUpdated = DateTimeOffset.UtcNow,
                     Resource = "/resource/middleware",

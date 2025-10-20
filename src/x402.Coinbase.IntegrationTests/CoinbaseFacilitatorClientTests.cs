@@ -58,10 +58,7 @@ namespace x402.Coinbase.IntegrationTests
                 Network = "base-sepolia",
                 MimeType = "application/json",
                 Description = "test payment",
-                OutputSchema = new
-                {
-                    Data = "string"
-                }
+                OutputSchema = null
             };
 
             var result = await client.VerifyAsync(payload, requirements);
