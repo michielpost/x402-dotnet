@@ -1,4 +1,4 @@
-﻿using x402.Core.Enums;
+﻿using x402.Core.Models;
 
 namespace x402.Models
 {
@@ -10,44 +10,13 @@ namespace x402.Models
         /// <summary>
         /// The payment scheme (e.g., "exact").
         /// </summary>
-        public PaymentScheme Scheme { get; set; }
+        public required PaymentRequirementsBasic PaymentRequirements { get; set; }
 
-        /// <summary>
-        /// The network identifier (e.g., "base-sepolia").
-        /// </summary>
-        public string? Network { get; set; }
-
-
-        /// <summary>
-        /// The MIME type of the resource.
-        /// </summary>
-        public required string MimeType { get; set; }
-
-        /// <summary>
-        /// The maximum amount required in atomic units.
-        /// </summary>
-        public required string MaxAmountRequired { get; set; }
-
-        /// <summary>
-        /// The asset symbol (e.g., "USDC").
-        /// </summary>
-        public required string Asset { get; set; }
-
-        /// <summary>
-        /// The pay-to wallet address.
-        /// </summary>
-        public string? PayTo { get; set; }
-
-        public string Description { get; set; } = string.Empty;
 
         /// <summary>
         /// Set to true to enable matching routes based on query string parameters.
         /// </summary>
         public bool EnableQueryStringMatching { get; set; }
 
-        /// <summary>
-        /// List endpoint with facilitator discovery service when set to true.
-        /// </summary>
-        public bool Discoverable { get; set; }
     }
 }

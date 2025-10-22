@@ -7,7 +7,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
+using x402.Core;
 using x402.Core.Enums;
+using x402.Core.Interfaces;
 using x402.Core.Models;
 using x402.Core.Models.Facilitator;
 using x402.Facilitator;
@@ -34,6 +36,7 @@ namespace x402.Tests
                     {
                         services.AddSingleton(facilitator);
                         services.AddSingleton<X402Handler>();
+                        services.AddSingleton<ITokenInfoProvider, TokenInfoProvider>();
                         services.AddHttpContextAccessor();
 
                     });

@@ -5,7 +5,10 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using x402.Core;
 using x402.Core.Enums;
+using x402.Core.Interfaces;
+using x402.Core.Models;
 using x402.Core.Models.Facilitator;
 using x402.Facilitator;
 using x402.Models;
@@ -23,9 +26,11 @@ namespace x402.Tests
                 .ConfigureWebHost(builder =>
                 {
                     builder.UseTestServer();
-                    builder.ConfigureServices(s => { 
-                        s.AddSingleton<IFacilitatorClient>(facilitatorClient); 
+                    builder.ConfigureServices(s =>
+                    {
+                        s.AddSingleton<IFacilitatorClient>(facilitatorClient);
                         s.AddSingleton<X402Handler>();
+                        s.AddSingleton<ITokenInfoProvider, TokenInfoProvider>();
                         s.AddHttpContextAccessor();
                     });
                     builder.Configure(app =>
@@ -71,17 +76,19 @@ namespace x402.Tests
         {
             var options = new PaymentMiddlewareOptions
             {
-                DefaultNetwork = "base-sepolia",
-                DefaultPayToAddress = "0x0000000000000000000000000000000000000001",
                 PaymentRequirements = new Dictionary<string, PaymentRequirementsConfig>
                 {
                     ["/pay"] = new PaymentRequirementsConfig
                     {
-                        Scheme = PaymentScheme.Exact,
-                        MaxAmountRequired = "100000",
-                        Asset = "USDC",
-                        MimeType = "application/json",
-                        Description = "unit"
+                        PaymentRequirements = new PaymentRequirementsBasic
+                        {
+                            Scheme = PaymentScheme.Exact,
+                            MaxAmountRequired = "100000",
+                            Asset = "USDC",
+                            MimeType = "application/json",
+                            Description = "unit",
+                            PayTo = "0x"
+                        }
                     }
                 }
             };
@@ -102,17 +109,19 @@ namespace x402.Tests
             };
             var options = new PaymentMiddlewareOptions
             {
-                DefaultNetwork = "base-sepolia",
-                DefaultPayToAddress = "0x0000000000000000000000000000000000000001",
                 PaymentRequirements = new Dictionary<string, PaymentRequirementsConfig>
                 {
                     ["/payok"] = new PaymentRequirementsConfig
                     {
-                        Scheme = PaymentScheme.Exact,
-                        MaxAmountRequired = "100000",
-                        Asset = "USDC",
-                        MimeType = "application/json",
-                        Description = "unit"
+                        PaymentRequirements = new PaymentRequirementsBasic
+                        {
+                            Scheme = PaymentScheme.Exact,
+                            MaxAmountRequired = "100000",
+                            Asset = "USDC",
+                            MimeType = "application/json",
+                            Description = "unit",
+                            PayTo = "0x"
+                        }
                     }
                 }
             };

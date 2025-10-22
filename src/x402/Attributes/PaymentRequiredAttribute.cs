@@ -2,8 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using x402.Core.Enums;
+using x402.Core.Interfaces;
 using x402.Core.Models;
-using x402.Facilitator;
 
 namespace x402.Attributes
 {
@@ -17,11 +17,6 @@ namespace x402.Attributes
         /// The payment scheme (e.g., "exact").
         /// </summary>
         public PaymentScheme Scheme { get; set; }
-
-        /// <summary>
-        /// The network identifier (e.g., "base-sepolia").
-        /// </summary>
-        public string Network { get; set; }
 
         /// <summary>
         /// The maximum amount required in atomic units.
@@ -55,13 +50,11 @@ namespace x402.Attributes
         public PaymentRequiredAttribute(string maxAmountRequired,
             string asset,
             string payTo,
-            string network,
             PaymentScheme scheme = PaymentScheme.Exact)
         {
             MaxAmountRequired = maxAmountRequired;
             Asset = asset;
             PayTo = payTo;
-            Network = network;
             Scheme = scheme;
         }
 
@@ -69,11 +62,18 @@ namespace x402.Attributes
         {
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<PaymentRequiredAttribute>>();
             var x402Handler = context.HttpContext.RequestServices.GetRequiredService<X402Handler>();
+            var tokenInfoProvider = context.HttpContext.RequestServices.GetRequiredService<ITokenInfoProvider>();
 
             var request = context.HttpContext.Request;
             var fullUrl = $"{request.Scheme}://{request.Host}{request.Path}{request.QueryString}";
 
             logger.LogDebug("PaymentRequiredAttribute invoked for path {Path}", fullUrl);
+
+            var tokenInfo = tokenInfoProvider.GetTokenInfo(this.Asset);
+            if (tokenInfo == null)
+            {
+                logger.LogWarning("No token info found for asset {Asset};", this.Asset);
+            }
 
             var paymentRequirements = new PaymentRequirements
             {
@@ -81,11 +81,16 @@ namespace x402.Attributes
                 Description = this.Description,
                 MaxAmountRequired = this.MaxAmountRequired.ToString(),
                 MimeType = this.MimeType,
-                Network = this.Network,
+                Network = tokenInfo?.Network ?? string.Empty,
                 PayTo = this.PayTo,
                 Resource = fullUrl,
                 Scheme = this.Scheme,
                 MaxTimeoutSeconds = 60,
+                Extra = new PaymentRequirementsExtra
+                {
+                    Name = tokenInfo?.Name ?? string.Empty,
+                    Version = tokenInfo?.Version ?? string.Empty
+                }
             };
             logger.LogInformation("Built payment requirements for path {Path}: scheme {Scheme}, asset {Asset}", fullUrl, paymentRequirements.Scheme, paymentRequirements.Asset);
 

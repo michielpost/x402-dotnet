@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
 using x402.Core.Enums;
+using x402.Core.Interfaces;
 using x402.Core.Models;
 using x402.Core.Models.Facilitator;
 using x402.Core.Models.Responses;
@@ -23,14 +23,32 @@ public class X402Handler
 
     private readonly ILogger<X402Handler> logger;
     private readonly IFacilitatorClient facilitator;
+    private readonly ITokenInfoProvider tokenInfoProvider;
     private readonly IHttpContextAccessor httpContextAccessor;
 
-    public X402Handler(ILogger<X402Handler> logger, IFacilitatorClient facilitator, IHttpContextAccessor httpContextAccessor)
+    public X402Handler(ILogger<X402Handler> logger,
+        IFacilitatorClient facilitator,
+        ITokenInfoProvider tokenInfoProvider,
+        IHttpContextAccessor httpContextAccessor)
     {
         this.logger = logger;
         this.facilitator = facilitator;
+        this.tokenInfoProvider = tokenInfoProvider;
         this.httpContextAccessor = httpContextAccessor;
     }
+
+    public Task<HandleX402Result> HandleX402Async(
+       PaymentRequirementsBasic paymentRequirementsBasic,
+       bool discoverable,
+       SettlementMode settlementMode = SettlementMode.Optimistic,
+       Func<HttpContext, SettlementResponse, Task>? onSettlement = null,
+       Func<HttpContext, PaymentRequirements, OutputSchema, OutputSchema>? onSetOutputSchema = null)
+    {
+        var paymentRequirements = FillPaymentRequirements(paymentRequirementsBasic);
+
+        return HandleX402Async(paymentRequirements, discoverable, settlementMode, onSettlement, onSetOutputSchema);
+    }
+
 
     public async Task<HandleX402Result> HandleX402Async(
         PaymentRequirements paymentRequirements,
@@ -40,7 +58,7 @@ public class X402Handler
         Func<HttpContext, PaymentRequirements, OutputSchema, OutputSchema>? onSetOutputSchema = null)
     {
         var context = httpContextAccessor.HttpContext;
-        if(context == null)
+        if (context == null)
         {
             throw new InvalidOperationException("HttpContext is not available.");
         }
@@ -295,5 +313,32 @@ public class X402Handler
         context.Response.ContentType = "application/json";
         string json = "{\"error\":\"" + errorMsg + "\"}";
         return context.Response.WriteAsync(json);
+    }
+
+    private PaymentRequirements FillPaymentRequirements(PaymentRequirementsBasic basic)
+    {
+        var tokenInfo = tokenInfoProvider.GetTokenInfo(basic.Asset);
+        if (tokenInfo == null)
+        {
+            logger.LogWarning("No token info found for asset {Asset};", basic.Asset);
+        }
+
+        var pr = new PaymentRequirements
+        {
+            Scheme = basic.Scheme,
+            Network = tokenInfo?.Network ?? string.Empty,
+            MaxAmountRequired = basic.MaxAmountRequired,
+            Asset = basic.Asset,
+            MimeType = basic.MimeType,
+            PayTo = basic.PayTo,
+            MaxTimeoutSeconds = basic.MaxTimeoutSeconds,
+            Description = basic.Description,
+            Extra = new PaymentRequirementsExtra
+            {
+                Name = tokenInfo?.Name ?? string.Empty,
+                Version = tokenInfo?.Version ?? string.Empty
+            }
+        };
+        return pr;
     }
 }

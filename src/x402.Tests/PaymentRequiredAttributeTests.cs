@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using x402.Attributes;
+using x402.Core;
 using x402.Core.Enums;
+using x402.Core.Interfaces;
 using x402.Core.Models.Facilitator;
 using x402.Facilitator;
 
@@ -44,6 +46,7 @@ namespace x402.Tests
                 .AddLogging(b => b.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug))
                 .AddSingleton<IFacilitatorClient, FakeFacilitatorClient>()
                 .AddSingleton<X402Handler>()
+                .AddSingleton<ITokenInfoProvider, TokenInfoProvider>()
                 .AddHttpContextAccessor()
                 .BuildServiceProvider();
 
@@ -53,7 +56,6 @@ namespace x402.Tests
                 maxAmountRequired: "1",
                 asset: "USDC",
                 payTo: "0x0000000000000000000000000000000000000001",
-                network: "base-sepolia",
                 scheme: PaymentScheme.Exact)
             {
                 Description = "unit test",
@@ -85,6 +87,7 @@ namespace x402.Tests
                 .AddLogging(b => b.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug))
                 .AddSingleton<IFacilitatorClient>(fake)
                 .AddSingleton<X402Handler>()
+                .AddSingleton<ITokenInfoProvider, TokenInfoProvider>()
                 .AddHttpContextAccessor()
                 .BuildServiceProvider();
 
@@ -109,7 +112,6 @@ namespace x402.Tests
                 maxAmountRequired: "1",
                 asset: "USDC",
                 payTo: "0x0000000000000000000000000000000000000001",
-                network: "base-sepolia",
                 scheme: PaymentScheme.Exact)
             {
                 Description = "unit test",
