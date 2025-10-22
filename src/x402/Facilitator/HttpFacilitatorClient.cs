@@ -59,9 +59,11 @@ namespace x402.Facilitator
                 Content = JsonContent.Create(body, options: JsonOptions)
             };
             PrepareRequest(request);
-            httpClient.Timeout = TimeSpan.FromSeconds(req.MaxTimeoutSeconds);
 
-            var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            cts.CancelAfter(TimeSpan.FromSeconds(req.MaxTimeoutSeconds));
+
+            var response = await httpClient.SendAsync(request, cts.Token).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
@@ -95,9 +97,11 @@ namespace x402.Facilitator
                 Content = JsonContent.Create(body, options: JsonOptions)
             };
             PrepareRequest(request);
-            httpClient.Timeout = TimeSpan.FromSeconds(req.MaxTimeoutSeconds);
 
-            var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            cts.CancelAfter(TimeSpan.FromSeconds(req.MaxTimeoutSeconds));
+
+            var response = await httpClient.SendAsync(request, cts.Token).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
@@ -122,7 +126,6 @@ namespace x402.Facilitator
             var url = BuildUrl("/supported", HttpMethod.Get);
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             PrepareRequest(request);
-            httpClient.Timeout = TimeSpan.FromSeconds(20);
 
             using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
@@ -170,7 +173,6 @@ namespace x402.Facilitator
             var url = BuildUrl(discoveryUrl, HttpMethod.Get);
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             PrepareRequest(request);
-            httpClient.Timeout = TimeSpan.FromSeconds(20);
 
             using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
 

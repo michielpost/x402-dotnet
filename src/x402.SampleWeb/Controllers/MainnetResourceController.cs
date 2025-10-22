@@ -33,7 +33,7 @@ namespace x402.SampleWeb.Controllers
                     PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
                 },
                 discoverable: true,
-                SettlementMode.Optimistic,
+                SettlementMode.Pessimistic,
                 onSetOutputSchema: (context, reqs, schema) =>
                 {
                     schema.Input ??= new();
