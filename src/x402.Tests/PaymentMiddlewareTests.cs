@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using x402.Core.Enums;
 using x402.Core.Models.Facilitator;
+using x402.Facilitator;
 using x402.Models;
 
 namespace x402.Tests
@@ -15,14 +16,14 @@ namespace x402.Tests
     public class PaymentMiddlewareTests
     {
 
-        private static IHost BuildHost(PaymentMiddlewareOptions options)
+        private static IHost BuildHost(PaymentMiddlewareOptions options, IFacilitatorClient facilitatorClient)
         {
             return new HostBuilder()
                 .ConfigureLogging(b => b.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug))
                 .ConfigureWebHost(builder =>
                 {
                     builder.UseTestServer();
-                    builder.ConfigureServices(s => { });
+                    builder.ConfigureServices(s => { s.AddSingleton<IFacilitatorClient>(facilitatorClient); });
                     builder.Configure(app =>
                     {
                         app.UsePaymentMiddleware(options);
@@ -52,11 +53,10 @@ namespace x402.Tests
         {
             var options = new PaymentMiddlewareOptions
             {
-                Facilitator = new FakeFacilitatorClient(),
                 PaymentRequirements = new Dictionary<string, PaymentRequirementsConfig>()
             };
 
-            using var host = BuildHost(options);
+            using var host = BuildHost(options, new FakeFacilitatorClient());
             var client = host.GetTestClient();
             var resp = await client.GetAsync("/free");
             Assert.That(resp.IsSuccessStatusCode, Is.True);
@@ -67,7 +67,6 @@ namespace x402.Tests
         {
             var options = new PaymentMiddlewareOptions
             {
-                Facilitator = new FakeFacilitatorClient(),
                 DefaultNetwork = "base-sepolia",
                 DefaultPayToAddress = "0x0000000000000000000000000000000000000001",
                 PaymentRequirements = new Dictionary<string, PaymentRequirementsConfig>
@@ -83,7 +82,7 @@ namespace x402.Tests
                 }
             };
 
-            using var host = BuildHost(options);
+            using var host = BuildHost(options, new FakeFacilitatorClient());
             var client = host.GetTestClient();
             var resp = await client.GetAsync("/pay");
             Assert.That(resp.StatusCode, Is.EqualTo((System.Net.HttpStatusCode)StatusCodes.Status402PaymentRequired));
@@ -99,7 +98,6 @@ namespace x402.Tests
             };
             var options = new PaymentMiddlewareOptions
             {
-                Facilitator = fake,
                 DefaultNetwork = "base-sepolia",
                 DefaultPayToAddress = "0x0000000000000000000000000000000000000001",
                 PaymentRequirements = new Dictionary<string, PaymentRequirementsConfig>
@@ -115,7 +113,7 @@ namespace x402.Tests
                 }
             };
 
-            using var host = BuildHost(options);
+            using var host = BuildHost(options, fake);
             var client = host.GetTestClient();
             var request = new HttpRequestMessage(HttpMethod.Get, "/payok");
             request.Headers.Add("X-PAYMENT", CreateHeaderB64("http://localhost/payok"));

@@ -56,10 +56,7 @@ namespace x402.SampleWeb.Controllers
         [Route("dynamic")]
         public async Task<SampleResult?> Dynamic(string amount)
         {
-            var request = this.HttpContext.Request;
-            var fullUrl = $"{request.Scheme}://{request.Host}{request.Path}{request.QueryString}";
-
-            var x402Result = await X402Handler.HandleX402Async(this.HttpContext, facilitator, fullUrl,
+            var x402Result = await X402Handler.HandleX402Async(this.HttpContext, facilitator,
                 new PaymentRequirements
                 {
                     Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
@@ -67,7 +64,11 @@ namespace x402.SampleWeb.Controllers
                     Network = "base-sepolia",
                     MaxAmountRequired = amount,
                     PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
-                    Resource = fullUrl,
+                    Extra = new PaymentRequirementsExtra
+                    {
+                        Name = "USDC",
+                        Version = "2"
+                    }
                 },
                 discoverable: true,
                 SettlementMode.Optimistic,
@@ -89,18 +90,19 @@ namespace x402.SampleWeb.Controllers
         [Route("send-msg")]
         public async Task<SampleResult?> SendMsg([FromBody] SampleRequest req)
         {
-            var request = this.HttpContext.Request;
-            var fullUrl = $"{request.Scheme}://{request.Host}{request.Path}{request.QueryString}";
-
-            var x402Result = await X402Handler.HandleX402Async(this.HttpContext, facilitator, fullUrl,
+            var x402Result = await X402Handler.HandleX402Async(this.HttpContext, facilitator,
                 new PaymentRequirements
                 {
                     Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-                    Description = "Dynamic payment",
+                    Description = "Send a message",
                     Network = "base-sepolia",
                     MaxAmountRequired = "1000",
                     PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
-                    Resource = fullUrl,
+                    Extra = new PaymentRequirementsExtra
+                    {
+                        Name = "USDC",
+                        Version = "2"
+                    }
                 },
                 discoverable: true,
                 SettlementMode.Optimistic,

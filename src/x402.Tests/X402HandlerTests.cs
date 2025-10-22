@@ -49,7 +49,6 @@ namespace x402.Tests
                             var result = await X402Handler.HandleX402Async(
                                 context,
                                 facilitator,
-                                path,
                                 requirements,
                                 true,
                                 mode,
@@ -73,7 +72,7 @@ namespace x402.Tests
                 Network = "base-sepolia",
                 MaxAmountRequired = "1",
                 Asset = "USDC",
-                Resource = path,
+                Resource = $"http://localhost{path}",
                 MimeType = "application/json",
                 PayTo = "0x0000000000000000000000000000000000000001",
                 Description = "unit test"
@@ -90,7 +89,7 @@ namespace x402.Tests
                 payload = new Dictionary<string, object?>
                 {
                     { "authorization", new Dictionary<string, object?> { { "from", from ?? "0xF00" } } },
-                    { "resource", resource }
+                    { "resource", $"http://localhost{resource}" }
                 }
             };
             return JsonSerializer.Serialize(payload, new JsonSerializerOptions(JsonSerializerDefaults.Web));

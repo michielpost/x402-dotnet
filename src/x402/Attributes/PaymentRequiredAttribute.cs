@@ -85,11 +85,11 @@ namespace x402.Attributes
                 PayTo = this.PayTo,
                 Resource = fullUrl,
                 Scheme = this.Scheme,
-                MaxTimeoutSeconds = 60
+                MaxTimeoutSeconds = 60,
             };
             logger.LogInformation("Built payment requirements for path {Path}: scheme {Scheme}, asset {Asset}", fullUrl, paymentRequirements.Scheme, paymentRequirements.Asset);
 
-            var x402Result = await X402Handler.HandleX402Async(context.HttpContext, facilitator, fullUrl, paymentRequirements, Discoverable, SettlementMode).ConfigureAwait(false);
+            var x402Result = await X402Handler.HandleX402Async(context.HttpContext, facilitator, paymentRequirements, Discoverable, SettlementMode).ConfigureAwait(false);
             if (!x402Result.CanContinueRequest)
             {
                 logger.LogWarning("Payment not satisfied for path {Path}; stopping execution", fullUrl);

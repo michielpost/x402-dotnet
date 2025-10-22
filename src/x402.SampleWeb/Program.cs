@@ -67,7 +67,6 @@ app.UseAuthorization();
 var facilitator = app.Services.GetRequiredService<IFacilitatorClient>();
 var paymentOptions = new x402.Models.PaymentMiddlewareOptions
 {
-    Facilitator = facilitator,
     DefaultPayToAddress = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", // Replace with your actual wallet address
     DefaultNetwork = "base-sepolia",
     PaymentRequirements = new Dictionary<string, x402.Models.PaymentRequirementsConfig>()

@@ -51,7 +51,7 @@ public SampleResult Protected()
 }
 
 ```
-Directly in an API Controller
+Directly in an API Controller (for more control)
 ```cs
 [HttpGet]
 [Route("dynamic")]
@@ -84,10 +84,8 @@ public async Task<SampleResult?> Dynamic(string amount)
 Or use the `PaymentMiddleware` to require payment for a list of URLs
 ```cs
 // Add Middleware
-var facilitator = app.Services.GetRequiredService<IFacilitatorClient>();
 var paymentOptions = new x402.Models.PaymentMiddlewareOptions
 {
-    Facilitator = facilitator,
     DefaultPayToAddress = "0xYourWalletAddressHere", // Replace with your actual wallet address
     DefaultNetwork = "base-sepolia",
     PaymentRequirements = new Dictionary<string, x402.Models.PaymentRequirementsConfig>()

@@ -25,7 +25,7 @@ namespace x402.Core.Models
         public required string MaxAmountRequired { get; set; }
 
         /// <summary>
-        /// The asset symbol (e.g., "USDC").
+        /// The asset contract address
         /// </summary>
         public required string Asset { get; set; }
 
