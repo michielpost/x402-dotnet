@@ -24,7 +24,7 @@ namespace x402.Tests
             string path,
             PaymentRequirements requirements,
             SettlementMode mode = SettlementMode.Optimistic,
-            Func<HttpContext, SettlementResponse, Task>? onSettlement = null,
+            Func<HttpContext, SettlementResponse?, Exception?, Task>? onSettlement = null,
             Action? onStartingMarker = null)
         {
             return new HostBuilder()
@@ -240,7 +240,7 @@ namespace x402.Tests
                 "/pess-ok",
                 reqs,
                 SettlementMode.Pessimistic,
-                onSettlement: (ctx, sr) => { callbackCalled = true; return Task.CompletedTask; });
+                onSettlement: (ctx, sr, ex) => { callbackCalled = true; return Task.CompletedTask; });
             var client = host.GetTestClient();
             var request = new HttpRequestMessage(HttpMethod.Get, "/pess-ok");
             request.Headers.Add("X-PAYMENT", CreateHeaderB64(resource: "/pess-ok", from: "0xabc"));

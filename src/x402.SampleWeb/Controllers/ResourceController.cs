@@ -65,9 +65,9 @@ namespace x402.SampleWeb.Controllers
                 },
                 discoverable: true,
                 SettlementMode.Pessimistic,
-                onSettlement: (context, response) =>
+                onSettlement: (context, response, ex) =>
                 {
-                    Console.WriteLine("Settlement completed: " + response.Success);
+                    Console.WriteLine("Settlement completed: " + response?.Success + ex?.Message);
                     return Task.CompletedTask;
                 });
 
