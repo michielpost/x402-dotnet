@@ -28,7 +28,8 @@ namespace x402
             PaymentRequirements paymentRequirements,
             bool discoverable,
             SettlementMode settlementMode = SettlementMode.Optimistic,
-            Func<HttpContext, SettlementResponse, Task>? onSettlement = null)
+            Func<HttpContext, SettlementResponse, Task>? onSettlement = null,
+            Func<HttpContext, PaymentRequirements, OutputSchema, OutputSchema>? onSetOutputSchema = null)
         {
             var logger = context.RequestServices.GetRequiredService<ILogger<X402Handler>>();
             logger.LogDebug("HandleX402 invoked for path {Path}", path);
@@ -37,9 +38,7 @@ namespace x402
             //If discoverable, add context
             if (discoverable)
             {
-                //var discoveryInfo = null;
-                if (paymentRequirements.OutputSchema == null)
-                    paymentRequirements.OutputSchema = new();
+                var outputSchema = new OutputSchema();
 
                 Input input = new Input
                 {
@@ -48,7 +47,21 @@ namespace x402
                     Method = context.Request.Method
                 };
 
-                paymentRequirements.OutputSchema.Input = input;
+                outputSchema.Input = input;
+
+                if (onSetOutputSchema != null)
+                {
+                    try
+                    {
+                        outputSchema = onSetOutputSchema(context, paymentRequirements, outputSchema);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "onSettlement callback threw for path {Path}", path);
+                    }
+                }
+                paymentRequirements.OutputSchema = outputSchema;
+
             }
 
             //No payment, return 402

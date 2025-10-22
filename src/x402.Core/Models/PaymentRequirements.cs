@@ -1,4 +1,6 @@
-﻿using x402.Core.Enums;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using x402.Core.Enums;
 
 namespace x402.Core.Models
 {
@@ -74,6 +76,9 @@ namespace x402.Core.Models
     {
         public Input? Input { get; set; } = new();
         public object? Output { get; set; }
+
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement> ExtensionData { get; set; } = new();
     }
 
     public class Input
@@ -82,13 +87,22 @@ namespace x402.Core.Models
         public string? Method { get; set; }
         public string Type { get; set; } = "http";
 
-        //public BodyFields BodyFields { get; set; }
+        public Dictionary<string, BodyFieldProps>? BodyFields { get; set; }
+        public Dictionary<string, string>? QueryParams { get; set; }
 
-        //public string BodyType { get; set; }
-        //public string Description { get; set; }
-        //public bool Required { get; set; }
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement> ExtensionData { get; set; } = new();
+
+
     }
 
+    public class BodyFieldProps
+    {
+        public string? Description { get; set; }
 
+        public bool Required { get; set; }
+
+        public string? Type { get; set; }
+    }
 
 }
