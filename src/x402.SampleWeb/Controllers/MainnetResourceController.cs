@@ -12,10 +12,12 @@ namespace x402.SampleWeb.Controllers
     public class MainnetResourceController : ControllerBase
     {
         private readonly IFacilitatorClient facilitator;
+        private readonly X402Handler x402Handler;
 
-        public MainnetResourceController(IFacilitatorClient facilitator)
+        public MainnetResourceController(IFacilitatorClient facilitator, X402Handler x402Handler)
         {
             this.facilitator = facilitator;
+            this.x402Handler = x402Handler;
         }
 
      
@@ -23,7 +25,7 @@ namespace x402.SampleWeb.Controllers
         [Route("send-msg")]
         public async Task<SampleResult?> SendMsg([FromBody] SampleRequest req)
         {
-            var x402Result = await X402Handler.HandleX402Async(this.HttpContext, facilitator,
+            var x402Result = await x402Handler.HandleX402Async(
                 new PaymentRequirements
                 {
                     Asset = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",

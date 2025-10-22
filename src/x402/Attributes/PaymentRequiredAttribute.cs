@@ -68,7 +68,7 @@ namespace x402.Attributes
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<PaymentRequiredAttribute>>();
-            var facilitator = context.HttpContext.RequestServices.GetRequiredService<IFacilitatorClient>();
+            var x402Handler = context.HttpContext.RequestServices.GetRequiredService<X402Handler>();
 
             var request = context.HttpContext.Request;
             var fullUrl = $"{request.Scheme}://{request.Host}{request.Path}{request.QueryString}";
@@ -89,7 +89,7 @@ namespace x402.Attributes
             };
             logger.LogInformation("Built payment requirements for path {Path}: scheme {Scheme}, asset {Asset}", fullUrl, paymentRequirements.Scheme, paymentRequirements.Asset);
 
-            var x402Result = await X402Handler.HandleX402Async(context.HttpContext, facilitator, paymentRequirements, Discoverable, SettlementMode).ConfigureAwait(false);
+            var x402Result = await x402Handler.HandleX402Async(paymentRequirements, Discoverable, SettlementMode).ConfigureAwait(false);
             if (!x402Result.CanContinueRequest)
             {
                 logger.LogWarning("Payment not satisfied for path {Path}; stopping execution", fullUrl);

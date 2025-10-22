@@ -23,7 +23,11 @@ namespace x402.Tests
                 .ConfigureWebHost(builder =>
                 {
                     builder.UseTestServer();
-                    builder.ConfigureServices(s => { s.AddSingleton<IFacilitatorClient>(facilitatorClient); });
+                    builder.ConfigureServices(s => { 
+                        s.AddSingleton<IFacilitatorClient>(facilitatorClient); 
+                        s.AddSingleton<X402Handler>();
+                        s.AddHttpContextAccessor();
+                    });
                     builder.Configure(app =>
                     {
                         app.UsePaymentMiddleware(options);

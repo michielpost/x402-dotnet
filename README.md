@@ -30,13 +30,10 @@ Install the `x402.Client.EVM` package from NuGet:
 
 ## How to use?
 
-Setup the Facilitator in Program.cs
+Register the x402 services and facilitator in `Program.cs`:
 ```cs
-// Add the facilitator in Program.cs
-builder.Services.AddHttpClient<IFacilitatorClient, HttpFacilitatorClient>(client =>
-{
-    client.BaseAddress = new Uri("https://localhost:7141"); // Address of your facilitator
-});
+// Use the default HttpFacilitator
+builder.Services.AddX402().WithHttpFacilitator(facilitatorUrl);
 ```
 
 Use the `PaymentRequired` Attribute
@@ -110,8 +107,7 @@ To use the Coinbase Facilitator, install [x402.Coinbase](https://nuget.org/packa
 
 ```cs
 // Add the Coinbase Config and Facilitator
-builder.Services.Configure<CoinbaseOptions>(builder.Configuration.GetSection(nameof(CoinbaseOptions)));
-builder.Services.AddHttpClient<IFacilitatorClient, CoinbaseFacilitatorClient>();
+builder.Services.AddX402().WithCoinbaseFacilitator(builder.Configuration);
 ```
 
 Add to appsettings.json:

@@ -33,6 +33,9 @@ namespace x402.Tests
                     builder.ConfigureServices(services =>
                     {
                         services.AddSingleton(facilitator);
+                        services.AddSingleton<X402Handler>();
+                        services.AddHttpContextAccessor();
+
                     });
                     builder.Configure(app =>
                     {
@@ -46,9 +49,8 @@ namespace x402.Tests
                             });
 
                             // Invoke handler
-                            var result = await X402Handler.HandleX402Async(
-                                context,
-                                facilitator,
+                            var x402handler = context.RequestServices.GetRequiredService<X402Handler>();
+                            var result = await x402handler.HandleX402Async(
                                 requirements,
                                 true,
                                 mode,

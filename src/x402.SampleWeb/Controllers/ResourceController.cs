@@ -12,10 +12,12 @@ namespace x402.SampleWeb.Controllers
     public class ResourceController : ControllerBase
     {
         private readonly IFacilitatorClient facilitator;
+        private readonly X402Handler x402Handler;
 
-        public ResourceController(IFacilitatorClient facilitator)
+        public ResourceController(IFacilitatorClient facilitator, X402Handler x402Handler)
         {
             this.facilitator = facilitator;
+            this.x402Handler = x402Handler;
         }
 
         /// <summary>
@@ -56,7 +58,7 @@ namespace x402.SampleWeb.Controllers
         [Route("dynamic")]
         public async Task<SampleResult?> Dynamic(string amount)
         {
-            var x402Result = await X402Handler.HandleX402Async(this.HttpContext, facilitator,
+            var x402Result = await x402Handler.HandleX402Async(
                 new PaymentRequirements
                 {
                     Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
@@ -90,7 +92,7 @@ namespace x402.SampleWeb.Controllers
         [Route("send-msg")]
         public async Task<SampleResult?> SendMsg([FromBody] SampleRequest req)
         {
-            var x402Result = await X402Handler.HandleX402Async(this.HttpContext, facilitator,
+            var x402Result = await x402Handler.HandleX402Async(
                 new PaymentRequirements
                 {
                     Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",

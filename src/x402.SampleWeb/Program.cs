@@ -37,16 +37,12 @@ builder.Services.AddCors(options =>
 var facilitatorUrl = builder.Configuration["FacilitatorUrl"];
 if (!string.IsNullOrEmpty(facilitatorUrl))
 {
-    builder.Services.AddHttpClient<IFacilitatorClient, HttpFacilitatorClient>(client =>
-    {
-        client.BaseAddress = new Uri(facilitatorUrl);
-    });
+    builder.Services.AddX402().WithHttpFacilitator(facilitatorUrl);
+   
 }
 else
 {
-    // Coinbase facilitator client
-    builder.Services.Configure<CoinbaseOptions>(builder.Configuration.GetSection(nameof(CoinbaseOptions)));
-    builder.Services.AddHttpClient<IFacilitatorClient, CoinbaseFacilitatorClient>();
+    builder.Services.AddX402().WithCoinbaseFacilitator(builder.Configuration);
 }
 
 var app = builder.Build();

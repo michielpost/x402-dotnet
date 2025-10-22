@@ -36,6 +36,8 @@ namespace x402.Tests
             var services = new ServiceCollection()
                 .AddLogging(b => b.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug))
                 .AddSingleton<IFacilitatorClient, FakeFacilitatorClient>()
+                .AddSingleton<X402Handler>()
+                .AddHttpContextAccessor()
                 .BuildServiceProvider();
 
             var context = CreateActionExecutingContext(services, "/needs-pay");
@@ -75,6 +77,8 @@ namespace x402.Tests
             var services = new ServiceCollection()
                 .AddLogging(b => b.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug))
                 .AddSingleton<IFacilitatorClient>(fake)
+                .AddSingleton<X402Handler>()
+                .AddHttpContextAccessor()
                 .BuildServiceProvider();
 
             var context = CreateActionExecutingContext(services, "/ok");

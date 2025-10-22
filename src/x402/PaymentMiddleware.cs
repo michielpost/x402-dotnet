@@ -14,7 +14,7 @@ namespace x402
         private readonly RequestDelegate _next;
         private readonly ILogger<PaymentMiddleware> logger;
         private readonly PaymentMiddlewareOptions paymentMiddlewareOptions;
-        private readonly IFacilitatorClient facilitator;
+        private readonly X402Handler x402Handler;
 
         /// <summary>
         /// Creates a payment middleware that enforces X-402 payments on configured paths or endpoints.
@@ -24,13 +24,13 @@ namespace x402
         /// <exception cref="ArgumentNullException"></exception>
         public PaymentMiddleware(RequestDelegate next,
             ILogger<PaymentMiddleware> logger,
-            IFacilitatorClient facilitator,
+            X402Handler x402Handler,
             PaymentMiddlewareOptions paymentMiddlewareOptions)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
             this.logger = logger;
             this.paymentMiddlewareOptions = paymentMiddlewareOptions;
-            this.facilitator = facilitator;
+            this.x402Handler = x402Handler;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -63,7 +63,7 @@ namespace x402
             }
 
             logger.LogInformation("Enforcing x402 payment for path {Path} with scheme {Scheme} asset {Asset}", resourceFullUrl, paymentRequirements.Scheme, paymentRequirements.Asset);
-            var x402Result = await X402Handler.HandleX402Async(context, facilitator, paymentRequirements, paymentConfig?.Discoverable ?? false, paymentMiddlewareOptions.SettlementMode).ConfigureAwait(false);
+            var x402Result = await x402Handler.HandleX402Async(paymentRequirements, paymentConfig?.Discoverable ?? false, paymentMiddlewareOptions.SettlementMode).ConfigureAwait(false);
             if (!x402Result.CanContinueRequest)
             {
                 logger.LogWarning("Payment not satisfied for path {Path}; responding with 402/500 already handled", resourceFullUrl);
