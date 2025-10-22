@@ -21,6 +21,13 @@ namespace x402.Tests
             var httpContext = new DefaultHttpContext();
             httpContext.RequestServices = services;
             httpContext.Request.Path = path;
+
+            var accessor = services.GetService<IHttpContextAccessor>();
+            if (accessor != null)
+            {
+                accessor.HttpContext = httpContext;
+            }
+
             var routeData = new RouteData();
             var actionContext = new ActionContext(httpContext, routeData, new ControllerActionDescriptor());
             var filters = new List<IFilterMetadata>();
