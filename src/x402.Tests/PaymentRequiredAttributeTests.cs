@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using x402.Attributes;
+using x402.Core;
 using x402.Core.Enums;
-using x402.Core.Models;
+using x402.Core.Interfaces;
 using x402.Core.Models.Facilitator;
 using x402.Facilitator;
 
@@ -16,34 +17,19 @@ namespace x402.Tests
     [TestFixture]
     public class PaymentRequiredAttributeTests
     {
-        private sealed class FakeFacilitatorClient : IFacilitatorClient
-        {
-            public Func<PaymentPayloadHeader, PaymentRequirements, Task<VerificationResponse>>? VerifyAsyncImpl { get; set; }
-            public Func<PaymentPayloadHeader, PaymentRequirements, Task<SettlementResponse>>? SettleAsyncImpl { get; set; }
-
-            public Task<VerificationResponse> VerifyAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements requirements, CancellationToken cancellationToken = default)
-            {
-                if (VerifyAsyncImpl != null) return VerifyAsyncImpl(paymentPayload, requirements);
-                return Task.FromResult(new VerificationResponse { IsValid = true });
-            }
-
-            public Task<SettlementResponse> SettleAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements requirements, CancellationToken cancellationToken = default)
-            {
-                if (SettleAsyncImpl != null) return SettleAsyncImpl(paymentPayload, requirements);
-                return Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xabc", Network = requirements.Network });
-            }
-
-            public Task<List<FacilitatorKind>> SupportedAsync(CancellationToken cancellationToken = default)
-            {
-                return Task.FromResult(new List<FacilitatorKind>());
-            }
-        }
 
         private static ActionExecutingContext CreateActionExecutingContext(IServiceProvider services, string path = "/pay")
         {
             var httpContext = new DefaultHttpContext();
             httpContext.RequestServices = services;
             httpContext.Request.Path = path;
+
+            var accessor = services.GetService<IHttpContextAccessor>();
+            if (accessor != null)
+            {
+                accessor.HttpContext = httpContext;
+            }
+
             var routeData = new RouteData();
             var actionContext = new ActionContext(httpContext, routeData, new ControllerActionDescriptor());
             var filters = new List<IFilterMetadata>();
@@ -59,6 +45,9 @@ namespace x402.Tests
             var services = new ServiceCollection()
                 .AddLogging(b => b.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug))
                 .AddSingleton<IFacilitatorClient, FakeFacilitatorClient>()
+                .AddSingleton<X402Handler>()
+                .AddSingleton<ITokenInfoProvider, TokenInfoProvider>()
+                .AddHttpContextAccessor()
                 .BuildServiceProvider();
 
             var context = CreateActionExecutingContext(services, "/needs-pay");
@@ -67,7 +56,6 @@ namespace x402.Tests
                 maxAmountRequired: "1",
                 asset: "USDC",
                 payTo: "0x0000000000000000000000000000000000000001",
-                network: "base-sepolia",
                 scheme: PaymentScheme.Exact)
             {
                 Description = "unit test",
@@ -98,6 +86,9 @@ namespace x402.Tests
             var services = new ServiceCollection()
                 .AddLogging(b => b.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug))
                 .AddSingleton<IFacilitatorClient>(fake)
+                .AddSingleton<X402Handler>()
+                .AddSingleton<ITokenInfoProvider, TokenInfoProvider>()
+                .AddHttpContextAccessor()
                 .BuildServiceProvider();
 
             var context = CreateActionExecutingContext(services, "/ok");
@@ -121,7 +112,6 @@ namespace x402.Tests
                 maxAmountRequired: "1",
                 asset: "USDC",
                 payTo: "0x0000000000000000000000000000000000000001",
-                network: "base-sepolia",
                 scheme: PaymentScheme.Exact)
             {
                 Description = "unit test",

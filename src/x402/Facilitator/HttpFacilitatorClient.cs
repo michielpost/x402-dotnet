@@ -146,5 +146,44 @@ namespace x402.Facilitator
             logger.LogInformation("Retrieved {Count} supported facilitator kinds", kinds.Count);
             return kinds;
         }
+
+        public async Task<DiscoveryResponse> DiscoveryAsync(string? type = null, int? limit = null, int? offset = null, CancellationToken cancellationToken = default)
+        {
+            logger.LogDebug("Requesting discovery resource list");
+
+            var baseUrl = "/discovery/resources";
+            var queryParams = new List<string>();
+
+            if (!string.IsNullOrEmpty(type))
+                queryParams.Add($"type={Uri.EscapeDataString(type)}");
+
+            if (limit.HasValue)
+                queryParams.Add($"limit={limit.Value}");
+
+            if (offset.HasValue)
+                queryParams.Add($"offset={offset.Value}");
+
+            var discoveryUrl = queryParams.Count > 0
+                ? $"{baseUrl}?{string.Join("&", queryParams)}"
+                : baseUrl;
+
+            var url = BuildUrl(discoveryUrl, HttpMethod.Get);
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            PrepareRequest(request);
+            httpClient.Timeout = TimeSpan.FromSeconds(20);
+
+            using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                logger.LogWarning("Discover resources request failed with status {StatusCode}: {Content}", (int)response.StatusCode, content);
+                throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {content}");
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<DiscoveryResponse>(JsonOptions, cancellationToken).ConfigureAwait(false);
+
+            return result ?? new();
+        }
     }
 }

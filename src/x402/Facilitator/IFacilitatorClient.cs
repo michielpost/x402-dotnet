@@ -35,5 +35,9 @@ namespace x402.Facilitator
         /// <returns></returns>
         Task<List<FacilitatorKind>> SupportedAsync(CancellationToken cancellationToken = default);
 
+
+        Task<DiscoveryResponse> DiscoveryAsync(string? type = null, int? limit = null, int? offset = null, CancellationToken cancellationToken = default);
+
+
     }
 }

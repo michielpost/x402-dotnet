@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using x402.Core;
 using x402.Core.Enums;
+using x402.Core.Interfaces;
 using x402.Core.Models;
 using x402.Core.Models.Facilitator;
 using x402.Facilitator;
@@ -16,37 +18,21 @@ namespace x402.Tests
     [TestFixture]
     public class PaymentMiddlewareTests
     {
-        private sealed class FakeFacilitatorClient : IFacilitatorClient
-        {
-            public Func<PaymentPayloadHeader, PaymentRequirements, Task<VerificationResponse>>? VerifyAsyncImpl { get; set; }
-            public Func<PaymentPayloadHeader, PaymentRequirements, Task<SettlementResponse>>? SettleAsyncImpl { get; set; }
 
-            public Task<VerificationResponse> VerifyAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements requirements, CancellationToken cancellationToken = default)
-            {
-                if (VerifyAsyncImpl != null) return VerifyAsyncImpl(paymentPayload, requirements);
-                return Task.FromResult(new VerificationResponse { IsValid = true });
-            }
-
-            public Task<SettlementResponse> SettleAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements requirements, CancellationToken cancellationToken = default)
-            {
-                if (SettleAsyncImpl != null) return SettleAsyncImpl(paymentPayload, requirements);
-                return Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xabc", Network = requirements.Network });
-            }
-
-            public Task<List<FacilitatorKind>> SupportedAsync(CancellationToken cancellationToken = default)
-            {
-                return Task.FromResult(new List<FacilitatorKind>());
-            }
-        }
-
-        private static IHost BuildHost(PaymentMiddlewareOptions options)
+        private static IHost BuildHost(PaymentMiddlewareOptions options, IFacilitatorClient facilitatorClient)
         {
             return new HostBuilder()
                 .ConfigureLogging(b => b.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug))
                 .ConfigureWebHost(builder =>
                 {
                     builder.UseTestServer();
-                    builder.ConfigureServices(s => { });
+                    builder.ConfigureServices(s =>
+                    {
+                        s.AddSingleton<IFacilitatorClient>(facilitatorClient);
+                        s.AddSingleton<X402Handler>();
+                        s.AddSingleton<ITokenInfoProvider, TokenInfoProvider>();
+                        s.AddHttpContextAccessor();
+                    });
                     builder.Configure(app =>
                     {
                         app.UsePaymentMiddleware(options);
@@ -76,11 +62,10 @@ namespace x402.Tests
         {
             var options = new PaymentMiddlewareOptions
             {
-                Facilitator = new FakeFacilitatorClient(),
                 PaymentRequirements = new Dictionary<string, PaymentRequirementsConfig>()
             };
 
-            using var host = BuildHost(options);
+            using var host = BuildHost(options, new FakeFacilitatorClient());
             var client = host.GetTestClient();
             var resp = await client.GetAsync("/free");
             Assert.That(resp.IsSuccessStatusCode, Is.True);
@@ -91,23 +76,24 @@ namespace x402.Tests
         {
             var options = new PaymentMiddlewareOptions
             {
-                Facilitator = new FakeFacilitatorClient(),
-                DefaultNetwork = "base-sepolia",
-                DefaultPayToAddress = "0x0000000000000000000000000000000000000001",
                 PaymentRequirements = new Dictionary<string, PaymentRequirementsConfig>
                 {
                     ["/pay"] = new PaymentRequirementsConfig
                     {
-                        Scheme = PaymentScheme.Exact,
-                        MaxAmountRequired = "100000",
-                        Asset = "USDC",
-                        MimeType = "application/json",
-                        Description = "unit"
+                        PaymentRequirements = new PaymentRequirementsBasic
+                        {
+                            Scheme = PaymentScheme.Exact,
+                            MaxAmountRequired = "100000",
+                            Asset = "USDC",
+                            MimeType = "application/json",
+                            Description = "unit",
+                            PayTo = "0x"
+                        }
                     }
                 }
             };
 
-            using var host = BuildHost(options);
+            using var host = BuildHost(options, new FakeFacilitatorClient());
             var client = host.GetTestClient();
             var resp = await client.GetAsync("/pay");
             Assert.That(resp.StatusCode, Is.EqualTo((System.Net.HttpStatusCode)StatusCodes.Status402PaymentRequired));
@@ -123,23 +109,24 @@ namespace x402.Tests
             };
             var options = new PaymentMiddlewareOptions
             {
-                Facilitator = fake,
-                DefaultNetwork = "base-sepolia",
-                DefaultPayToAddress = "0x0000000000000000000000000000000000000001",
                 PaymentRequirements = new Dictionary<string, PaymentRequirementsConfig>
                 {
                     ["/payok"] = new PaymentRequirementsConfig
                     {
-                        Scheme = PaymentScheme.Exact,
-                        MaxAmountRequired = "100000",
-                        Asset = "USDC",
-                        MimeType = "application/json",
-                        Description = "unit"
+                        PaymentRequirements = new PaymentRequirementsBasic
+                        {
+                            Scheme = PaymentScheme.Exact,
+                            MaxAmountRequired = "100000",
+                            Asset = "USDC",
+                            MimeType = "application/json",
+                            Description = "unit",
+                            PayTo = "0x"
+                        }
                     }
                 }
             };
 
-            using var host = BuildHost(options);
+            using var host = BuildHost(options, fake);
             var client = host.GetTestClient();
             var request = new HttpRequestMessage(HttpMethod.Get, "/payok");
             request.Headers.Add("X-PAYMENT", CreateHeaderB64("http://localhost/payok"));

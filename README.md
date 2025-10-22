@@ -16,6 +16,7 @@ Install the `x402` packages from NuGet:
 - Support advanced scenarios by calling the `X402Handler` in your API controller  
 - Handle payment settlement using any remote facilitator  
 - Optionally use the Coinbase facilitator (with API key)
+- Extensible TokenInfoProvider that fills in network and coin data based on the asset address
 
 ### x402 enabled HttpClient
 Install the `x402.Client.EVM` package from NuGet:
@@ -30,13 +31,10 @@ Install the `x402.Client.EVM` package from NuGet:
 
 ## How to use?
 
-Setup the Facilitator in Program.cs
+Register the x402 services and facilitator in `Program.cs`:
 ```cs
-// Add the facilitator in Program.cs
-builder.Services.AddHttpClient<IFacilitatorClient, HttpFacilitatorClient>(client =>
-{
-    client.BaseAddress = new Uri("https://localhost:7141"); // Address of your facilitator
-});
+// Use the default HttpFacilitator
+builder.Services.AddX402().WithHttpFacilitator(facilitatorUrl);
 ```
 
 Use the `PaymentRequired` Attribute
@@ -44,31 +42,31 @@ Use the `PaymentRequired` Attribute
 // Use the Payment Required Attribute
 [HttpGet]
 [Route("protected")]
-[PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0xYourAddressHere", "base-sepolia")]
+[PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0xYourAddressHere")]
 public SampleResult Protected()
 {
     return new SampleResult { Title = "Protected by PaymentRequired Attribute" };
 }
 
 ```
-Directly in an API Controller
+Directly in an API Controller (for more control)
 ```cs
+public ResourceController(X402Handler x402Handler)
+{
+    this.x402Handler = x402Handler;
+}
+
 [HttpGet]
 [Route("dynamic")]
 public async Task<SampleResult?> Dynamic(string amount)
 {
-    var request = this.HttpContext.Request;
-    var fullUrl = $"{request.Scheme}://{request.Host}{request.Path}{request.QueryString}";
-
-    var x402Result = await X402Handler.HandleX402Async(this.HttpContext, facilitator, fullUrl,
-        new Models.PaymentRequirements
+    var x402Result = await x402Handler.HandleX402Async(this.HttpContext, facilitator, fullUrl,
+        new PaymentRequirementsBasic
         {
-            Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e", //USDC on base-sepolia
+            Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
             Description = "Dynamic payment",
-            Network = "base-sepolia",
             MaxAmountRequired = amount,
-            PayTo = "0xYourAddress",
-            Resource = fullUrl,
+            PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
         });
 
     if (!x402Result.CanContinueRequest)
@@ -84,23 +82,23 @@ public async Task<SampleResult?> Dynamic(string amount)
 Or use the `PaymentMiddleware` to require payment for a list of URLs
 ```cs
 // Add Middleware
-var facilitator = app.Services.GetRequiredService<IFacilitatorClient>();
-var paymentOptions = new x402.Models.PaymentMiddlewareOptions
+var paymentOptions = new PaymentMiddlewareOptions
 {
-    Facilitator = facilitator,
-    DefaultPayToAddress = "0xYourWalletAddressHere", // Replace with your actual wallet address
-    DefaultNetwork = "base-sepolia",
-    PaymentRequirements = new Dictionary<string, x402.Models.PaymentRequirementsConfig>()
-        {
-            {  "/url-to-pay-for", new x402.Models.PaymentRequirementsConfig
-                {
-                    Scheme = x402.Enums.PaymentScheme.Exact,
-                    MaxAmountRequired = 1000000,
-                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e", // Contract address of asset
-                    MimeType = "application/json"
+    PaymentRequirements = new Dictionary<string, PaymentRequirementsConfig>()
+    {
+        {  "/resource/middleware", new PaymentRequirementsConfig
+            {
+                PaymentRequirements = new PaymentRequirementsBasic {
+                    MaxAmountRequired = "1000",
+                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                    MimeType = "application/json",
+                    Description = "Payment Required",
+                    Discoverable = true,
+                    PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", // Replace with your actual wallet address
                 }
             }
-        },
+        }
+    },
 };
 
 app.UsePaymentMiddleware(paymentOptions);
@@ -112,8 +110,7 @@ To use the Coinbase Facilitator, install [x402.Coinbase](https://nuget.org/packa
 
 ```cs
 // Add the Coinbase Config and Facilitator
-builder.Services.Configure<CoinbaseOptions>(builder.Configuration.GetSection(nameof(CoinbaseOptions)));
-builder.Services.AddHttpClient<IFacilitatorClient, CoinbaseFacilitatorClient>();
+builder.Services.AddX402().WithCoinbaseFacilitator(builder.Configuration);
 ```
 
 Add to appsettings.json:

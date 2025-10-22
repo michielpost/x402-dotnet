@@ -1,8 +1,7 @@
 using x402;
 using x402.Coinbase;
-using x402.Coinbase.Models;
-using x402.Core.Enums;
-using x402.Facilitator;
+using x402.Core.Models;
+using x402.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,16 +36,12 @@ builder.Services.AddCors(options =>
 var facilitatorUrl = builder.Configuration["FacilitatorUrl"];
 if (!string.IsNullOrEmpty(facilitatorUrl))
 {
-    builder.Services.AddHttpClient<IFacilitatorClient, HttpFacilitatorClient>(client =>
-    {
-        client.BaseAddress = new Uri(facilitatorUrl);
-    });
+    builder.Services.AddX402().WithHttpFacilitator(facilitatorUrl);
+
 }
 else
 {
-    // Coinbase facilitator client
-    builder.Services.Configure<CoinbaseOptions>(builder.Configuration.GetSection(nameof(CoinbaseOptions)));
-    builder.Services.AddHttpClient<IFacilitatorClient, CoinbaseFacilitatorClient>();
+    builder.Services.AddX402().WithCoinbaseFacilitator(builder.Configuration);
 }
 
 var app = builder.Build();
@@ -64,24 +59,23 @@ app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
-var facilitator = app.Services.GetRequiredService<IFacilitatorClient>();
-var paymentOptions = new x402.Models.PaymentMiddlewareOptions
+var paymentOptions = new PaymentMiddlewareOptions
 {
-    Facilitator = facilitator,
-    DefaultPayToAddress = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", // Replace with your actual wallet address
-    DefaultNetwork = "base-sepolia",
-    PaymentRequirements = new Dictionary<string, x402.Models.PaymentRequirementsConfig>()
-        {
-            {  "/resource/middleware", new x402.Models.PaymentRequirementsConfig
-                {
-                    Scheme = PaymentScheme.Exact,
+    PaymentRequirements = new Dictionary<string, PaymentRequirementsConfig>()
+    {
+        {  "/resource/middleware", new PaymentRequirementsConfig
+            {
+                PaymentRequirements = new PaymentRequirementsBasic {
                     MaxAmountRequired = "1000",
                     Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                     MimeType = "application/json",
-                    Description = "Payment Required"
+                    Description = "Payment Required",
+                    Discoverable = true,
+                    PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", // Replace with your actual wallet address
                 }
             }
-        },
+        }
+    },
 };
 
 app.UsePaymentMiddleware(paymentOptions);

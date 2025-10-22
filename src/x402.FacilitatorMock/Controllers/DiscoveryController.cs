@@ -3,7 +3,7 @@ using Swashbuckle.AspNetCore.Annotations;
 using x402.Core.Models;
 using x402.Core.Models.Facilitator;
 
-namespace x402.SampleWeb.Controllers
+namespace x402.FacilitatorMock.Controllers
 {
     [ApiController]
     [Route("[controller]")]
@@ -24,9 +24,9 @@ namespace x402.SampleWeb.Controllers
                 },
                 Items = new()
             {
-                new Item
+                new DiscoveryItem
                 {
-                    LastUpdated = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                    LastUpdated = DateTimeOffset.UtcNow,
                     Resource = "/resource/middleware",
                     Type = "http",
                     Accepts = new List<PaymentRequirements>

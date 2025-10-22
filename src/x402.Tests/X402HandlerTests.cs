@@ -7,7 +7,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
+using x402.Core;
 using x402.Core.Enums;
+using x402.Core.Interfaces;
 using x402.Core.Models;
 using x402.Core.Models.Facilitator;
 using x402.Facilitator;
@@ -17,28 +19,6 @@ namespace x402.Tests
     [TestFixture]
     public class X402HandlerTests
     {
-        private sealed class FakeFacilitatorClient : IFacilitatorClient
-        {
-            public Func<PaymentPayloadHeader, PaymentRequirements, Task<VerificationResponse>>? VerifyAsyncImpl { get; set; }
-            public Func<PaymentPayloadHeader, PaymentRequirements, Task<SettlementResponse>>? SettleAsyncImpl { get; set; }
-
-            public Task<VerificationResponse> VerifyAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements requirements, CancellationToken cancellationToken = default)
-            {
-                if (VerifyAsyncImpl != null) return VerifyAsyncImpl(paymentPayload, requirements);
-                return Task.FromResult(new VerificationResponse { IsValid = true });
-            }
-
-            public Task<SettlementResponse> SettleAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements requirements, CancellationToken cancellationToken = default)
-            {
-                if (SettleAsyncImpl != null) return SettleAsyncImpl(paymentPayload, requirements);
-                return Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xabc", Network = requirements.Network });
-            }
-
-            public Task<List<FacilitatorKind>> SupportedAsync(CancellationToken cancellationToken = default)
-            {
-                return Task.FromResult(new List<FacilitatorKind>());
-            }
-        }
 
         private static IHost BuildHost(IFacilitatorClient facilitator,
             string path,
@@ -55,6 +35,10 @@ namespace x402.Tests
                     builder.ConfigureServices(services =>
                     {
                         services.AddSingleton(facilitator);
+                        services.AddSingleton<X402Handler>();
+                        services.AddSingleton<ITokenInfoProvider, TokenInfoProvider>();
+                        services.AddHttpContextAccessor();
+
                     });
                     builder.Configure(app =>
                     {
@@ -68,11 +52,10 @@ namespace x402.Tests
                             });
 
                             // Invoke handler
-                            var result = await X402Handler.HandleX402Async(
-                                context,
-                                facilitator,
-                                path,
+                            var x402handler = context.RequestServices.GetRequiredService<X402Handler>();
+                            var result = await x402handler.HandleX402Async(
                                 requirements,
+                                true,
                                 mode,
                                 onSettlement).ConfigureAwait(false);
 
@@ -94,7 +77,7 @@ namespace x402.Tests
                 Network = "base-sepolia",
                 MaxAmountRequired = "1",
                 Asset = "USDC",
-                Resource = path,
+                Resource = $"http://localhost{path}",
                 MimeType = "application/json",
                 PayTo = "0x0000000000000000000000000000000000000001",
                 Description = "unit test"
@@ -111,7 +94,7 @@ namespace x402.Tests
                 payload = new Dictionary<string, object?>
                 {
                     { "authorization", new Dictionary<string, object?> { { "from", from ?? "0xF00" } } },
-                    { "resource", resource }
+                    { "resource", $"http://localhost{resource}" }
                 }
             };
             return JsonSerializer.Serialize(payload, new JsonSerializerOptions(JsonSerializerDefaults.Web));

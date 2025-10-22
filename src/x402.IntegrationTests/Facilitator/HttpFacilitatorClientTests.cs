@@ -63,10 +63,7 @@ namespace x402.IntegrationTests.Facilitator
                 Network = "base-sepolia",
                 MimeType = "application/json",
                 Description = "test payment",
-                OutputSchema = new
-                {
-                    Data = "string"
-                }
+                OutputSchema = null
             };
 
             var result = await client.VerifyAsync(payload, requirements);
@@ -95,6 +92,24 @@ namespace x402.IntegrationTests.Facilitator
 
             Assert.That(result, Is.Not.Null);
             TestContext.Out.WriteLine($"Settle result: Success={result.Success}");
+        }
+
+        [Test]
+        public async Task DiscoveryAsync_ShouldReturnResources()
+        {
+            var apiUrl = "https://facilitator.payai.network";
+
+            var httpClient = new HttpClient
+            {
+                BaseAddress = new Uri(apiUrl)
+            };
+
+            var payAiClient = new HttpFacilitatorClient(httpClient, new NullLogger<HttpFacilitatorClient>());
+
+            var result = await payAiClient.DiscoveryAsync();
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Items.Count, Is.GreaterThan(0));
         }
     }
 }

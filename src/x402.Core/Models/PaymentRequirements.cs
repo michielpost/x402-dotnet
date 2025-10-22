@@ -1,4 +1,6 @@
-﻿using x402.Core.Enums;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using x402.Core.Enums;
 
 namespace x402.Core.Models
 {
@@ -23,7 +25,7 @@ namespace x402.Core.Models
         public required string MaxAmountRequired { get; set; }
 
         /// <summary>
-        /// The asset symbol (e.g., "USDC").
+        /// The asset contract address
         /// </summary>
         public required string Asset { get; set; }
 
@@ -50,7 +52,7 @@ namespace x402.Core.Models
         /// <summary>
         /// JSON schema describing the response format
         /// </summary>
-        public object? OutputSchema { get; set; }
+        public OutputSchema? OutputSchema { get; set; }
 
         /// <summary>
         /// The maximum timeout in seconds.
@@ -69,4 +71,38 @@ namespace x402.Core.Models
         public string? Name { get; set; }
         public string? Version { get; set; }
     }
+
+    public class OutputSchema
+    {
+        public Input? Input { get; set; } = new();
+        public object? Output { get; set; }
+
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement> ExtensionData { get; set; } = new();
+    }
+
+    public class Input
+    {
+        public bool Discoverable { get; set; } = true;
+        public string? Method { get; set; }
+        public string Type { get; set; } = "http";
+
+        public Dictionary<string, BodyFieldProps>? BodyFields { get; set; }
+        public Dictionary<string, string>? QueryParams { get; set; }
+
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement> ExtensionData { get; set; } = new();
+
+
+    }
+
+    public class BodyFieldProps
+    {
+        public string? Description { get; set; }
+
+        public bool Required { get; set; }
+
+        public string? Type { get; set; }
+    }
+
 }
