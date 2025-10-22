@@ -142,7 +142,7 @@ public class X402Handler
             // Other unexpected errors - server error
             logger.LogError(ex, "Unexpected error during payment verification for path {Path}", fullUrl);
             await Respond500Async(context, "Internal server error during payment verification").ConfigureAwait(false);
-            return new HandleX402Result(false, $"Internal server error during payment verification", vr);
+            return new HandleX402Result(false, $"Internal server error during payment verification. {ex.Message}", vr);
         }
 
         if (!vr.IsValid)

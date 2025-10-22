@@ -25,7 +25,7 @@ namespace x402.SampleWeb.Controllers
         [Route("middleware")]
         public SampleResult Middleware()
         {
-            return new SampleResult { Title = "Protected by middleware" };
+            return new SampleResult { Title = "Success! Protected by middleware" };
         }
 
         [HttpGet]
@@ -37,10 +37,10 @@ namespace x402.SampleWeb.Controllers
 
         [HttpGet]
         [Route("protected")]
-        [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", Discoverable = true)]
+        [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", Discoverable = true, SettlementMode = SettlementMode.Pessimistic)]
         public SampleResult Protected()
         {
-            return new SampleResult { Title = "Protected by PaymentRequired Attribute" };
+            return new SampleResult { Title = "Success! Protected by PaymentRequired Attribute" };
         }
 
         [HttpPost]
@@ -48,7 +48,7 @@ namespace x402.SampleWeb.Controllers
         [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", Discoverable = true)]
         public SampleResult ProtectedPost([FromBody] SampleRequest req)
         {
-            return new SampleResult { Title = "Protected by PaymentRequired Attribute" };
+            return new SampleResult { Title = "Success! Protected by PaymentRequired Attribute" };
         }
 
         [HttpGet]
@@ -76,7 +76,7 @@ namespace x402.SampleWeb.Controllers
                 return null;
             }
 
-            return new SampleResult { Title = $"Dynamic protected for {amount}, paid by: {x402Result.VerificationResponse?.Payer}" };
+            return new SampleResult { Title = $"Success! Dynamic protected for {amount}, paid by: {x402Result.VerificationResponse?.Payer}" };
         }
 
         [HttpPost]
@@ -98,7 +98,7 @@ namespace x402.SampleWeb.Controllers
                     schema.Input ??= new();
 
                     //Manually set the input schema
-                    schema.Input.BodyFields = new Dictionary<string, BodyFieldProps>
+                    schema.Input.BodyFields = new Dictionary<string, object>
                     {
                         {
                             nameof(req.Value),
@@ -119,7 +119,7 @@ namespace x402.SampleWeb.Controllers
                 return null;
             }
 
-            return new SampleResult { Title = $"Msg: {req.Value}, paid by: {x402Result.VerificationResponse?.Payer}" };
+            return new SampleResult { Title = $"Success! Msg: {req.Value}, paid by: {x402Result.VerificationResponse?.Payer}" };
         }
 
     }
