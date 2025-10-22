@@ -84,24 +84,25 @@ namespace x402.Core.Models
     public class Input
     {
         public bool Discoverable { get; set; } = true;
-        public string? Method { get; set; }
         public string Type { get; set; } = "http";
+        public string? Method { get; set; }
+        public string? BodyType { get; set; }
+        public Dictionary<string, object>? QueryParams { get; set; }
         public Dictionary<string, object>? BodyFields { get; set; }
-        public Dictionary<string, string>? QueryParams { get; set; }
+        public Dictionary<string, object>? HeaderFields { get; set; }
 
         [JsonExtensionData]
         public Dictionary<string, JsonElement> ExtensionData { get; set; } = new();
 
-
     }
 
-    public class BodyFieldProps
+    public class FieldDefenition
     {
-        public string? Description { get; set; }
-
-        public bool Required { get; set; }
-
         public string? Type { get; set; }
-    }
+        public bool Required { get; set; }
+        public string? Description { get; set; }
+        public List<string>? Enum { get; set; }
 
+        public Dictionary<string, FieldDefenition>? Properties { get; set; }
+    }
 }

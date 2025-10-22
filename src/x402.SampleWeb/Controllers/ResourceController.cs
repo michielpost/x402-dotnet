@@ -102,7 +102,7 @@ namespace x402.SampleWeb.Controllers
                     {
                         {
                             nameof(req.Value),
-                            new BodyFieldProps
+                            new FieldDefenition
                             {
                                 Required = true,
                                 Description = "Message to send",
