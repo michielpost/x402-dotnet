@@ -86,8 +86,7 @@ namespace x402.Core.Models
         public bool Discoverable { get; set; } = true;
         public string? Method { get; set; }
         public string Type { get; set; } = "http";
-
-        public Dictionary<string, BodyFieldProps>? BodyFields { get; set; }
+        public Dictionary<string, object>? BodyFields { get; set; }
         public Dictionary<string, string>? QueryParams { get; set; }
 
         [JsonExtensionData]

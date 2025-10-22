@@ -39,7 +39,7 @@ namespace x402.SampleWeb.Controllers
                     schema.Input ??= new();
 
                     //Manually set the input schema
-                    schema.Input.BodyFields = new Dictionary<string, BodyFieldProps>
+                    schema.Input.BodyFields = new Dictionary<string, object>
                     {
                         {
                             nameof(req.Value),
