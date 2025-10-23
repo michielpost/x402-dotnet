@@ -110,20 +110,21 @@ public class X402Handler
             payload = PaymentPayloadHeader.FromHeader(header);
             logger.LogDebug("Parsed X-PAYMENT header for path {Path}", fullUrl);
 
-            //If resource is included in the payload it must match the URL path
-            var resource = payload.Payload.Resource;
-
-            if (!string.IsNullOrEmpty(resource) && !string.Equals(resource, fullUrl, StringComparison.InvariantCultureIgnoreCase))
+            HandleX402Result validationResult = await ValidatePayload(paymentRequirements, payload, fullUrl);
+            if (!validationResult.CanContinueRequest)
             {
-                logger.LogWarning("Resource mismatch: payload {PayloadResource} vs request {RequestPath}", resource, fullUrl);
-                await Respond402Async(context, paymentRequirements, "resource mismatch");
-                return new HandleX402Result(false, $"Resource mismatch: payload {resource} vs request {fullUrl}");
-            }
-            else if (context.Response.HasStarted)
-            {
-                logger.LogWarning("Cannot modify response for path {Path}; response already started", fullUrl);
+                if (context.Response.HasStarted)
+                {
+                    logger.LogWarning("Cannot modify response for path {Path}; response already started", fullUrl);
+                }
+                else
+                {
+                    await Respond402Async(context, paymentRequirements, validationResult.Error);
+                    return validationResult;
+                }
             }
 
+            // Verify payment with facilitator
             vr = await facilitator.VerifyAsync(payload, paymentRequirements);
             logger.LogInformation("Verification completed for path {Path}: IsValid={IsValid}", fullUrl, vr.IsValid);
         }
@@ -279,6 +280,46 @@ public class X402Handler
 
         logger.LogDebug("Payment verified; proceeding to response for path {Path}", fullUrl);
         return new HandleX402Result(preSettledResponse?.Success ?? true, null, vr);
+    }
+
+    private async Task<HandleX402Result> ValidatePayload(PaymentRequirements paymentRequirements, PaymentPayloadHeader payload, string fullUrl)
+    {
+
+        //If resource is included in the payload it must match the URL path
+        var resource = payload.Payload.Resource;
+        if (!string.IsNullOrEmpty(resource) && !string.Equals(resource, fullUrl, StringComparison.InvariantCultureIgnoreCase))
+        {
+            logger.LogWarning("Resource mismatch: payload {PayloadResource} vs request {RequestPath}", resource, fullUrl);
+            return new HandleX402Result(false, $"Resource mismatch: payload {resource} vs request {fullUrl}");
+        }
+
+        if (payload.Scheme != paymentRequirements.Scheme)
+        {
+            logger.LogWarning("Scheme mismatch: payload {PayloadScheme} vs requirements {RequirementsScheme}", payload.Scheme, paymentRequirements.Scheme);
+            return new HandleX402Result(false, $"Scheme mismatch: payload {payload.Scheme} vs requirements {paymentRequirements.Scheme}");
+        }
+
+        if (payload.Network != paymentRequirements.Network)
+        {
+            logger.LogWarning("Network mismatch: payload {PayloadNetwork} vs requirements {RequirementsNetwork}", payload.Network, paymentRequirements.Network);
+            return new HandleX402Result(false, $"Network mismatch: payload {payload.Network} vs requirements {paymentRequirements.Network}");
+        }
+
+        //Check Authorization against payment requirements
+        var authorization = payload.Payload.Authorization;
+        if (authorization.To != paymentRequirements.PayTo)
+        {
+            logger.LogWarning("PayTo mismatch: authorization {AuthorizationTo} vs requirements {RequirementsPayTo}", authorization.To, paymentRequirements.PayTo);
+            return new HandleX402Result(false, $"PayTo mismatch: authorization {authorization.To} vs requirements {paymentRequirements.PayTo}");
+        }
+
+        if (authorization.Value != paymentRequirements.MaxAmountRequired)
+        {
+            logger.LogWarning("Amount mismatch: authorization {AuthorizationValue} vs requirements {RequirementsAmount}", authorization.Value, paymentRequirements.MaxAmountRequired);
+            return new HandleX402Result(false, $"Amount mismatch: authorization {authorization.Value} vs requirements {paymentRequirements.MaxAmountRequired}");
+        }
+
+        return new HandleX402Result(true);
     }
 
     /// <summary>

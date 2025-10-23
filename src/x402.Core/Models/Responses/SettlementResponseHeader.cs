@@ -14,23 +14,23 @@
         /// <summary>
         /// Transaction hash.
         /// </summary>
-        public string TxHash { get; }
+        public string Transaction { get; }
 
         /// <summary>
         /// Network ID.
         /// </summary>
-        public string NetworkId { get; }
+        public string Network { get; }
 
         /// <summary>
         /// Payer address.
         /// </summary>
         public string? Payer { get; }
 
-        public SettlementResponseHeader(bool success, string txHash, string networkId, string? payer)
+        public SettlementResponseHeader(bool success, string transaction, string network, string? payer)
         {
             Success = success;
-            TxHash = txHash;
-            NetworkId = networkId;
+            Transaction = transaction;
+            Network = network;
             Payer = payer;
         }
     }

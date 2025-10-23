@@ -84,7 +84,7 @@ namespace x402.Tests
             };
         }
 
-        private static string CreateHeaderJson(string? resource = null, string? from = null, string? network = "base-sepolia")
+        private static string CreateHeaderJson(string? resource = null, string? from = null, string? network = "base-sepolia", string to = "0x0000000000000000000000000000000000000001", string value = "1")
         {
             var payload = new
             {
@@ -93,7 +93,11 @@ namespace x402.Tests
                 network,
                 payload = new Dictionary<string, object?>
                 {
-                    { "authorization", new Dictionary<string, object?> { { "from", from ?? "0xF00" } } },
+                    { "authorization", new Dictionary<string, object?> { 
+                        { "from", from ?? "0xF00" },
+                        { "to", to } ,
+                        { "value", value }
+                    } },
                     { "resource", $"http://localhost{resource}" }
                 }
             };

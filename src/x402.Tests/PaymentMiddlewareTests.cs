@@ -41,7 +41,7 @@ namespace x402.Tests
                 }).Start();
         }
 
-        private static string CreateHeaderB64(string resource)
+        private static string CreateHeaderB64(string resource, string amount)
         {
             var headerJson = System.Text.Json.JsonSerializer.Serialize(new
             {
@@ -50,7 +50,11 @@ namespace x402.Tests
                 network = "base-sepolia",
                 payload = new Dictionary<string, object?>
                 {
-                    { "authorization", new Dictionary<string, object?> { { "from", "0xabc" } } },
+                    { "authorization", new Dictionary<string, object?> { 
+                        { "from", "0xabc" }, 
+                        { "to", "0x" } ,
+                        { "value", amount }
+                    } },
                     { "resource", resource }
                 }
             }, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
@@ -117,7 +121,7 @@ namespace x402.Tests
                         {
                             Scheme = PaymentScheme.Exact,
                             MaxAmountRequired = "100000",
-                            Asset = "USDC",
+                            Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                             MimeType = "application/json",
                             Description = "unit",
                             PayTo = "0x"
@@ -129,7 +133,7 @@ namespace x402.Tests
             using var host = BuildHost(options, fake);
             var client = host.GetTestClient();
             var request = new HttpRequestMessage(HttpMethod.Get, "/payok");
-            request.Headers.Add("X-PAYMENT", CreateHeaderB64("http://localhost/payok"));
+            request.Headers.Add("X-PAYMENT", CreateHeaderB64("http://localhost/payok", "100000"));
             var resp = await client.SendAsync(request);
             Assert.That(resp.IsSuccessStatusCode, Is.True);
             Assert.That(resp.Headers.Contains("X-PAYMENT-RESPONSE"), Is.True);

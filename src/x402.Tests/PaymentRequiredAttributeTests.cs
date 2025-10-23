@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Net.NetworkInformation;
 using x402.Attributes;
 using x402.Core;
 using x402.Core.Enums;
@@ -101,7 +102,11 @@ namespace x402.Tests
                 network = "base-sepolia",
                 payload = new Dictionary<string, object?>
                 {
-                    { "authorization", new Dictionary<string, object?> { { "from", "0xabc" } } },
+                    { "authorization", new Dictionary<string, object?> {  
+                        { "from", "0xabc" },
+                        { "to", "0x0000000000000000000000000000000000000001" } ,
+                        { "value", "1" }
+                    } },
                     { "resource", ":///ok" }
                 }
             }, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
@@ -110,7 +115,7 @@ namespace x402.Tests
 
             var attr = new PaymentRequiredAttribute(
                 maxAmountRequired: "1",
-                asset: "USDC",
+                asset: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                 payTo: "0x0000000000000000000000000000000000000001",
                 scheme: PaymentScheme.Exact)
             {

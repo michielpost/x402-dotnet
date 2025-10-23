@@ -55,6 +55,17 @@ var response = await client.GetAsync(urlToUse);
 
 Console.WriteLine($"Final: {(int)response.StatusCode} {response.ReasonPhrase}");
 
+var header = response.ReadSettlementResponseHeader();
+if(header != null)
+{
+    Console.WriteLine("Settlement Response Header:");
+    Console.WriteLine(JsonSerializer.Serialize(header, new JsonSerializerOptions { WriteIndented = true }));
+}
+else
+{
+    Console.WriteLine("No Settlement Response Header found.");
+}
+
 Console.Write("Do you want to see the full response content? (y/N): ");
 var showContent = Console.ReadLine();
 if (!string.IsNullOrWhiteSpace(showContent) && showContent.Trim().Equals("y", StringComparison.OrdinalIgnoreCase))
