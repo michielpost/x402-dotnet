@@ -66,9 +66,9 @@ else
     Console.WriteLine("No Settlement Response Header found.");
 }
 
-Console.Write("Do you want to see the full response content? (y/N): ");
+Console.Write("Do you want to see the full response content? (Y/n): ");
 var showContent = Console.ReadLine();
-if (!string.IsNullOrWhiteSpace(showContent) && showContent.Trim().Equals("y", StringComparison.OrdinalIgnoreCase))
+if (string.IsNullOrWhiteSpace(showContent) || showContent.Trim().Equals("y", StringComparison.OrdinalIgnoreCase))
 {
     var content = await response.Content.ReadAsStringAsync();
     Console.WriteLine("Response content:");
