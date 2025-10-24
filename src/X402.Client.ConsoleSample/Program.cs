@@ -74,3 +74,6 @@ if (string.IsNullOrWhiteSpace(showContent) || showContent.Trim().Equals("y", Str
     Console.WriteLine("Response content:");
     Console.WriteLine(content);
 }
+
+Console.WriteLine("Press Enter to close");
+Console.ReadLine();
