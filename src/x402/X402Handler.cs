@@ -172,7 +172,7 @@ public class X402Handler
             });
 
             logger.LogDebug("Payment verified; proceeding to response for path {Path}", fullUrl);
-            var finalResult = new HandleX402Result(preSettledResponse?.Success ?? vr.IsValid, null, vr, preSettledResponse);
+            var finalResult = new HandleX402Result(preSettledResponse?.Success ?? vr.IsValid, paymentRequirements, null, vr, preSettledResponse);
             StoreResult(finalResult);
             return finalResult;
         }
@@ -269,7 +269,7 @@ public class X402Handler
             logger.LogWarning("Cannot modify response for path {Path}; response already started", paymentRequirements.Resource);
         }
 
-        var result = new HandleX402Result(false, errorMessage, vr, sr);
+        var result = new HandleX402Result(false, paymentRequirements, errorMessage, vr, sr);
         StoreResult(result);
         return result;
     }
@@ -297,35 +297,35 @@ public class X402Handler
         if (!string.IsNullOrEmpty(payload.Payload.Resource) && !string.Equals(payload.Payload.Resource, fullUrl, StringComparison.InvariantCultureIgnoreCase))
         {
             logger.LogWarning("Resource mismatch: payload {PayloadResource} vs request {RequestPath}", payload.Payload.Resource, fullUrl);
-            return new HandleX402Result(false, $"Resource mismatch: payload {payload.Payload.Resource} vs request {fullUrl}");
+            return new HandleX402Result(false, paymentRequirements, $"Resource mismatch: payload {payload.Payload.Resource} vs request {fullUrl}");
         }
 
         if (payload.Scheme != paymentRequirements.Scheme)
         {
             logger.LogWarning("Scheme mismatch: payload {PayloadScheme} vs requirements {RequirementsScheme}", payload.Scheme, paymentRequirements.Scheme);
-            return new HandleX402Result(false, $"Scheme mismatch: payload {payload.Scheme} vs requirements {paymentRequirements.Scheme}");
+            return new HandleX402Result(false, paymentRequirements, $"Scheme mismatch: payload {payload.Scheme} vs requirements {paymentRequirements.Scheme}");
         }
 
         if (payload.Network != paymentRequirements.Network)
         {
             logger.LogWarning("Network mismatch: payload {PayloadNetwork} vs requirements {RequirementsNetwork}", payload.Network, paymentRequirements.Network);
-            return new HandleX402Result(false, $"Network mismatch: payload {payload.Network} vs requirements {paymentRequirements.Network}");
+            return new HandleX402Result(false, paymentRequirements, $"Network mismatch: payload {payload.Network} vs requirements {paymentRequirements.Network}");
         }
 
         var authorization = payload.Payload.Authorization;
         if (authorization.To != paymentRequirements.PayTo)
         {
             logger.LogWarning("PayTo mismatch: authorization {AuthorizationTo} vs requirements {RequirementsPayTo}", authorization.To, paymentRequirements.PayTo);
-            return new HandleX402Result(false, $"PayTo mismatch: authorization {authorization.To} vs requirements {paymentRequirements.PayTo}");
+            return new HandleX402Result(false, paymentRequirements, $"PayTo mismatch: authorization {authorization.To} vs requirements {paymentRequirements.PayTo}");
         }
 
         if (authorization.Value != paymentRequirements.MaxAmountRequired)
         {
             logger.LogWarning("Amount mismatch: authorization {AuthorizationValue} vs requirements {RequirementsAmount}", authorization.Value, paymentRequirements.MaxAmountRequired);
-            return new HandleX402Result(false, $"Amount mismatch: authorization {authorization.Value} vs requirements {paymentRequirements.MaxAmountRequired}");
+            return new HandleX402Result(false, paymentRequirements, $"Amount mismatch: authorization {authorization.Value} vs requirements {paymentRequirements.MaxAmountRequired}");
         }
 
-        return new HandleX402Result(true);
+        return new HandleX402Result(true, paymentRequirements);
     }
 
     private string CreatePaymentResponseHeader(SettlementResponse sr, string? payer)
