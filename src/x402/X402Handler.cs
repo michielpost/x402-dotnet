@@ -13,6 +13,9 @@ namespace x402;
 
 public class X402Handler
 {
+    // Key for storing HandleX402Result in HttpContext.Items
+    public static readonly string X402ResultKey = "X402HandleResult";
+
     private readonly JsonSerializerOptions jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase, // default camelCase
@@ -37,7 +40,7 @@ public class X402Handler
         this.httpContextAccessor = httpContextAccessor;
     }
 
-    public Task<HandleX402Result> HandleX402Async(
+    public async Task<HandleX402Result> HandleX402Async(
        PaymentRequirementsBasic paymentRequirementsBasic,
        bool discoverable,
        SettlementMode settlementMode = SettlementMode.Optimistic,
@@ -46,7 +49,15 @@ public class X402Handler
     {
         var paymentRequirements = FillPaymentRequirements(paymentRequirementsBasic);
 
-        return HandleX402Async(paymentRequirements, discoverable, settlementMode, onSettlement, onSetOutputSchema);
+        var result = await HandleX402Async(paymentRequirements, discoverable, settlementMode, onSettlement, onSetOutputSchema);
+
+        // Store the result in HttpContext.Items
+        if (httpContextAccessor.HttpContext != null)
+        {
+            httpContextAccessor.HttpContext.Items[X402ResultKey] = result;
+        }
+
+        return result;
     }
 
 
@@ -99,7 +110,10 @@ public class X402Handler
         {
             logger.LogInformation("No X-PAYMENT header present for path {Path}; responding 402", fullUrl);
             await Respond402Async(context, paymentRequirements, "X-PAYMENT header is required");
-            return new HandleX402Result(false);
+            var result = new HandleX402Result(false);
+            context.Items[X402ResultKey] = result; // Store result
+            return result;
+
         }
 
         //Handle payment verification
@@ -120,8 +134,9 @@ public class X402Handler
                 else
                 {
                     await Respond402Async(context, paymentRequirements, validationResult.Error);
-                    return validationResult;
                 }
+                context.Items[X402ResultKey] = validationResult; // Store result
+                return validationResult;
             }
 
             // Verify payment with facilitator
@@ -132,29 +147,39 @@ public class X402Handler
         {
             // Malformed payment header - client error
             logger.LogWarning("Malformed X-PAYMENT header for path {Path}", fullUrl);
-            await Respond402Async(context, paymentRequirements, "Malformed X-PAYMENT header");
-            return new HandleX402Result(false, "Malformed X-PAYMENT header", vr);
+            await Respond402Async(context, paymentRequirements, "Malformed X-PAYMENT header"); 
+            var result = new HandleX402Result(false, "Malformed X-PAYMENT header", vr);
+            context.Items[X402ResultKey] = result; // Store result
+            return result;
+
         }
         catch (IOException ex)
         {
             // Network/communication error with facilitator - server error
             logger.LogError(ex, "Payment verification IO error for path {Path}", fullUrl);
-            await Respond500Async(context, "Payment verification failed: " + ex.Message);
-            return new HandleX402Result(false, $"Payment verification failed: {ex.Message}", vr);
+            await Respond500Async(context, "Payment verification failed: " + ex.Message); 
+            var result = new HandleX402Result(false, $"Payment verification failed: {ex.Message}", vr);
+            context.Items[X402ResultKey] = result; // Store result
+            return result;
+
         }
         catch (Exception ex)
         {
             // Other unexpected errors - server error
             logger.LogError(ex, "Unexpected error during payment verification for path {Path}", fullUrl);
             await Respond500Async(context, "Internal server error during payment verification");
-            return new HandleX402Result(false, $"Internal server error during payment verification. {ex.Message}", vr);
+            var result = new HandleX402Result(false, $"Internal server error during payment verification. {ex.Message}", vr);
+            context.Items[X402ResultKey] = result; // Store result
+            return result;
         }
 
         if (!vr.IsValid)
         {
             logger.LogInformation("Verification invalid for path {Path}: {Reason}", fullUrl, vr.InvalidReason);
             await Respond402Async(context, paymentRequirements, vr.InvalidReason);
-            return new HandleX402Result(false, vr.InvalidReason, vr);
+            var result = new HandleX402Result(false, vr.InvalidReason, vr);
+            context.Items[X402ResultKey] = result; // Store result
+            return result;
         }
 
         // Optional pessimistic settlement in the main flow
@@ -172,7 +197,9 @@ public class X402Handler
                         : FacilitatorErrorCodes.UnexpectedSettleError;
                     logger.LogWarning("Pessimistic settlement failed for path {Path}: {Reason}", fullUrl, errorMsg);
                     await Respond402Async(context, paymentRequirements, errorMsg);
-                    return new HandleX402Result(false, errorMsg, vr);
+                    var result = new HandleX402Result(false, errorMsg, vr, preSettledResponse);
+                    context.Items[X402ResultKey] = result; // Store result
+                    return result;
                 }
             }
             catch (Exception ex)
@@ -180,7 +207,10 @@ public class X402Handler
                 settlementException = ex;
                 logger.LogError(ex, "Pessimistic settlement error for path {Path}", fullUrl);
                 await Respond402Async(context, paymentRequirements, "settlement error: " + ex.Message);
-                return new HandleX402Result(false, "settlement error: " + ex.Message, vr);
+                var result = new HandleX402Result(false, "settlement error: " + ex.Message, vr, preSettledResponse);
+                context.Items[X402ResultKey] = result; // Store result
+                return result;
+
             }
             finally
             {
@@ -279,7 +309,9 @@ public class X402Handler
         });
 
         logger.LogDebug("Payment verified; proceeding to response for path {Path}", fullUrl);
-        return new HandleX402Result(preSettledResponse?.Success ?? true, null, vr);
+        var finalResult = new HandleX402Result(preSettledResponse?.Success ?? vr.IsValid, null, vr, preSettledResponse);
+        context.Items[X402ResultKey] = finalResult; // Store result
+        return finalResult;
     }
 
     private async Task<HandleX402Result> ValidatePayload(PaymentRequirements paymentRequirements, PaymentPayloadHeader payload, string fullUrl)

@@ -134,6 +134,7 @@ namespace x402.Tests
             request.Headers.Add("X-PAYMENT", "not-base64");
 
             var resp = await client.SendAsync(request);
+            var content = await resp.Content.ReadAsStringAsync();
 
             Assert.That(resp.StatusCode, Is.EqualTo((System.Net.HttpStatusCode)StatusCodes.Status402PaymentRequired));
         }

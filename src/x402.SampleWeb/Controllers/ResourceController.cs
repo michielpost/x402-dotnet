@@ -38,9 +38,22 @@ namespace x402.SampleWeb.Controllers
         [HttpGet]
         [Route("protected")]
         [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", Discoverable = true, SettlementMode = SettlementMode.Pessimistic)]
-        public SampleResult Protected()
+        public ActionResult<SampleResult> Protected()
         {
-            return new SampleResult { Title = "Success! Protected by PaymentRequired Attribute" };
+            var x402Result = HttpContext.GetX402Result();
+            if (x402Result == null)
+            {
+                // Handle unexpected case (should not happen since we just called HandleX402Async)
+                return StatusCode(500, new { error = "X402 result not found" });
+            }
+
+            if (!x402Result.CanContinueRequest)
+            {
+                // Response is already set to 402 or 500 by X402Handler, so just return
+                return new EmptyResult();
+            }
+
+            return new SampleResult { Title = $"Success! Protected by PaymentRequired Attribute. Tx: {x402Result.SettlementResponse?.Transaction}" };
         }
 
         [HttpPost]
@@ -76,7 +89,7 @@ namespace x402.SampleWeb.Controllers
                 return null;
             }
 
-            return new SampleResult { Title = $"Success! Dynamic protected for {amount}, paid by: {x402Result.VerificationResponse?.Payer}" };
+            return new SampleResult { Title = $"Success! Dynamic protected for {amount}, paid by: {x402Result.VerificationResponse?.Payer}. Tx: {x402Result.SettlementResponse?.Transaction}" };
         }
 
         [HttpPost]

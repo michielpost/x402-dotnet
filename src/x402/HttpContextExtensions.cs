@@ -1,0 +1,33 @@
+﻿using Microsoft.AspNetCore.Http;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using x402.Core.Models;
+
+namespace x402
+{
+    public static class HttpContextExtensions
+    {
+        /// <summary>
+        /// Retrieves the X402 payment handling result from the HttpContext.
+        /// </summary>
+        /// <param name="context">The HttpContext instance.</param>
+        /// <returns>The HandleX402Result if available; otherwise, null.</returns>
+        public static HandleX402Result? GetX402Result(this HttpContext context)
+        {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            if (context.Items.TryGetValue(X402Handler.X402ResultKey, out var result) && result is HandleX402Result x402Result)
+            {
+                return x402Result;
+            }
+
+            return null;
+        }
+    }
+}
