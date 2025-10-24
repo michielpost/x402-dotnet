@@ -51,10 +51,10 @@ namespace x402.Coinbase.IntegrationTests
             var payload = PaymentPayloadHeader.FromHeader(paymentHeader);
             var requirements = new PaymentRequirements
             {
-                Asset = "USDC",
+                Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                 MaxAmountRequired = "10000",
                 PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
-                Resource = "https://nos.nl/api",
+                Resource = "https://localhost/api",
                 Network = "base-sepolia",
                 MimeType = "application/json",
                 Description = "test payment",
@@ -74,10 +74,10 @@ namespace x402.Coinbase.IntegrationTests
             var payload = PaymentPayloadHeader.FromHeader(paymentHeader);
             var requirements = new PaymentRequirements
             {
-                Asset = "USDC",
+                Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                 MaxAmountRequired = "1",
-                PayTo = "replace-with-real-address",
-                Resource = "/",
+                PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+                Resource = "https://localhost/api",
                 Network = "base-sepolia",
                 MimeType = "application/json",
                 Description = "Test payment"

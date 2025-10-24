@@ -26,10 +26,10 @@ namespace x402.IntegrationTests.Facilitator
 
             var provider = services.BuildServiceProvider();
 
-            //var apiUrl = "https://facilitator.payai.network";
+            var apiUrl = "https://facilitator.payai.network";
             //var apiUrl = "https://facilitator.mogami.tech";
             //var apiUrl = "https://facilitator.mcpay.tech";
-            var apiUrl = "https://facilitator.daydreams.systems/";
+            //var apiUrl = "https://facilitator.daydreams.systems/";
 
             var httpClient = new HttpClient
             {
@@ -56,10 +56,10 @@ namespace x402.IntegrationTests.Facilitator
             var payload = PaymentPayloadHeader.FromHeader(paymentHeader);
             var requirements = new PaymentRequirements
             {
-                Asset = "USDC",
+                Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                 MaxAmountRequired = "10000",
                 PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
-                Resource = "https://test/api",
+                Resource = "https://localhost/api",
                 Network = "base-sepolia",
                 MimeType = "application/json",
                 Description = "test payment",
@@ -79,10 +79,10 @@ namespace x402.IntegrationTests.Facilitator
             var payload = PaymentPayloadHeader.FromHeader(paymentHeader);
             var requirements = new PaymentRequirements
             {
-                Asset = "USDC",
+                Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                 MaxAmountRequired = "1",
-                PayTo = "replace-with-real-address",
-                Resource = "/",
+                PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+                Resource = "https://localhost/api",
                 Network = "base-sepolia",
                 MimeType = "application/json",
                 Description = "Test payment"
