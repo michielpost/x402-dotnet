@@ -93,7 +93,7 @@ namespace x402.Tests
                 network,
                 payload = new Dictionary<string, object?>
                 {
-                    { "authorization", new Dictionary<string, object?> { 
+                    { "authorization", new Dictionary<string, object?> {
                         { "from", from ?? "0xF00" },
                         { "to", to } ,
                         { "value", value }

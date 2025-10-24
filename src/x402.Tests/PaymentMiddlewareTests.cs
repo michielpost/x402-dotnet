@@ -50,8 +50,8 @@ namespace x402.Tests
                 network = "base-sepolia",
                 payload = new Dictionary<string, object?>
                 {
-                    { "authorization", new Dictionary<string, object?> { 
-                        { "from", "0xabc" }, 
+                    { "authorization", new Dictionary<string, object?> {
+                        { "from", "0xabc" },
                         { "to", "0x" } ,
                         { "value", amount }
                     } },

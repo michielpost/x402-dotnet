@@ -40,6 +40,7 @@ namespace x402.SampleWeb.Controllers
         [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", Discoverable = true, SettlementMode = SettlementMode.Pessimistic)]
         public ActionResult<SampleResult> Protected()
         {
+            // Optional: Retrieve the X402 result from HttpContext
             var x402Result = HttpContext.GetX402Result();
             if (x402Result == null)
             {

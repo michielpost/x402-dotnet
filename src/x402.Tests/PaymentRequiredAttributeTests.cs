@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Net.NetworkInformation;
 using x402.Attributes;
 using x402.Core;
 using x402.Core.Enums;
@@ -102,7 +101,7 @@ namespace x402.Tests
                 network = "base-sepolia",
                 payload = new Dictionary<string, object?>
                 {
-                    { "authorization", new Dictionary<string, object?> {  
+                    { "authorization", new Dictionary<string, object?> {
                         { "from", "0xabc" },
                         { "to", "0x0000000000000000000000000000000000000001" } ,
                         { "value", "1" }

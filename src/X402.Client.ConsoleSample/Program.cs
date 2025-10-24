@@ -56,7 +56,7 @@ var response = await client.GetAsync(urlToUse);
 Console.WriteLine($"Final: {(int)response.StatusCode} {response.ReasonPhrase}");
 
 var header = response.ReadSettlementResponseHeader();
-if(header != null)
+if (header != null)
 {
     Console.WriteLine("Settlement Response Header:");
     Console.WriteLine(JsonSerializer.Serialize(header, new JsonSerializerOptions { WriteIndented = true }));
