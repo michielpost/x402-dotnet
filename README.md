@@ -2,7 +2,6 @@
 
 ![x402 payments enabled](https://github.com/michielpost/x402-dotnet/raw/master/images/x402-button-small.png)  
 **x402 Payment Protocol implementation for .Net**  
-More info about x402: https://www.x402.org
 
 ### x402 on the server
 Install the `x402` packages from NuGet:
@@ -173,6 +172,7 @@ Contributions are welcome. Fork this repository and send a pull request if you h
 
 ## Links
 Useful tools when developing x402 solutions:
-- https://proxy402.com/fetch
+- More info about x402: https://www.x402.org
+- Test tool± https://proxy402.com/fetch
 - Specifications: https://github.com/coinbase/x402/blob/main/specs/x402-specification.md
 
