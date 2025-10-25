@@ -14,7 +14,7 @@ namespace x402.Client
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
         };
 
-        public event EventHandler<PaymentRequiredEventArgs>? PaymentRequiredReceived;
+        public event PaymentRequiredEventHandler? PaymentRequiredReceived;
         public event EventHandler<PaymentSelectedEventArgs>? PaymentSelected;
         public event EventHandler<PaymentRetryEventArgs>? PaymentRetrying;
 
@@ -39,9 +39,9 @@ namespace x402.Client
                 var paymentRequiredResponse = await ParsePaymentRequiredResponseAsync(response);
 
                 // Notify subscribers
-                OnPaymentRequiredReceived(new PaymentRequiredEventArgs(request, response, paymentRequiredResponse));
+                var canContinue = OnPaymentRequiredReceived(new PaymentRequiredEventArgs(request, response, paymentRequiredResponse));
 
-                if (paymentRequiredResponse.Accepts.Count == 0)
+                if (!canContinue || paymentRequiredResponse.Accepts.Count == 0)
                     break;
 
                 var payment = _wallet.RequestPayment(paymentRequiredResponse.Accepts, cancellationToken);
@@ -68,8 +68,23 @@ namespace x402.Client
             return response;
         }
 
-        protected virtual void OnPaymentRequiredReceived(PaymentRequiredEventArgs e)
-            => PaymentRequiredReceived?.Invoke(this, e);
+        protected virtual bool OnPaymentRequiredReceived(PaymentRequiredEventArgs e)
+        {
+            var canContinue = true;
+            if (PaymentRequiredReceived != null)
+            {
+                // If any subscriber returns false, we should not continue
+                foreach (PaymentRequiredEventHandler handler in PaymentRequiredReceived.GetInvocationList())
+                {
+                    if (!handler(this, e))
+                    {
+                        canContinue = false;
+                        break;
+                    }
+                }
+            }
+            return canContinue;
+        }
 
         protected virtual void OnPaymentSelected(PaymentSelectedEventArgs e)
             => PaymentSelected?.Invoke(this, e);

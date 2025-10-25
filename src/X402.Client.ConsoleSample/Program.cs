@@ -41,6 +41,8 @@ handler.PaymentRequiredReceived += (_, e) =>
 
     //Console.WriteLine($"Payment Required: {JsonSerializer.Serialize(e.PaymentRequiredResponse)}");
 
+    // Return true to allow payment to continue, false to stop
+    return true;
 };
 
 handler.PaymentSelected += (_, e) =>

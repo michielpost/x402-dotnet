@@ -2,6 +2,8 @@
 
 namespace x402.Client.Events
 {
+    public delegate bool PaymentRequiredEventHandler(object sender, PaymentRequiredEventArgs e);
+
     public class PaymentRequiredEventArgs : EventArgs
     {
         public HttpRequestMessage Request { get; }
