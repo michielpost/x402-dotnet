@@ -24,8 +24,24 @@ namespace x402.Client.EVM
             // Convert hex string to byte[]
             privateKey = hexPrivateKey.HexToByteArray();
 
-            Account = new Nethereum.Web3.Accounts.Account(hexPrivateKey);
+            Account = new Nethereum.Web3.Accounts.Account(privateKey);
             ChainId = chainId;
+        }
+
+        public EVMWallet(byte[] privateKey, ulong chainId)
+        {
+            // Convert hex string to byte[]
+            this.privateKey = privateKey;
+
+            Account = new Nethereum.Web3.Accounts.Account(privateKey);
+            ChainId = chainId;
+        }
+
+        public static EVMWallet FromMnemonic(string mnemonic, string password, int accountIndex, ulong chainId)
+        {
+            var wallet = new Nethereum.HdWallet.Wallet(mnemonic, password);
+            var account = wallet.GetAccount(accountIndex);
+            return new EVMWallet(account.PrivateKey, chainId);
         }
 
         protected override PaymentPayloadHeader CreateHeader(PaymentRequirements requirement, CancellationToken cancellationToken)

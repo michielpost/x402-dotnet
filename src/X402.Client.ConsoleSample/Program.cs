@@ -10,6 +10,7 @@ var config = new ConfigurationBuilder()
     .SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables()
+    .AddUserSecrets<Program>()
     .Build();
 
 // Read values from configuration
