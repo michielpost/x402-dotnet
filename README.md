@@ -15,7 +15,7 @@ Install the `x402` packages from NuGet:
 - Support advanced scenarios by calling the `X402Handler` in your API controller  
 - Handle payment settlement using any remote facilitator  
 - Optionally use the Coinbase facilitator (with API key)
-- Extensible TokenInfoProvider that fills in network and coin data based on the asset address
+- Extensible AssetInfoProvider that fills in network and coin data based on the asset address
 
 ### x402 enabled HttpClient
 Install the `x402.Client.EVM` package from NuGet:

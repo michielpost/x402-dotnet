@@ -25,18 +25,18 @@ public class X402Handler
 
     private readonly ILogger<X402Handler> logger;
     private readonly IFacilitatorClient facilitator;
-    private readonly ITokenInfoProvider tokenInfoProvider;
+    private readonly IAssetInfoProvider assetInfoProvider;
     private readonly IHttpContextAccessor httpContextAccessor;
 
     public X402Handler(
         ILogger<X402Handler> logger,
         IFacilitatorClient facilitator,
-        ITokenInfoProvider tokenInfoProvider,
+        IAssetInfoProvider assetInfoProvider,
         IHttpContextAccessor httpContextAccessor)
     {
         this.logger = logger;
         this.facilitator = facilitator;
-        this.tokenInfoProvider = tokenInfoProvider;
+        this.assetInfoProvider = assetInfoProvider;
         this.httpContextAccessor = httpContextAccessor;
     }
 
@@ -379,16 +379,16 @@ public class X402Handler
 
     private PaymentRequirements FillPaymentRequirements(PaymentRequirementsBasic basic)
     {
-        var tokenInfo = tokenInfoProvider.GetTokenInfo(basic.Asset);
-        if (tokenInfo == null)
+        var assetInfo = assetInfoProvider.GetAssetInfo(basic.Asset);
+        if (assetInfo == null)
         {
-            logger.LogWarning("No token info found for asset {Asset}", basic.Asset);
+            logger.LogWarning("No asset info found for asset {Asset}", basic.Asset);
         }
 
         return new PaymentRequirements
         {
             Scheme = basic.Scheme,
-            Network = tokenInfo?.Network ?? string.Empty,
+            Network = assetInfo?.Network ?? string.Empty,
             MaxAmountRequired = basic.MaxAmountRequired,
             Asset = basic.Asset,
             MimeType = basic.MimeType,
@@ -397,8 +397,8 @@ public class X402Handler
             Description = basic.Description,
             Extra = new PaymentRequirementsExtra
             {
-                Name = tokenInfo?.Name ?? string.Empty,
-                Version = tokenInfo?.Version ?? string.Empty
+                Name = assetInfo?.Name ?? string.Empty,
+                Version = assetInfo?.Version ?? string.Empty
             }
         };
     }

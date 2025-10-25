@@ -3,11 +3,12 @@ using x402.Core.Models;
 
 namespace x402.Core
 {
-    public class TokenInfoProvider : ITokenInfoProvider
+    public class AssetInfoProvider : IAssetInfoProvider
     {
-        protected List<TokenInfo> TokenInfos { get; } = new()
+        protected Dictionary<string, string> Aliases { get; } = new();
+        protected List<AssetInfo> AssetInfos { get; } = new()
         {
-            new TokenInfo
+            new AssetInfo
             {
                 ChainId = 84532,
                 Network = "base-sepolia",
@@ -15,7 +16,7 @@ namespace x402.Core
                 Name = "USDC",
                 Version = "2"
             },
-            new TokenInfo
+            new AssetInfo
             {
                 ChainId = 8453,
                 Network = "base",
@@ -23,7 +24,7 @@ namespace x402.Core
                 Name = "USD Coin",
                 Version = "2"
             },
-            new TokenInfo
+            new AssetInfo
             {
                 ChainId = 43113,
                 Network = "avalanche-fuji",
@@ -31,7 +32,7 @@ namespace x402.Core
                 Name = "USD Coin",
                 Version = "2"
             },
-            new TokenInfo
+            new AssetInfo
             {
                 ChainId = 43114,
                 Network = "avalanche",
@@ -39,7 +40,7 @@ namespace x402.Core
                 Name = "USDC",
                 Version = "2"
             },
-            new TokenInfo
+            new AssetInfo
             {
                 ChainId = 103,
                 Network = "solana-devnet",
@@ -47,7 +48,7 @@ namespace x402.Core
                 Name = "USDC",
                 Version = "1"
             },
-            new TokenInfo
+            new AssetInfo
             {
                 ChainId = 101,
                 Network = "solana",
@@ -55,7 +56,7 @@ namespace x402.Core
                 Name = "USDC",
                 Version = "1"
             },
-            new TokenInfo
+            new AssetInfo
             {
                 ChainId = 137,
                 Network = "polygon",
@@ -63,7 +64,7 @@ namespace x402.Core
                 Name = "USD Coin",
                 Version = "1"
             },
-            new TokenInfo
+            new AssetInfo
             {
                 ChainId = 80002,
                 Network = "polygon-amoy",
@@ -73,10 +74,44 @@ namespace x402.Core
             }
         };
 
-
-        public virtual TokenInfo? GetTokenInfo(string contractAddress)
+        public void AddAlias(string alias, string contractAddress)
         {
-            return TokenInfos.FirstOrDefault(ti => ti.ContractAddress.Equals(contractAddress, StringComparison.OrdinalIgnoreCase));
+            ArgumentException.ThrowIfNullOrWhiteSpace(alias);
+            ArgumentException.ThrowIfNullOrWhiteSpace(contractAddress);
+
+            if (GetAssetInfo(contractAddress) is null)
+            {
+                throw new ArgumentException(
+                    $"Cannot create alias '{alias}' for unknown contract address '{contractAddress}'.",
+                    nameof(contractAddress)
+                );
+            }
+
+            Aliases[alias] = contractAddress;
+        }
+
+        public void AddAssetInfo(AssetInfo assetInfo)
+        {
+            var existing = GetAssetInfo(assetInfo.ContractAddress);
+            if (existing != null)
+            {
+                AssetInfos.Remove(existing);
+            }
+            AssetInfos.Add(assetInfo);
+        }
+
+        public virtual AssetInfo? GetAssetInfo(string contractAddress)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(contractAddress);
+
+            // Resolve alias first, if it exists
+            if (Aliases.TryGetValue(contractAddress, out var aliasedContract))
+            {
+                contractAddress = aliasedContract;
+            }
+
+            return AssetInfos.FirstOrDefault(info =>
+                string.Equals(info.ContractAddress, contractAddress, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

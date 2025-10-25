@@ -10,7 +10,7 @@ namespace x402
         public static IServiceCollection AddX402(this IServiceCollection services)
         {
             services.AddSingleton<X402Handler>();
-            services.AddSingleton<ITokenInfoProvider, TokenInfoProvider>();
+            services.AddSingleton<IAssetInfoProvider, AssetInfoProvider>();
             services.AddHttpContextAccessor();
 
             return services;

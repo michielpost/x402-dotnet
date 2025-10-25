@@ -62,17 +62,17 @@ namespace x402.Attributes
         {
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<PaymentRequiredAttribute>>();
             var x402Handler = context.HttpContext.RequestServices.GetRequiredService<X402Handler>();
-            var tokenInfoProvider = context.HttpContext.RequestServices.GetRequiredService<ITokenInfoProvider>();
+            var assetInfoProvider = context.HttpContext.RequestServices.GetRequiredService<IAssetInfoProvider>();
 
             var request = context.HttpContext.Request;
             var fullUrl = $"{request.Scheme}://{request.Host}{request.Path}{request.QueryString}";
 
             logger.LogDebug("PaymentRequiredAttribute invoked for path {Path}", fullUrl);
 
-            var tokenInfo = tokenInfoProvider.GetTokenInfo(this.Asset);
-            if (tokenInfo == null)
+            var assetInfo = assetInfoProvider.GetAssetInfo(this.Asset);
+            if (assetInfo == null)
             {
-                logger.LogWarning("No token info found for asset {Asset};", this.Asset);
+                logger.LogWarning("No asset info found for asset {Asset};", this.Asset);
             }
 
             var paymentRequirements = new PaymentRequirements
@@ -81,15 +81,15 @@ namespace x402.Attributes
                 Description = this.Description,
                 MaxAmountRequired = this.MaxAmountRequired.ToString(),
                 MimeType = this.MimeType,
-                Network = tokenInfo?.Network ?? string.Empty,
+                Network = assetInfo?.Network ?? string.Empty,
                 PayTo = this.PayTo,
                 Resource = fullUrl,
                 Scheme = this.Scheme,
                 MaxTimeoutSeconds = 60,
                 Extra = new PaymentRequirementsExtra
                 {
-                    Name = tokenInfo?.Name ?? string.Empty,
-                    Version = tokenInfo?.Version ?? string.Empty
+                    Name = assetInfo?.Name ?? string.Empty,
+                    Version = assetInfo?.Version ?? string.Empty
                 }
             };
             logger.LogInformation("Built payment requirements for path {Path}: scheme {Scheme}, asset {Asset}", fullUrl, paymentRequirements.Scheme, paymentRequirements.Asset);

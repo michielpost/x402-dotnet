@@ -36,7 +36,7 @@ namespace x402.Tests
                     {
                         services.AddSingleton(facilitator);
                         services.AddSingleton<X402Handler>();
-                        services.AddSingleton<ITokenInfoProvider, TokenInfoProvider>();
+                        services.AddSingleton<IAssetInfoProvider, AssetInfoProvider>();
                         services.AddHttpContextAccessor();
 
                     });

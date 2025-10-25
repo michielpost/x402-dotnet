@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\X402.Client.ConsoleSample\X402.Client.ConsoleSample.csproj" />
     <ProjectReference Include="..\x402.FacilitatorMock\x402.FacilitatorMock.csproj" />
     <ProjectReference Include="..\x402.SampleWeb\x402.SampleWeb.csproj" />
   </ItemGroup>

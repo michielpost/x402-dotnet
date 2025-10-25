@@ -1,10 +1,34 @@
-﻿using System.Text.Json;
+﻿using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 using x402.Client;
 using x402.Client.EVM;
 
 Console.WriteLine("Welcome to the x402 client sample app");
 
-var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", 84532UL) //base-sepolia chain ID
+// Load configuration
+var config = new ConfigurationBuilder()
+    .SetBasePath(AppContext.BaseDirectory)
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables()
+    .Build();
+
+// Read values from configuration
+var privateKey = config["EVMWallet:PrivateKey"];
+var networkIdString = config["EVMWallet:NetworkId"];
+
+if (string.IsNullOrWhiteSpace(privateKey) || string.IsNullOrWhiteSpace(networkIdString))
+{
+    Console.WriteLine("Missing EVMWallet configuration. Please set EVMWallet:PrivateKey and EVMWallet:NetworkId.");
+    return;
+}
+
+if (!ulong.TryParse(networkIdString, out var networkId))
+{
+    Console.WriteLine("Invalid NetworkId value in configuration.");
+    return;
+}
+
+var wallet = new EVMWallet(privateKey, networkId)
 {
     IgnoreAllowances = true
 };

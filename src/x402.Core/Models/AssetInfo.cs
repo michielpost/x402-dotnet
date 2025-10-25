@@ -1,6 +1,6 @@
 ﻿namespace x402.Core.Models
 {
-    public record TokenInfo
+    public record AssetInfo
     {
         public ulong ChainId { get; init; }
         public required string Network { get; init; }

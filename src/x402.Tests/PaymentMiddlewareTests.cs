@@ -30,7 +30,7 @@ namespace x402.Tests
                     {
                         s.AddSingleton<IFacilitatorClient>(facilitatorClient);
                         s.AddSingleton<X402Handler>();
-                        s.AddSingleton<ITokenInfoProvider, TokenInfoProvider>();
+                        s.AddSingleton<IAssetInfoProvider, AssetInfoProvider>();
                         s.AddHttpContextAccessor();
                     });
                     builder.Configure(app =>

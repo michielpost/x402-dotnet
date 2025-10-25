@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using x402.Core.Interfaces;
 using x402.Models;
 
 namespace x402
@@ -14,7 +13,6 @@ namespace x402
         private readonly ILogger<PaymentMiddleware> logger;
         private readonly PaymentMiddlewareOptions paymentMiddlewareOptions;
         private readonly X402Handler x402Handler;
-        private readonly ITokenInfoProvider tokenInfoProvider;
 
         /// <summary>
         /// Creates a payment middleware that enforces X-402 payments on configured paths or endpoints.
@@ -25,14 +23,12 @@ namespace x402
         public PaymentMiddleware(RequestDelegate next,
             ILogger<PaymentMiddleware> logger,
             X402Handler x402Handler,
-            ITokenInfoProvider tokenInfoProvider,
             PaymentMiddlewareOptions paymentMiddlewareOptions)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
             this.logger = logger;
             this.paymentMiddlewareOptions = paymentMiddlewareOptions;
             this.x402Handler = x402Handler;
-            this.tokenInfoProvider = tokenInfoProvider;
         }
 
         public async Task InvokeAsync(HttpContext context)
