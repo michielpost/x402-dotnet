@@ -9,15 +9,15 @@ namespace x402
         /// Retrieves the X402 payment handling result from the HttpContext.
         /// </summary>
         /// <param name="context">The HttpContext instance.</param>
-        /// <returns>The HandleX402Result if available; otherwise, null.</returns>
-        public static HandleX402Result? GetX402Result(this HttpContext context)
+        /// <returns>The X402ProcessingResult if available; otherwise, null.</returns>
+        public static X402ProcessingResult? GetX402Result(this HttpContext context)
         {
             if (context == null)
             {
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (context.Items.TryGetValue(X402Handler.X402ResultKey, out var result) && result is HandleX402Result x402Result)
+            if (context.Items.TryGetValue(X402Handler.X402ResultKey, out var result) && result is X402ProcessingResult x402Result)
             {
                 return x402Result;
             }

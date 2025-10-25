@@ -104,7 +104,9 @@ namespace x402.Tests
                     { "authorization", new Dictionary<string, object?> {
                         { "from", "0xabc" },
                         { "to", "0x0000000000000000000000000000000000000001" } ,
-                        { "value", "1" }
+                        { "value", "1" },
+                        { "validBefore", DateTimeOffset.UtcNow.AddSeconds(5).ToUnixTimeSeconds().ToString() },
+                        { "validAfter", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString() }
                     } },
                     { "resource", ":///ok" }
                 }
