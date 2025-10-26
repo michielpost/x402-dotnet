@@ -47,6 +47,7 @@ namespace x402.Client.EVM.IntegrationTests
             };
 
             var response = await client.PostAsJsonAsync("https://localhost:44310/PublicMessage/send-msg", req);
+            var respText = await response.Content.ReadAsStringAsync();
 
             Assert.That(response.IsSuccessStatusCode, Is.True);
             Console.WriteLine($"Final: {(int)response.StatusCode} {response.ReasonPhrase}");
