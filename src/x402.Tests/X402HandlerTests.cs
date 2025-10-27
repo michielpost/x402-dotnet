@@ -28,6 +28,17 @@ namespace x402.Tests
             Action? onStartingMarker = null,
             int version = 1)
         {
+            return BuildHost(facilitator, path, new List<PaymentRequirements> { requirements }, mode, onSettlement, onStartingMarker, version);
+        }
+
+        private static IHost BuildHost(IFacilitatorClient facilitator,
+            string path,
+            List<PaymentRequirements> requirements,
+            SettlementMode mode = SettlementMode.Optimistic,
+            Func<HttpContext, SettlementResponse?, Exception?, Task>? onSettlement = null,
+            Action? onStartingMarker = null,
+            int version = 1)
+        {
             return new HostBuilder()
                 .ConfigureLogging(b => b.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug))
                 .ConfigureWebHost(builder =>
@@ -55,7 +66,7 @@ namespace x402.Tests
                             // Invoke handler
                             var x402handler = context.RequestServices.GetRequiredService<X402Handler>();
                             var result = await x402handler.HandleX402Async(
-                                new List<PaymentRequirements> { requirements },
+                                requirements,
                                 true,
                                 version: version,
                                 mode,
@@ -86,6 +97,21 @@ namespace x402.Tests
             };
         }
 
+        private static PaymentRequirements CreateRequirements(string path, string payTo, string amount)
+        {
+            return new PaymentRequirements
+            {
+                Scheme = PaymentScheme.Exact,
+                Network = "base-sepolia",
+                MaxAmountRequired = amount,
+                Asset = "USDC",
+                Resource = $"http://localhost{path}",
+                MimeType = "application/json",
+                PayTo = payTo,
+                Description = "unit test"
+            };
+        }
+
         private static string CreateHeaderJson(string? resource = null, string? from = null, string? network = "base-sepolia", string to = "0x0000000000000000000000000000000000000001", string value = "1")
         {
             var payload = new
@@ -108,9 +134,9 @@ namespace x402.Tests
             return JsonSerializer.Serialize(payload, new JsonSerializerOptions(JsonSerializerDefaults.Web));
         }
 
-        private static string CreateHeaderB64(string? resource = null, string? from = null, string? network = "base-sepolia")
+        private static string CreateHeaderB64(string? resource = null, string? from = null, string? network = "base-sepolia", string to = "0x0000000000000000000000000000000000000001", string value = "1")
         {
-            string json = CreateHeaderJson(resource, from, network);
+            string json = CreateHeaderJson(resource, from, network, to, value);
             return Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
         }
 
@@ -469,6 +495,75 @@ namespace x402.Tests
 
             Assert.That(resp.IsSuccessStatusCode, Is.True);
             Assert.That(resp.Headers.Contains("PAYMENT-RESPONSE"), Is.True);
+        }
+
+        [Test]
+        public async Task MultiplePaymentRequirements_SelectsCorrectRequirement()
+        {
+            string? settledPayTo = null;
+            string? settledAmount = null;
+
+            var facilitator = new FakeFacilitatorClient
+            {
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, req) =>
+                {
+                    settledPayTo = req.PayTo;
+                    settledAmount = req.MaxAmountRequired;
+                    return Task.FromResult(new SettlementResponse { Success = true, Transaction = "0x123", Network = req.Network });
+                }
+            };
+
+            // Create multiple payment requirements with different PayTo addresses and amounts
+            var requirements = new List<PaymentRequirements>
+            {
+                CreateRequirements("/multi", "0x1111111111111111111111111111111111111111", "5"),
+                CreateRequirements("/multi", "0x2222222222222222222222222222222222222222", "10"),
+                CreateRequirements("/multi", "0x3333333333333333333333333333333333333333", "15")
+            };
+
+            using var host = BuildHost(facilitator, "/multi", requirements, SettlementMode.Optimistic, onSettlement: null, onStartingMarker: null, version: 2);
+            var client = host.GetTestClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "/multi");
+            // Send payment header targeting the second requirement (0x2222... with amount 10)
+            request.Headers.Add("PAYMENT-SIGNATURE", CreateHeaderB64(resource: "/multi", from: "0xabc", to: "0x2222222222222222222222222222222222222222", value: "10"));
+
+            var resp = await client.SendAsync(request);
+
+            Assert.That(resp.IsSuccessStatusCode, Is.True);
+            Assert.That(resp.Headers.Contains("PAYMENT-RESPONSE"), Is.True);
+            // Verify the correct requirement was selected and settled
+            Assert.That(settledPayTo, Is.EqualTo("0x2222222222222222222222222222222222222222"));
+            Assert.That(settledAmount, Is.EqualTo("10"));
+        }
+
+        [Test]
+        public async Task MultiplePaymentRequirements_NoMatch_Returns402()
+        {
+            var facilitator = new FakeFacilitatorClient
+            {
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0x123", Network = req.Network })
+            };
+
+            // Create multiple payment requirements
+            var requirements = new List<PaymentRequirements>
+            {
+                CreateRequirements("/multi-fail", "0x1111111111111111111111111111111111111111", "5"),
+                CreateRequirements("/multi-fail", "0x2222222222222222222222222222222222222222", "10"),
+                CreateRequirements("/multi-fail", "0x3333333333333333333333333333333333333333", "15")
+            };
+
+            using var host = BuildHost(facilitator, "/multi-fail", requirements, SettlementMode.Optimistic, onSettlement: null, onStartingMarker: null, version: 2);
+            var client = host.GetTestClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "/multi-fail");
+            // Send payment header that doesn't match any requirement (wrong PayTo)
+            request.Headers.Add("PAYMENT-SIGNATURE", CreateHeaderB64(resource: "/multi-fail", from: "0xabc", to: "0x9999999999999999999999999999999999999999", value: "5"));
+
+            var resp = await client.SendAsync(request);
+
+            Assert.That(resp.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.PaymentRequired));
+            Assert.That(resp.Headers.Contains("PAYMENT-REQUIRED"), Is.True);
         }
     }
 }
