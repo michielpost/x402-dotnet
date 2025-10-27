@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Text;
+using System.Text.Json;
 using x402.Client.Events;
 using x402.Core.Models.v1;
 
@@ -8,6 +9,9 @@ namespace x402.Client
     {
         private readonly IX402Wallet _wallet;
         private readonly int _maxRetries;
+        public const string PaymentHeaderV1 = "X-PAYMENT";
+        public const string PaymentHeaderV2 = "PAYMENT-SIGNATURE";
+        public const string PaymentRequiredHeader = "PAYMENT-REQUIRED";
 
         protected static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
         {
@@ -36,6 +40,7 @@ namespace x402.Client
             while (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired &&
                    retries < _maxRetries)
             {
+                // Try to parse as v2 first (header-based), then fall back to v1 (body-based)
                 var paymentRequiredResponse = await ParsePaymentRequiredResponseAsync(response);
 
                 // Notify subscribers
@@ -54,8 +59,17 @@ namespace x402.Client
 
                 var retryRequest = await CloneHttpRequestAsync(request);
                 var headerJson = JsonSerializer.Serialize(payment.Header, JsonOptions);
-                var base64header = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(headerJson));
-                retryRequest.Headers.Add("X-PAYMENT", base64header);
+                var base64header = Convert.ToBase64String(Encoding.UTF8.GetBytes(headerJson));
+                
+                // Use the appropriate header based on X402 version
+                if (paymentRequiredResponse.X402Version == 2)
+                {
+                    retryRequest.Headers.Add(PaymentHeaderV2, base64header);
+                }
+                else
+                {
+                    retryRequest.Headers.Add(PaymentHeaderV1, base64header);
+                }
 
                 response.Dispose();
 
@@ -96,14 +110,40 @@ namespace x402.Client
         {
             try
             {
+                // Version 2: Try to parse from PAYMENT-REQUIRED header first
+                if (response.Headers.TryGetValues(PaymentRequiredHeader, out var headerValues))
+                {
+                    var headerValue = headerValues.FirstOrDefault();
+                    if (!string.IsNullOrWhiteSpace(headerValue))
+                    {
+                        try
+                        {
+                            var decodedBytes = Convert.FromBase64String(headerValue);
+                            var jsonString = Encoding.UTF8.GetString(decodedBytes);
+                            var parsed = JsonSerializer.Deserialize<PaymentRequiredResponse>(jsonString,
+                                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                            
+                            if (parsed != null && parsed.X402Version == 2)
+                            {
+                                return parsed;
+                            }
+                        }
+                        catch
+                        {
+                            // Fall through to try body parsing
+                        }
+                    }
+                }
+
+                // Version 1: Parse from JSON body
                 var content = await response.Content.ReadAsStringAsync();
                 if (string.IsNullOrWhiteSpace(content))
                     return new PaymentRequiredResponse();
 
-                var parsed = JsonSerializer.Deserialize<PaymentRequiredResponse>(content,
+                var bodyParsed = JsonSerializer.Deserialize<PaymentRequiredResponse>(content,
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-                return parsed ?? new PaymentRequiredResponse();
+                return bodyParsed ?? new PaymentRequiredResponse();
             }
             catch
             {
