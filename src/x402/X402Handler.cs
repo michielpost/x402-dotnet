@@ -499,10 +499,12 @@ public class X402Handler
 
         string json = JsonSerializer.Serialize(prr, jsonOptions);
 
+        context.Response.StatusCode = StatusCodes.Status402PaymentRequired;
+
         if (version == 1)
         {
-            context.Response.StatusCode = StatusCodes.Status402PaymentRequired;
             context.Response.ContentType = "application/json";
+            return context.Response.WriteAsync(json);
         }
         else if (version == 2)
         {
@@ -510,7 +512,7 @@ public class X402Handler
             context.Response.Headers.Append("Access-Control-Expose-Headers", PaymentRequiredHeader);
         }
 
-        return context.Response.WriteAsync(json);
+        return Task.CompletedTask;
     }
 
     private Task Respond500Async(HttpContext context, string? errorMsg)
