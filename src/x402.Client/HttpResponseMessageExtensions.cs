@@ -6,9 +6,23 @@ namespace x402.Client
 {
     public static class HttpResponseMessageExtensions
     {
+        public static readonly string PaymentResponseHeaderV1 = "X-PAYMENT-RESPONSE";
+        public static readonly string PaymentResponseHeaderV2 = "PAYMENT-RESPONSE";
+
         public static SettlementResponseHeader? ReadSettlementResponseHeader(this HttpResponseMessage response, JsonSerializerOptions? jsonOptions = null)
         {
-            if (!response.Headers.TryGetValues("X-PAYMENT-RESPONSE", out var values))
+            IEnumerable<string>? values = null;
+
+            if (response.Headers.TryGetValues(PaymentResponseHeaderV1, out var v1Value))
+            {
+                values = v1Value;
+            }
+            else if (response.Headers.TryGetValues(PaymentResponseHeaderV2, out var v2Value))
+            {
+                values = v2Value;
+            }
+
+            if (values == null)
                 return null;
 
             var base64 = values.FirstOrDefault();

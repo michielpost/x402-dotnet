@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 using System.Text.Json;
-using x402.Core.Models;
 using x402.Core.Models.Facilitator;
+using x402.Core.Models.v1;
 
 namespace x402.Facilitator
 {
@@ -48,7 +48,7 @@ namespace x402.Facilitator
             logger.LogInformation("Verifying payment payload for resource {Resource} with scheme {Scheme} and asset {Asset}", req.Resource, req.Scheme, req.Asset);
             var body = new FacilitatorRequest
             {
-                X402Version = 1,
+                X402Version = paymentPayload.X402Version,
                 PaymentPayload = paymentPayload,
                 PaymentRequirements = req
             };
@@ -86,7 +86,7 @@ namespace x402.Facilitator
             logger.LogInformation("Settling payment for resource {Resource} on network {Network} to {PayTo}", req.Resource, req.Network, req.PayTo);
             var body = new FacilitatorRequest
             {
-                X402Version = 1,
+                X402Version = paymentPayload.X402Version,
                 PaymentPayload = paymentPayload,
                 PaymentRequirements = req
             };
@@ -120,7 +120,7 @@ namespace x402.Facilitator
 
         }
 
-        public async Task<List<FacilitatorKind>> SupportedAsync(CancellationToken cancellationToken = default)
+        public async Task<SupportedResponse> SupportedAsync(CancellationToken cancellationToken = default)
         {
             logger.LogDebug("Requesting supported facilitator kinds");
             var url = BuildUrl("/supported", HttpMethod.Get);
@@ -136,18 +136,9 @@ namespace x402.Facilitator
                 throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {content}");
             }
 
-            var map = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>(JsonOptions, cancellationToken).ConfigureAwait(false);
+            var result = await response.Content.ReadFromJsonAsync<SupportedResponse>(JsonOptions, cancellationToken).ConfigureAwait(false);
 
-            if (map is null || !map.TryGetValue("kinds", out var kindsObj))
-            {
-                return new();
-            }
-
-            // Re-serialize then deserialize properly as List<Kind>
-            var kindsJson = JsonSerializer.Serialize(kindsObj, JsonOptions);
-            var kinds = JsonSerializer.Deserialize<List<FacilitatorKind>>(kindsJson, JsonOptions) ?? new List<FacilitatorKind>();
-            logger.LogInformation("Retrieved {Count} supported facilitator kinds", kinds.Count);
-            return kinds;
+            return result ?? new();
         }
 
         public async Task<DiscoveryResponse> DiscoveryAsync(string? type = null, int? limit = null, int? offset = null, CancellationToken cancellationToken = default)

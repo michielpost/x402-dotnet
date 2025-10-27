@@ -2,7 +2,7 @@
 using System.Text.Json.Serialization;
 using x402.Core.Enums;
 
-namespace x402.Core.Models
+namespace x402.Core.Models.v1
 {
     /// <summary>
     /// Represents the requirements for a payment.

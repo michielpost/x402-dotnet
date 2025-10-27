@@ -2,6 +2,7 @@
 using x402.Attributes;
 using x402.Core.Enums;
 using x402.Core.Models;
+using x402.Core.Models.v1;
 using x402.SampleWeb.Models;
 
 namespace x402.SampleWeb.Controllers
@@ -78,6 +79,7 @@ namespace x402.SampleWeb.Controllers
                     PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
                 },
                 discoverable: true,
+                version: 1,
                 SettlementMode.Pessimistic,
                 onSettlement: (context, response, ex) =>
                 {
@@ -106,6 +108,7 @@ namespace x402.SampleWeb.Controllers
                     PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
                 },
                 discoverable: true,
+                version: 1,
                 SettlementMode.Pessimistic,
                 onSetOutputSchema: (context, reqs, schema) =>
                 {

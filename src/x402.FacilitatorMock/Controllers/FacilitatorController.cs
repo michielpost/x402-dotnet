@@ -60,7 +60,7 @@ public class FacilitatorController : ControllerBase
     {
         return new()
         {
-             new FacilitatorKind("USDC", "mainnet")
+             new FacilitatorKind("USDC", "mainnet", 1)
         };
     }
 

@@ -3,8 +3,8 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using x402.Core.Enums;
-using x402.Core.Models;
 using x402.Core.Models.Facilitator;
+using x402.Core.Models.v1;
 using x402.Facilitator;
 
 namespace x402.Tests
@@ -130,10 +130,10 @@ namespace x402.Tests
                 return msg;
             });
 
-            var kinds = await client.SupportedAsync();
-            Assert.That(kinds, Is.Not.Null);
-            Assert.That(kinds.Count, Is.EqualTo(1));
-            Assert.That(kinds[0].Network, Is.EqualTo("coinbase"));
+            var result = await client.SupportedAsync();
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Kinds.Count, Is.EqualTo(1));
+            Assert.That(result.Kinds[0].Network, Is.EqualTo("coinbase"));
         }
     }
 }

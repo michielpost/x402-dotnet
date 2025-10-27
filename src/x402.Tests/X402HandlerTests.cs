@@ -10,8 +10,8 @@ using System.Text.Json;
 using x402.Core;
 using x402.Core.Enums;
 using x402.Core.Interfaces;
-using x402.Core.Models;
 using x402.Core.Models.Facilitator;
+using x402.Core.Models.v1;
 using x402.Facilitator;
 
 namespace x402.Tests
@@ -56,6 +56,7 @@ namespace x402.Tests
                             var result = await x402handler.HandleX402Async(
                                 requirements,
                                 true,
+                                version: 1,
                                 mode,
                                 onSettlement).ConfigureAwait(false);
 

@@ -1,10 +1,11 @@
 ﻿using System.Diagnostics;
+using x402.Core.Models.v1;
 
 namespace x402.Core.Models.Facilitator
 {
     public class DiscoveryResponse
     {
-        public int X402Version { get; set; }
+        public int X402Version { get; set; } = 1;
         public List<DiscoveryItem> Items { get; set; } = new();
         public Pagination Pagination { get; set; } = new();
     }

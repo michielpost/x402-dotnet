@@ -1,4 +1,4 @@
-﻿using x402.Core.Models.Responses;
+﻿using x402.Core.Models.v1;
 
 namespace x402.Client.Events
 {

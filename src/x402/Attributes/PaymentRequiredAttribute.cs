@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using x402.Core.Enums;
 using x402.Core.Interfaces;
-using x402.Core.Models;
+using x402.Core.Models.v1;
 
 namespace x402.Attributes
 {
@@ -94,7 +94,7 @@ namespace x402.Attributes
             };
             logger.LogInformation("Built payment requirements for path {Path}: scheme {Scheme}, asset {Asset}", fullUrl, paymentRequirements.Scheme, paymentRequirements.Asset);
 
-            var x402Result = await x402Handler.HandleX402Async(paymentRequirements, Discoverable, SettlementMode).ConfigureAwait(false);
+            var x402Result = await x402Handler.HandleX402Async(paymentRequirements, Discoverable, settlementMode: SettlementMode).ConfigureAwait(false);
             if (!x402Result.CanContinueRequest)
             {
                 logger.LogWarning("Payment not satisfied for path {Path}; stopping execution", fullUrl);

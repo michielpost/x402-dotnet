@@ -5,7 +5,7 @@ using Nethereum.Signer.EIP712;
 using Nethereum.Web3.Accounts;
 using System.Numerics;
 using System.Security.Cryptography;
-using x402.Core.Models;
+using x402.Core.Models.v1;
 
 namespace x402.Client.EVM
 {
