@@ -21,7 +21,9 @@ public record X402ProcessingResult
     /// <summary>
     /// The payment requirements used for processing.
     /// </summary>
-    public PaymentRequirements PaymentRequirements { get; init; } = null!;
+    public List<PaymentRequirements> PaymentRequirements { get; init; } = new();
+
+    public PaymentRequirements? SelectedPaymentRequirement { get; init; }
 
     /// <summary>
     /// Error message if processing failed.
@@ -63,12 +65,14 @@ public record X402ProcessingResult
     /// </summary>
     public Exception? SettlementException { get; init; }
 
+
     /// <summary>
     /// Creates a successful result.
     /// </summary>
     public static X402ProcessingResult Success(
         int version,
-        PaymentRequirements paymentRequirements,
+        List<PaymentRequirements> paymentRequirements,
+        PaymentRequirements selectedPaymentRequirement,
         VerificationResponse verificationResponse,
         SettlementResponse? settlementResponse = null,
         PaymentPayloadHeader? paymentPayload = null,
@@ -80,6 +84,7 @@ public record X402ProcessingResult
             X402Version = version,
             CanContinueRequest = true,
             PaymentRequirements = paymentRequirements,
+            SelectedPaymentRequirement = selectedPaymentRequirement,
             VerificationResponse = verificationResponse,
             SettlementResponse = settlementResponse,
             PaymentPayload = paymentPayload,
@@ -94,7 +99,7 @@ public record X402ProcessingResult
     /// </summary>
     public static X402ProcessingResult CreateError(
         int version,
-        PaymentRequirements paymentRequirements,
+        List<PaymentRequirements> paymentRequirements,
         string error,
         int statusCode,
         VerificationResponse? verificationResponse = null,

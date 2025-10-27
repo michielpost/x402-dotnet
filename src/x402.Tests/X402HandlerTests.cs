@@ -54,7 +54,7 @@ namespace x402.Tests
                             // Invoke handler
                             var x402handler = context.RequestServices.GetRequiredService<X402Handler>();
                             var result = await x402handler.HandleX402Async(
-                                requirements,
+                                new List<PaymentRequirements> { requirements },
                                 true,
                                 version: 1,
                                 mode,

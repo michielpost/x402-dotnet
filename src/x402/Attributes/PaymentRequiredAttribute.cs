@@ -75,24 +75,27 @@ namespace x402.Attributes
                 logger.LogWarning("No asset info found for asset {Asset};", this.Asset);
             }
 
-            var paymentRequirements = new PaymentRequirements
+            var paymentRequirements = new List<PaymentRequirements>
             {
-                Asset = this.Asset,
-                Description = this.Description,
-                MaxAmountRequired = this.MaxAmountRequired.ToString(),
-                MimeType = this.MimeType,
-                Network = assetInfo?.Network ?? string.Empty,
-                PayTo = this.PayTo,
-                Resource = fullUrl,
-                Scheme = this.Scheme,
-                MaxTimeoutSeconds = 60,
-                Extra = new PaymentRequirementsExtra
+                new ()
                 {
-                    Name = assetInfo?.Name ?? string.Empty,
-                    Version = assetInfo?.Version ?? string.Empty
+                    Asset = this.Asset,
+                    Description = this.Description,
+                    MaxAmountRequired = this.MaxAmountRequired.ToString(),
+                    MimeType = this.MimeType,
+                    Network = assetInfo?.Network ?? string.Empty,
+                    PayTo = this.PayTo,
+                    Resource = fullUrl,
+                    Scheme = this.Scheme,
+                    MaxTimeoutSeconds = 60,
+                    Extra = new PaymentRequirementsExtra
+                    {
+                        Name = assetInfo?.Name ?? string.Empty,
+                        Version = assetInfo?.Version ?? string.Empty
+                    }
                 }
             };
-            logger.LogInformation("Built payment requirements for path {Path}: scheme {Scheme}, asset {Asset}", fullUrl, paymentRequirements.Scheme, paymentRequirements.Asset);
+            logger.LogInformation("Built payment requirements for path {Path}", fullUrl);
 
             var x402Result = await x402Handler.HandleX402Async(paymentRequirements, Discoverable, settlementMode: SettlementMode).ConfigureAwait(false);
             if (!x402Result.CanContinueRequest)
