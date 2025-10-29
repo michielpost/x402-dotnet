@@ -43,7 +43,7 @@ namespace x402.Client
                 if (!canContinue || paymentRequiredResponse.Accepts.Count == 0)
                     break;
 
-                var payment = _wallet.RequestPayment(paymentRequiredResponse.Accepts, cancellationToken);
+                var payment = _wallet.RequestPayment(paymentRequiredResponse, cancellationToken);
 
                 // Notify subscribers
                 OnPaymentSelected(new PaymentSelectedEventArgs(request, payment.Requirement, payment.Header, retries + 1));

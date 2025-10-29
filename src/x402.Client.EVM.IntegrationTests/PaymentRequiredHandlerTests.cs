@@ -23,7 +23,8 @@ namespace x402.Client.EVM.IntegrationTests
 
             //var response = await client.GetAsync("https://x402-dotnet.azurewebsites.net/Resource/protected");
             //var response = await client.GetAsync("https://localhost:7154/resource/protected");
-            var response = await client.GetAsync("https://www.x402.org/protected");
+            var response = await client.GetAsync("https://localhost:44381/ResourceV2/protected");
+            //var response = await client.GetAsync("https://www.x402.org/protected");
             //var response = await client.GetAsync("https://proxy402.com/Z6lePs160M");
 
             Assert.That(response.IsSuccessStatusCode, Is.True);

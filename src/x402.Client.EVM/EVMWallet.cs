@@ -92,9 +92,9 @@ namespace x402.Client.EVM
 
             var header = new PaymentPayloadHeader()
             {
-                Network = requirement.Network,
-                Scheme = requirement.Scheme,
                 X402Version = 1,
+                Scheme = requirement.Scheme,
+                Network = requirement.Network,
                 Payload = new Payload
                 {
                     Resource = requirement.Resource,
@@ -108,7 +108,7 @@ namespace x402.Client.EVM
                         ValidBefore = validBefore.ToString(),
                         Nonce = nonceByte.ToHex(prefix: true), //nonce is bytes32: pass as hex string (0x...)
                     }
-                },
+                }
             };
 
             return header;

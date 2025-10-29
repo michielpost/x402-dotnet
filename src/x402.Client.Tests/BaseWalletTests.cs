@@ -22,7 +22,7 @@ namespace x402.Client.Tests
             var wallet = new TestWallet(new());
             wallet.IgnoreAllowances = false;
 
-            var (selected, header) = wallet.RequestPayment(new[] { Req("0xA") }, CancellationToken.None);
+            var (selected, header) = wallet.RequestPayment(new PaymentRequiredResponse() { Accepts = new() { Req("0xA") } }, CancellationToken.None);
 
             Assert.That(selected, Is.Null);
             Assert.That(header, Is.Null);
@@ -39,7 +39,7 @@ namespace x402.Client.Tests
             var r1 = Req("0xA");
             var r2 = Req("0xB");
 
-            var (selected, header) = wallet.RequestPayment(new[] { r1, r2 }, CancellationToken.None);
+            var (selected, header) = wallet.RequestPayment(new PaymentRequiredResponse() { Accepts = new() { r1, r2 } }, CancellationToken.None);
 
             Assert.That(selected, Is.EqualTo(r2));
             Assert.That(header, Is.Not.Null);
@@ -54,7 +54,7 @@ namespace x402.Client.Tests
             wallet.IgnoreAllowances = true;
 
             var r = Req("0xZZ");
-            var (selected, header) = wallet.RequestPayment(new[] { r }, CancellationToken.None);
+            var (selected, header) = wallet.RequestPayment(new PaymentRequiredResponse() { Accepts = new() { r } }, CancellationToken.None);
 
             Assert.That(selected, Is.EqualTo(r));
             Assert.That(header, Is.Not.Null);
@@ -73,9 +73,9 @@ namespace x402.Client.Tests
             var rD = Req("0xD", amount: "600"); // exceeds per-request
             var rOk = Req("0xD", amount: "400"); // within per-request
 
-            var (selected1, header1) = wallet.RequestPayment(new[] { rC }, CancellationToken.None);
-            var (selected2, header2) = wallet.RequestPayment(new[] { rD }, CancellationToken.None);
-            var (selected3, header3) = wallet.RequestPayment(new[] { rC, rD, rOk }, CancellationToken.None);
+            var (selected1, header1) = wallet.RequestPayment(new PaymentRequiredResponse() { Accepts = new() { rC } }, CancellationToken.None);
+            var (selected2, header2) = wallet.RequestPayment(new PaymentRequiredResponse() { Accepts = new() { rD } }, CancellationToken.None);
+            var (selected3, header3) = wallet.RequestPayment(new PaymentRequiredResponse() { Accepts = new() { rC, rD, rOk } }, CancellationToken.None);
 
             Assert.That(selected1, Is.Null);
             Assert.That(header1, Is.Null);

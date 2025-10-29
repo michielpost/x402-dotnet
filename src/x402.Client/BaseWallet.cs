@@ -8,9 +8,9 @@ namespace x402.Client
         public List<AssetAllowance> AssetAllowances { get; set; } = new();
         public bool IgnoreAllowances { get; set; }
 
-        public virtual (PaymentRequirements? Requirement, PaymentPayloadHeader? Header) RequestPayment(IReadOnlyList<PaymentRequirements> requirements, CancellationToken cancellationToken = default)
+        public virtual (PaymentRequirements? Requirement, PaymentPayloadHeader? Header) RequestPayment(PaymentRequiredResponse paymentRequiredResponse, CancellationToken cancellationToken = default)
         {
-            var allowedRequirements = requirements
+            var allowedRequirements = paymentRequiredResponse.Accepts
                 .Where(r => AssetAllowances.Any(a =>
                     a.Asset == r.Asset
                     && a.TotalAllowance >= long.Parse(r.MaxAmountRequired)
