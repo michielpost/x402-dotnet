@@ -98,7 +98,7 @@ namespace x402.Client.Tests
                 new HttpResponseMessage(HttpStatusCode.OK)
             });
 
-            var handler = new PaymentRequiredHandler(wallet, maxRetries: 2)
+            var handler = new PaymentRequiredV2Handler(wallet, maxRetries: 2)
             {
                 InnerHandler = inner
             };
@@ -125,7 +125,7 @@ namespace x402.Client.Tests
 
             var inner = new QueueMessageHandler(new[] { Build402() });
 
-            var handler = new PaymentRequiredHandler(wallet, maxRetries: 3)
+            var handler = new PaymentRequiredV2Handler(wallet, maxRetries: 3)
             {
                 InnerHandler = inner
             };
@@ -154,7 +154,7 @@ namespace x402.Client.Tests
                 new HttpResponseMessage(HttpStatusCode.OK)
             });
 
-            var handler = new PaymentRequiredHandler(wallet, maxRetries: 1)
+            var handler = new PaymentRequiredV2Handler(wallet, maxRetries: 1)
             {
                 InnerHandler = inner
             };
@@ -182,7 +182,7 @@ namespace x402.Client.Tests
                 new HttpResponseMessage(HttpStatusCode.OK)
             });
 
-            var handler = new PaymentRequiredHandler(wallet, maxRetries: 2)
+            var handler = new PaymentRequiredV2Handler(wallet, maxRetries: 2)
             {
                 InnerHandler = inner
             };
@@ -200,7 +200,7 @@ namespace x402.Client.Tests
             Assert.That(retryBody, Is.EqualTo(originalBody));
         }
 
-      
+
 
         // Version 2 specific tests
         [Test]
@@ -227,7 +227,7 @@ namespace x402.Client.Tests
             var base64Header = Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
 
             var v2Response = new HttpResponseMessage(HttpStatusCode.PaymentRequired);
-            v2Response.Headers.Add(PaymentRequiredHandler.PaymentRequiredHeader, base64Header);
+            v2Response.Headers.Add(PaymentRequiredV2Handler.PaymentRequiredHeader, base64Header);
 
             var inner = new QueueMessageHandler(new[]
             {
@@ -235,7 +235,7 @@ namespace x402.Client.Tests
                 new HttpResponseMessage(HttpStatusCode.OK)
             });
 
-            var handler = new PaymentRequiredHandler(wallet, maxRetries: 2)
+            var handler = new PaymentRequiredV2Handler(wallet, maxRetries: 2)
             {
                 InnerHandler = inner
             };
@@ -254,7 +254,7 @@ namespace x402.Client.Tests
             Assert.That(retryRequest.Headers.Contains(x402.Client.v1.HttpRequestMessageExtensions.PaymentHeaderV1), Is.False);
         }
 
-       
+
 
         [Test]
         public async Task Version2_Parses_Header_Instead_Of_Body()
@@ -282,7 +282,7 @@ namespace x402.Client.Tests
             {
                 Content = new StringContent("invalid body", Encoding.UTF8, "text/plain")
             };
-            response.Headers.Add(PaymentRequiredHandler.PaymentRequiredHeader, base64Header);
+            response.Headers.Add(PaymentRequiredV2Handler.PaymentRequiredHeader, base64Header);
 
             var inner = new QueueMessageHandler(new[]
             {
@@ -290,7 +290,7 @@ namespace x402.Client.Tests
                 new HttpResponseMessage(HttpStatusCode.OK)
             });
 
-            var handler = new PaymentRequiredHandler(wallet, maxRetries: 2)
+            var handler = new PaymentRequiredV2Handler(wallet, maxRetries: 2)
             {
                 InnerHandler = inner
             };

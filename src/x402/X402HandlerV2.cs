@@ -76,7 +76,7 @@ public class X402HandlerV2
         var context = GetHttpContext();
         var fullUrl = $"{context.Request.Scheme}://{context.Request.Host}{context.Request.Path}{context.Request.QueryString}".ToLowerInvariant();
 
-        if(string.IsNullOrWhiteSpace(resourceInfo.Url))
+        if (string.IsNullOrWhiteSpace(resourceInfo.Url))
             resourceInfo.Url = fullUrl;
 
         foreach (var paymentRequirementsItem in paymentRequirements)
@@ -361,7 +361,7 @@ public class X402HandlerV2
         try
         {
             var base64Header = CreatePaymentResponseHeader(sr, payer);
-            
+
             context.Response.Headers.Append(PaymentResponseHeaderV2, base64Header);
             context.Response.Headers.Append("Access-Control-Expose-Headers", PaymentResponseHeaderV2);
 

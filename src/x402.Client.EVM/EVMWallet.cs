@@ -211,6 +211,6 @@ namespace x402.Client.EVM
             };
         }
 
-       
+
     }
 }

@@ -20,7 +20,7 @@ namespace x402.Client.v2
 
             // Use the appropriate header based on X402 version
             request.Headers.Add(PaymentHeaderV2, base64header);
-            
+
         }
     }
 }

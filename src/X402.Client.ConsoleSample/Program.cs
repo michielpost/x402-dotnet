@@ -33,7 +33,7 @@ var wallet = new EVMWallet(privateKey, networkId)
 {
     IgnoreAllowances = true
 };
-var handlerV1 = new x402.Client.v1.PaymentRequiredHandler(wallet);
+var handlerV1 = new PaymentRequiredV1Handler(wallet);
 
 handlerV1.PaymentRequiredReceived += (_, e) =>
 {

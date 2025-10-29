@@ -70,7 +70,7 @@ var paymentOptions = new PaymentMiddlewareOptions
                 {
                     Resource = new ResourceInfoBasic
                     {
-                         MimeType = "application/json",
+                            MimeType = "application/json",
                             Description = "Payment Required",
                     },
                     Accepts = new()
@@ -78,12 +78,10 @@ var paymentOptions = new PaymentMiddlewareOptions
                         new PaymentRequirementsBasic {
                             Amount = "1000",
                             Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-                           
                             PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", // Replace with your actual wallet address
                         }
                     },
                     Discoverable = true,
-
                 }
             }
         },
@@ -107,11 +105,10 @@ var paymentOptions = new PaymentMiddlewareOptions
                         }
                     },
                     Discoverable = true,
-
                 }
             }
         }
-    },
+    }
 };
 
 app.UsePaymentMiddleware(paymentOptions);

@@ -1,14 +1,14 @@
 ﻿using System.Text;
 using System.Text.Json;
 using x402.Client.Events;
-using x402.Client.v2.Events;
-using x402.Core.Models.v2;
+using x402.Client.v1.Events;
+using x402.Core.Models.v1;
 
-namespace x402.Client.v2
+namespace x402.Client.v1
 {
-    public class PaymentRequiredHandler : DelegatingHandler
+    public class PaymentRequiredV1Handler : DelegatingHandler
     {
-        private readonly IX402WalletV2 _wallet;
+        private readonly IX402WalletV1 _wallet;
         private readonly int _maxRetries;
 
         public const string PaymentRequiredHeader = "PAYMENT-REQUIRED";
@@ -17,10 +17,10 @@ namespace x402.Client.v2
         public event EventHandler<PaymentSelectedEventArgs>? PaymentSelected;
         public event EventHandler<PaymentRetryEventArgs>? PaymentRetrying;
 
-        public PaymentRequiredHandler(IX402WalletV2 wallet, int maxRetries = 1)
+        public PaymentRequiredV1Handler(IX402WalletV1 wallet, int maxRetries = 1)
             : this(wallet, maxRetries, new HttpClientHandler()) { }
 
-        public PaymentRequiredHandler(IX402WalletV2 wallet, int maxRetries, HttpMessageHandler innerHandler)
+        public PaymentRequiredV1Handler(IX402WalletV1 wallet, int maxRetries, HttpMessageHandler innerHandler)
             : base(innerHandler)
         {
             _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
@@ -119,11 +119,19 @@ namespace x402.Client.v2
                     }
                 }
 
-                return new PaymentRequiredResponse() { Resource = new() };
+                // Version 1: Parse from JSON body
+                var content = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrWhiteSpace(content))
+                    return new PaymentRequiredResponse();
+
+                var bodyParsed = JsonSerializer.Deserialize<PaymentRequiredResponse>(content,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                return bodyParsed ?? new PaymentRequiredResponse();
             }
             catch
             {
-                return new PaymentRequiredResponse() { Resource = new() };
+                return new PaymentRequiredResponse();
             }
         }
 

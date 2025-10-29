@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using x402.Core.Models.v1;
 
 namespace x402.Core.Models.v1.Facilitator
 {

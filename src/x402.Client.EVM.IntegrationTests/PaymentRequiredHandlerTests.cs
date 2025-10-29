@@ -18,7 +18,7 @@ namespace x402.Client.EVM.IntegrationTests
             {
                 IgnoreAllowances = true
             };
-            var handler = new PaymentRequiredHandler(wallet);
+            var handler = new PaymentRequiredV1Handler(wallet);
 
             var client = new HttpClient(handler);
 
@@ -77,7 +77,7 @@ namespace x402.Client.EVM.IntegrationTests
             {
                 IgnoreAllowances = true
             };
-            var handler = new PaymentRequiredHandler(wallet);
+            var handler = new PaymentRequiredV1Handler(wallet);
 
             var client = new HttpClient(handler);
 

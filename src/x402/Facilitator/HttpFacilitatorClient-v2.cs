@@ -2,8 +2,8 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using x402.Core.Models.Facilitator;
-using x402.Core.Models.v2.Facilitator;
 using x402.Core.Models.v2;
+using x402.Core.Models.v2.Facilitator;
 
 namespace x402.Facilitator
 {

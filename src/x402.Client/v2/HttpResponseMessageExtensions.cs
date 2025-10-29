@@ -12,7 +12,7 @@ namespace x402.Client.v2
         {
             IEnumerable<string>? values = null;
 
-           if (response.Headers.TryGetValues(PaymentResponseHeaderV2, out var v2Value))
+            if (response.Headers.TryGetValues(PaymentResponseHeaderV2, out var v2Value))
             {
                 values = v2Value;
             }

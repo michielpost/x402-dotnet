@@ -40,7 +40,7 @@ namespace x402.Client.Tests.Wallet
             var header = new Core.Models.v2.PaymentPayloadHeader()
             {
                 X402Version = 2,
-                Accepted = requirement,                
+                Accepted = requirement,
                 Payload = new Core.Models.v2.Payload
                 {
                     Signature = "",

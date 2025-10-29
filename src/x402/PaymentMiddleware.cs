@@ -56,7 +56,7 @@ namespace x402
 
             logger.LogInformation("Enforcing x402 payment for path {Path}", resourceFullUrl);
 
-            if(paymentConfig.Version == 1)
+            if (paymentConfig.Version == 1)
             {
                 var x402Result = await x402HandlerV1.HandleX402Async(paymentConfig.PaymentRequirements, paymentConfig.PaymentRequirements.Discoverable, settlementMode: paymentMiddlewareOptions.SettlementMode).ConfigureAwait(false);
                 if (!x402Result.CanContinueRequest)
@@ -78,7 +78,7 @@ namespace x402
             {
                 throw new Exception($"Unsupported X-402 version {paymentConfig.Version} for path {resourceFullUrl}");
             }
-                //Payment verified, continue to next middleware
+            //Payment verified, continue to next middleware
             logger.LogDebug("Payment verified for path {Path}; continuing to next middleware", resourceFullUrl);
             await _next(context);
         }
