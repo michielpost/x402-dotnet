@@ -13,6 +13,9 @@ namespace x402.Client.EVM
         public Account Account { get; }
         public ulong ChainId { get; }
 
+        public TimeSpan AddValidAfterFromNow { get; set; } = TimeSpan.FromMinutes(-1);
+        public TimeSpan AddValidBeforeFromNow { get; set; } = TimeSpan.FromMinutes(15);
+
         byte[] privateKey;
 
         public EVMWallet(string hexPrivateKey, ulong chainId)
@@ -58,8 +61,8 @@ namespace x402.Client.EVM
             var value = new Nethereum.Hex.HexTypes.HexBigInteger(amount);
 
             // Validity window: use unix timestamps
-            ulong validAfter = (ulong)DateTimeOffset.UtcNow.AddMinutes(-1).ToUnixTimeSeconds(); // valid immediately
-            ulong validBefore = (ulong)DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds(); // valid for 15 minutes
+            ulong validAfter = (ulong)DateTimeOffset.UtcNow.Add(AddValidAfterFromNow).ToUnixTimeSeconds(); // valid immediately
+            ulong validBefore = (ulong)DateTimeOffset.UtcNow.Add(AddValidBeforeFromNow).ToUnixTimeSeconds(); // valid for 15 minutes
 
             // Create a proper bytes32 nonce: 32 random bytes -> 0x-prefixed hex
             var nonceByte = GenerateBytes32Nonce();
@@ -128,8 +131,8 @@ namespace x402.Client.EVM
             var value = new Nethereum.Hex.HexTypes.HexBigInteger(amount);
 
             // Validity window: use unix timestamps
-            ulong validAfter = (ulong)DateTimeOffset.UtcNow.AddMinutes(-1).ToUnixTimeSeconds(); // valid immediately
-            ulong validBefore = (ulong)DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds(); // valid for 15 minutes
+            ulong validAfter = (ulong)DateTimeOffset.UtcNow.Add(AddValidAfterFromNow).ToUnixTimeSeconds(); // valid immediately
+            ulong validBefore = (ulong)DateTimeOffset.UtcNow.Add(AddValidBeforeFromNow).ToUnixTimeSeconds(); // valid for 15 minutes
 
             // Create a proper bytes32 nonce: 32 random bytes -> 0x-prefixed hex
             var nonceByte = GenerateBytes32Nonce();
