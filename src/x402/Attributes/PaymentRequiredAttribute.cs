@@ -33,6 +33,9 @@ namespace x402.Attributes
         /// </summary>
         public string PayTo { get; set; }
 
+        public int Version { get; set; }
+
+
         public string Description { get; set; } = string.Empty;
         public string MimeType { get; set; } = string.Empty;
 
@@ -50,11 +53,13 @@ namespace x402.Attributes
         public PaymentRequiredAttribute(string maxAmountRequired,
             string asset,
             string payTo,
+            int version = 1,
             PaymentScheme scheme = PaymentScheme.Exact)
         {
             MaxAmountRequired = maxAmountRequired;
             Asset = asset;
             PayTo = payTo;
+            Version = version;
             Scheme = scheme;
         }
 
@@ -97,7 +102,7 @@ namespace x402.Attributes
             };
             logger.LogInformation("Built payment requirements for path {Path}", fullUrl);
 
-            var x402Result = await x402Handler.HandleX402Async(paymentRequirements, Discoverable, settlementMode: SettlementMode).ConfigureAwait(false);
+            var x402Result = await x402Handler.HandleX402Async(paymentRequirements, Discoverable, version: Version, settlementMode: SettlementMode).ConfigureAwait(false);
             if (!x402Result.CanContinueRequest)
             {
                 logger.LogWarning("Payment not satisfied for path {Path}; stopping execution", fullUrl);

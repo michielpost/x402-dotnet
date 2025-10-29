@@ -65,6 +65,20 @@ var paymentOptions = new PaymentMiddlewareOptions
     {
         {  "/resource/middleware", new PaymentRequirementsConfig
             {
+                Version = 1,
+                PaymentRequirements = new PaymentRequirementsBasic {
+                    MaxAmountRequired = "1000",
+                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                    MimeType = "application/json",
+                    Description = "Payment Required",
+                    Discoverable = true,
+                    PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", // Replace with your actual wallet address
+                }
+            }
+        },
+        {  "/resourcev2/middleware", new PaymentRequirementsConfig
+            {
+                Version = 2,
                 PaymentRequirements = new PaymentRequirementsBasic {
                     MaxAmountRequired = "1000",
                     Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",

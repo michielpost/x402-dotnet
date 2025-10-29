@@ -53,7 +53,7 @@ namespace x402
 
             logger.LogInformation("Enforcing x402 payment for path {Path} with scheme {Scheme} asset {Asset}", resourceFullUrl, paymentConfig.PaymentRequirements.Scheme, paymentConfig.PaymentRequirements.Asset);
 
-            var x402Result = await x402Handler.HandleX402Async(paymentConfig.PaymentRequirements, paymentConfig.PaymentRequirements.Discoverable, settlementMode: paymentMiddlewareOptions.SettlementMode).ConfigureAwait(false);
+            var x402Result = await x402Handler.HandleX402Async(paymentConfig.PaymentRequirements, paymentConfig.PaymentRequirements.Discoverable, paymentConfig.Version, settlementMode: paymentMiddlewareOptions.SettlementMode).ConfigureAwait(false);
             if (!x402Result.CanContinueRequest)
             {
                 logger.LogWarning("Payment not satisfied for path {Path}; responding with 402/500 already handled", resourceFullUrl);
