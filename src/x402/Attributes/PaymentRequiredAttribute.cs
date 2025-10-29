@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using x402.Core.Enums;
 using x402.Core.Interfaces;
-using x402.Core.Models;
+using x402.Core.Models.v1;
 
 namespace x402.Attributes
 {
@@ -33,6 +33,9 @@ namespace x402.Attributes
         /// </summary>
         public string PayTo { get; set; }
 
+        public int Version { get; set; }
+
+
         public string Description { get; set; } = string.Empty;
         public string MimeType { get; set; } = string.Empty;
 
@@ -50,11 +53,13 @@ namespace x402.Attributes
         public PaymentRequiredAttribute(string maxAmountRequired,
             string asset,
             string payTo,
+            int version = 1,
             PaymentScheme scheme = PaymentScheme.Exact)
         {
             MaxAmountRequired = maxAmountRequired;
             Asset = asset;
             PayTo = payTo;
+            Version = version;
             Scheme = scheme;
         }
 
@@ -75,26 +80,29 @@ namespace x402.Attributes
                 logger.LogWarning("No asset info found for asset {Asset};", this.Asset);
             }
 
-            var paymentRequirements = new PaymentRequirements
+            var paymentRequirements = new List<PaymentRequirements>
             {
-                Asset = this.Asset,
-                Description = this.Description,
-                MaxAmountRequired = this.MaxAmountRequired.ToString(),
-                MimeType = this.MimeType,
-                Network = assetInfo?.Network ?? string.Empty,
-                PayTo = this.PayTo,
-                Resource = fullUrl,
-                Scheme = this.Scheme,
-                MaxTimeoutSeconds = 60,
-                Extra = new PaymentRequirementsExtra
+                new ()
                 {
-                    Name = assetInfo?.Name ?? string.Empty,
-                    Version = assetInfo?.Version ?? string.Empty
+                    Asset = this.Asset,
+                    Description = this.Description,
+                    MaxAmountRequired = this.MaxAmountRequired.ToString(),
+                    MimeType = this.MimeType,
+                    Network = assetInfo?.Network ?? string.Empty,
+                    PayTo = this.PayTo,
+                    Resource = fullUrl,
+                    Scheme = this.Scheme,
+                    MaxTimeoutSeconds = 60,
+                    Extra = new PaymentRequirementsExtra
+                    {
+                        Name = assetInfo?.Name ?? string.Empty,
+                        Version = assetInfo?.Version ?? string.Empty
+                    }
                 }
             };
-            logger.LogInformation("Built payment requirements for path {Path}: scheme {Scheme}, asset {Asset}", fullUrl, paymentRequirements.Scheme, paymentRequirements.Asset);
+            logger.LogInformation("Built payment requirements for path {Path}", fullUrl);
 
-            var x402Result = await x402Handler.HandleX402Async(paymentRequirements, Discoverable, SettlementMode).ConfigureAwait(false);
+            var x402Result = await x402Handler.HandleX402Async(paymentRequirements, Discoverable, version: Version, settlementMode: SettlementMode).ConfigureAwait(false);
             if (!x402Result.CanContinueRequest)
             {
                 logger.LogWarning("Payment not satisfied for path {Path}; stopping execution", fullUrl);

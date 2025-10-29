@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
-using x402.Core.Models;
+using x402.Core.Models.v1;
 using x402.Facilitator;
 
 namespace x402.IntegrationTests.Facilitator
@@ -42,11 +42,11 @@ namespace x402.IntegrationTests.Facilitator
         [Test]
         public async Task SupportedAsync_ShouldReturnKinds()
         {
-            var kinds = await client.SupportedAsync();
+            var result = await client.SupportedAsync();
 
-            Assert.That(kinds, Is.Not.Null);
-            Assert.That(kinds.Count, Is.GreaterThan(0));
-            TestContext.Out.WriteLine($"Supported kinds: {string.Join(", ", kinds.Select(k => k.ToString()))}");
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Kinds.Count, Is.GreaterThan(0));
+            TestContext.Out.WriteLine($"Supported kinds: {string.Join(", ", result.Kinds.Select(k => k.ToString()))}");
         }
 
         [Test]

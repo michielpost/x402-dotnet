@@ -1,4 +1,6 @@
-﻿namespace x402.Core.Models.Facilitator
+﻿using x402.Core.Models.v1;
+
+namespace x402.Core.Models.Facilitator
 {
     /// <summary>
     /// Request to facilitator

@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using x402.Coinbase.Models;
-using x402.Core.Models;
+using x402.Core.Models.v1;
 
 
 namespace x402.Coinbase.IntegrationTests
@@ -37,11 +37,11 @@ namespace x402.Coinbase.IntegrationTests
         [Test]
         public async Task SupportedAsync_ShouldReturnKinds()
         {
-            var kinds = await client.SupportedAsync();
+            var result = await client.SupportedAsync();
 
-            Assert.That(kinds, Is.Not.Null);
-            Assert.That(kinds.Count, Is.GreaterThan(0));
-            TestContext.Out.WriteLine($"Supported kinds: {string.Join(", ", kinds.Select(k => k.ToString()))}");
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Kinds.Count, Is.GreaterThan(0));
+            TestContext.Out.WriteLine($"Supported kinds: {string.Join(", ", result.Kinds.Select(k => k.ToString()))}");
         }
 
         [Test]

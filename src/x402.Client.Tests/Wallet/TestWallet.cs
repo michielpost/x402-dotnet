@@ -1,22 +1,24 @@
 ﻿using x402.Client.Models;
-using x402.Core.Models;
+using x402.Core.Models.v1;
 
 namespace x402.Client.Tests.Wallet
 {
     public class TestWallet : BaseWallet
     {
+        public int Version { get; set; } = 1;
+
         public TestWallet(List<AssetAllowance> assetAllowances)
         {
             AssetAllowances = assetAllowances;
         }
 
-        protected override PaymentPayloadHeader CreateHeader(PaymentRequirements requirement, CancellationToken cancellationToken)
+        public override PaymentPayloadHeader CreateHeader(PaymentRequirements requirement, CancellationToken cancellationToken)
         {
             var header = new PaymentPayloadHeader()
             {
                 Network = requirement.Network,
                 Scheme = requirement.Scheme,
-                X402Version = 1,
+                X402Version = Version,
                 Payload = new Payload
                 {
                     Resource = requirement.Resource,

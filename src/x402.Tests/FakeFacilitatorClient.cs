@@ -1,5 +1,5 @@
-using x402.Core.Models;
 using x402.Core.Models.Facilitator;
+using x402.Core.Models.v1;
 using x402.Facilitator;
 
 namespace x402.Tests
@@ -21,9 +21,9 @@ namespace x402.Tests
             return Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xabc", Network = requirements.Network });
         }
 
-        public Task<List<FacilitatorKind>> SupportedAsync(CancellationToken cancellationToken = default)
+        public Task<SupportedResponse> SupportedAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new List<FacilitatorKind>());
+            return Task.FromResult(new SupportedResponse());
         }
 
         public Task<DiscoveryResponse> DiscoveryAsync(string? type = null, int? limit = null, int? offset = null, CancellationToken cancellationToken = default)

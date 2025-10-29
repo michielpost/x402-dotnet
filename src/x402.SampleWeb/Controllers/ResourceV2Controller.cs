@@ -9,11 +9,11 @@ namespace x402.SampleWeb.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class ResourceController : ControllerBase
+    public class ResourceV2Controller : ControllerBase
     {
         private readonly X402Handler x402Handler;
 
-        public ResourceController(X402Handler x402Handler)
+        public ResourceV2Controller(X402Handler x402Handler)
         {
             this.x402Handler = x402Handler;
         }
@@ -38,7 +38,7 @@ namespace x402.SampleWeb.Controllers
 
         [HttpGet]
         [Route("protected")]
-        [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", Discoverable = true, SettlementMode = SettlementMode.Pessimistic)]
+        [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", Discoverable = true, Version = 2, SettlementMode = SettlementMode.Pessimistic)]
         public ActionResult<SampleResult> Protected()
         {
             // Optional: Retrieve the X402 result from HttpContext
@@ -60,7 +60,7 @@ namespace x402.SampleWeb.Controllers
 
         [HttpPost]
         [Route("protected")]
-        [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", Discoverable = true)]
+        [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", Discoverable = true, Version = 2)]
         public SampleResult ProtectedPost([FromBody] SampleRequest req)
         {
             return new SampleResult { Title = "Success! Protected by PaymentRequired Attribute" };
@@ -79,7 +79,7 @@ namespace x402.SampleWeb.Controllers
                     PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
                 },
                 discoverable: true,
-                version: 1,
+                version: 2,
                 SettlementMode.Pessimistic,
                 onSettlement: (context, response, ex) =>
                 {
@@ -108,7 +108,7 @@ namespace x402.SampleWeb.Controllers
                     PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
                 },
                 discoverable: true,
-                version: 1,
+                version: 2,
                 SettlementMode.Pessimistic,
                 onSetOutputSchema: (context, reqs, schema) =>
                 {

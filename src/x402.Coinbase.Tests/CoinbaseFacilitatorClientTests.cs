@@ -5,8 +5,8 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using x402.Coinbase.Models;
 using x402.Core.Enums;
-using x402.Core.Models;
 using x402.Core.Models.Facilitator;
+using x402.Core.Models.v1;
 
 namespace x402.Coinbase.Tests
 {

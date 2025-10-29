@@ -127,9 +127,10 @@ namespace x402.Tests
                             MimeType = "application/json",
                             Description = "unit",
                             PayTo = "0x"
-                        }
-                    }
-                }
+                        },
+                        Version = 1
+                    },
+                },
             };
 
             using var host = BuildHost(options, fake);

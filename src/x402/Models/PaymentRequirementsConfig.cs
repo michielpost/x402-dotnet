@@ -18,5 +18,10 @@ namespace x402.Models
         /// </summary>
         public bool EnableQueryStringMatching { get; set; }
 
+        /// <summary>
+        /// x402 version
+        /// </summary>
+        public int Version { get; set; } = 1;
+
     }
 }

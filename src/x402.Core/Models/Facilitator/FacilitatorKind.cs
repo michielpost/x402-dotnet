@@ -5,7 +5,7 @@ namespace x402.Core.Models.Facilitator
     public record FacilitatorKind(
      [property: JsonPropertyName("scheme")] string Scheme,
      [property: JsonPropertyName("network")] string Network,
-     [property: JsonPropertyName("x402Version")] int? X402Version = 1,
+     [property: JsonPropertyName("x402Version")] int X402Version,
      [property: JsonPropertyName("extra")] FacilitatorKindExtra? Extra = null
          )
     {

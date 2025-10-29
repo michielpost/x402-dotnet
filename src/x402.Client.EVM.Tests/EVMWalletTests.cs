@@ -1,5 +1,5 @@
 using x402.Core.Enums;
-using x402.Core.Models;
+using x402.Core.Models.v1;
 
 namespace x402.Client.EVM.Tests
 {
@@ -32,7 +32,7 @@ namespace x402.Client.EVM.Tests
             };
 
             // Act
-            var (selected, header) = wallet.RequestPayment(requirements, CancellationToken.None);
+            var (selected, header) = wallet.RequestPayment(new PaymentRequiredResponse() { Accepts = requirements }, CancellationToken.None);
 
             // Assert
             Assert.That(selected, Is.Not.Null);
@@ -69,7 +69,7 @@ namespace x402.Client.EVM.Tests
             };
 
             // Act
-            var (_, header) = wallet.RequestPayment(requirements, CancellationToken.None);
+            var (_, header) = wallet.RequestPayment(new PaymentRequiredResponse() { Accepts = requirements }, CancellationToken.None);
 
             // Assert
             Assert.That(header, Is.Not.Null);

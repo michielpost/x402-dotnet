@@ -1,5 +1,5 @@
 ﻿using x402.Client.Models;
-using x402.Core.Models;
+using x402.Core.Models.v1;
 
 namespace x402.Client
 {
@@ -12,6 +12,6 @@ namespace x402.Client
         /// Given a list of payment requirements, returns one that can be fulfilled,
         /// and a corresponding payload header to include in the retry.
         /// </summary>
-        (PaymentRequirements? Requirement, PaymentPayloadHeader? Header) RequestPayment(IReadOnlyList<PaymentRequirements> requirements, CancellationToken cancellationToken);
+        (PaymentRequirements? Requirement, PaymentPayloadHeader? Header) RequestPayment(PaymentRequiredResponse paymentRequiredResponse, CancellationToken cancellationToken = default);
     }
 }

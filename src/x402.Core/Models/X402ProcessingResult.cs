@@ -1,4 +1,5 @@
 using x402.Core.Models.Facilitator;
+using x402.Core.Models.v1;
 
 namespace x402.Core.Models;
 
@@ -8,6 +9,11 @@ namespace x402.Core.Models;
 public record X402ProcessingResult
 {
     /// <summary>
+    /// The X402 version.
+    /// </summary>
+    public required int X402Version { get; set; }
+
+    /// <summary>
     /// Whether the request can continue (payment was successful).
     /// </summary>
     public bool CanContinueRequest { get; init; }
@@ -15,7 +21,9 @@ public record X402ProcessingResult
     /// <summary>
     /// The payment requirements used for processing.
     /// </summary>
-    public PaymentRequirements PaymentRequirements { get; init; } = null!;
+    public List<PaymentRequirements> PaymentRequirements { get; init; } = new();
+
+    public PaymentRequirements? SelectedPaymentRequirement { get; init; }
 
     /// <summary>
     /// Error message if processing failed.
@@ -57,11 +65,14 @@ public record X402ProcessingResult
     /// </summary>
     public Exception? SettlementException { get; init; }
 
+
     /// <summary>
     /// Creates a successful result.
     /// </summary>
     public static X402ProcessingResult Success(
-        PaymentRequirements paymentRequirements,
+        int version,
+        List<PaymentRequirements> paymentRequirements,
+        PaymentRequirements selectedPaymentRequirement,
         VerificationResponse verificationResponse,
         SettlementResponse? settlementResponse = null,
         PaymentPayloadHeader? paymentPayload = null,
@@ -70,8 +81,10 @@ public record X402ProcessingResult
     {
         return new X402ProcessingResult
         {
+            X402Version = version,
             CanContinueRequest = true,
             PaymentRequirements = paymentRequirements,
+            SelectedPaymentRequirement = selectedPaymentRequirement,
             VerificationResponse = verificationResponse,
             SettlementResponse = settlementResponse,
             PaymentPayload = paymentPayload,
@@ -85,7 +98,8 @@ public record X402ProcessingResult
     /// Creates an error result.
     /// </summary>
     public static X402ProcessingResult CreateError(
-        PaymentRequirements paymentRequirements,
+        int version,
+        List<PaymentRequirements> paymentRequirements,
         string error,
         int statusCode,
         VerificationResponse? verificationResponse = null,
@@ -96,6 +110,7 @@ public record X402ProcessingResult
     {
         return new X402ProcessingResult
         {
+            X402Version = version,
             CanContinueRequest = false,
             PaymentRequirements = paymentRequirements,
             Error = error,

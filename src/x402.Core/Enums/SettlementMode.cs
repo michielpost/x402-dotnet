@@ -14,7 +14,12 @@ namespace x402.Core.Enums
         /// <summary>
         /// Pessimistic settlement mode: request is handled only after settlement is confirmed.
         /// </summary>
-        Pessimistic
+        Pessimistic,
+
+        /// <summary>
+        /// Use this mode to skip settlement entirely (for testing or scenarios where settlement is handled externally).
+        /// </summary>
+        DoNotSettle
     }
 }
 
