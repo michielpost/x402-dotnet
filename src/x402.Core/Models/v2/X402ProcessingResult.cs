@@ -17,6 +17,8 @@ public record X402ProcessingResult
     /// </summary>
     public bool CanContinueRequest { get; init; }
 
+    public required ResourceInfo ResourceInfo { get; set; }
+
     /// <summary>
     /// The payment requirements used for processing.
     /// </summary>
@@ -70,6 +72,7 @@ public record X402ProcessingResult
     /// </summary>
     public static X402ProcessingResult Success(
         List<PaymentRequirements> paymentRequirements,
+        ResourceInfo resourceInfo,
         PaymentRequirements selectedPaymentRequirement,
         VerificationResponse verificationResponse,
         SettlementResponse? settlementResponse = null,
@@ -82,6 +85,7 @@ public record X402ProcessingResult
             X402Version = 2,
             CanContinueRequest = true,
             PaymentRequirements = paymentRequirements,
+            ResourceInfo = resourceInfo,
             SelectedPaymentRequirement = selectedPaymentRequirement,
             VerificationResponse = verificationResponse,
             SettlementResponse = settlementResponse,
@@ -97,6 +101,7 @@ public record X402ProcessingResult
     /// </summary>
     public static X402ProcessingResult CreateError(
         List<PaymentRequirements> paymentRequirements,
+        ResourceInfo resourceInfo,
         string error,
         int statusCode,
         VerificationResponse? verificationResponse = null,
@@ -110,6 +115,7 @@ public record X402ProcessingResult
             X402Version = 2,
             CanContinueRequest = false,
             PaymentRequirements = paymentRequirements,
+            ResourceInfo = resourceInfo,
             Error = error,
             StatusCode = statusCode,
             VerificationResponse = verificationResponse,

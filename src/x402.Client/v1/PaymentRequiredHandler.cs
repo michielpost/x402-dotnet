@@ -1,13 +1,14 @@
 ﻿using System.Text;
 using System.Text.Json;
 using x402.Client.Events;
+using x402.Client.v1.Events;
 using x402.Core.Models.v1;
 
-namespace x402.Client
+namespace x402.Client.v1
 {
     public class PaymentRequiredHandler : DelegatingHandler
     {
-        private readonly IX402Wallet _wallet;
+        private readonly IX402WalletV1 _wallet;
         private readonly int _maxRetries;
 
         public const string PaymentRequiredHeader = "PAYMENT-REQUIRED";
@@ -16,10 +17,10 @@ namespace x402.Client
         public event EventHandler<PaymentSelectedEventArgs>? PaymentSelected;
         public event EventHandler<PaymentRetryEventArgs>? PaymentRetrying;
 
-        public PaymentRequiredHandler(IX402Wallet wallet, int maxRetries = 1)
+        public PaymentRequiredHandler(IX402WalletV1 wallet, int maxRetries = 1)
             : this(wallet, maxRetries, new HttpClientHandler()) { }
 
-        public PaymentRequiredHandler(IX402Wallet wallet, int maxRetries, HttpMessageHandler innerHandler)
+        public PaymentRequiredHandler(IX402WalletV1 wallet, int maxRetries, HttpMessageHandler innerHandler)
             : base(innerHandler)
         {
             _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));

@@ -5,7 +5,6 @@ using Nethereum.Signer.EIP712;
 using Nethereum.Web3.Accounts;
 using System.Numerics;
 using System.Security.Cryptography;
-using x402.Core.Models.v1;
 
 namespace x402.Client.EVM
 {
@@ -44,7 +43,7 @@ namespace x402.Client.EVM
             return new EVMWallet(account.PrivateKey, chainId);
         }
 
-        public override PaymentPayloadHeader CreateHeader(PaymentRequirements requirement, CancellationToken cancellationToken = default)
+        public override Core.Models.v1.PaymentPayloadHeader CreateHeader(Core.Models.v1.PaymentRequirements requirement, CancellationToken cancellationToken = default)
         {
             // Prepare EIP-3009 TransferWithAuthorization fields
             string tokenName = requirement.Extra?.Name ?? string.Empty;
@@ -90,16 +89,84 @@ namespace x402.Client.EVM
             //Console.WriteLine($"Recovered signer address: {recoveredAddress}");
             //Console.WriteLine($"Signer matches 'from' ? {string.Equals(recoveredAddress, from, StringComparison.OrdinalIgnoreCase)}\n");
 
-            var header = new PaymentPayloadHeader()
+            var header = new Core.Models.v1.PaymentPayloadHeader()
             {
                 X402Version = 1,
                 Scheme = requirement.Scheme,
                 Network = requirement.Network,
-                Payload = new Payload
+                Payload = new Core.Models.v1.Payload
                 {
                     Resource = requirement.Resource,
                     Signature = signature,
-                    Authorization = new Authorization
+                    Authorization = new Core.Models.v1.Authorization
+                    {
+                        From = from,
+                        To = to,
+                        Value = value.Value.ToString(), // value as numeric string to avoid precision issues
+                        ValidAfter = validAfter.ToString(),
+                        ValidBefore = validBefore.ToString(),
+                        Nonce = nonceByte.ToHex(prefix: true), //nonce is bytes32: pass as hex string (0x...)
+                    }
+                }
+            };
+
+            return header;
+        }
+
+        public override Core.Models.v2.PaymentPayloadHeader CreateHeader(Core.Models.v2.PaymentRequirements requirement, CancellationToken cancellationToken = default)
+        {
+            // Prepare EIP-3009 TransferWithAuthorization fields
+            string tokenName = requirement.Extra?.Name ?? string.Empty;
+            string tokenVersion = requirement.Extra?.Version ?? string.Empty;
+            string tokenContractAddress = requirement.Asset;
+            string to = requirement.PayTo;
+
+            string from = Account.Address;
+
+            // value should be token units in smallest denomination (uint256)
+            var amount = BigInteger.Parse(requirement.Amount);
+            var value = new Nethereum.Hex.HexTypes.HexBigInteger(amount);
+
+            // Validity window: use unix timestamps
+            ulong validAfter = (ulong)DateTimeOffset.UtcNow.AddMinutes(-1).ToUnixTimeSeconds(); // valid immediately
+            ulong validBefore = (ulong)DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds(); // valid for 15 minutes
+
+            // Create a proper bytes32 nonce: 32 random bytes -> 0x-prefixed hex
+            var nonceByte = GenerateBytes32Nonce();
+
+            // Build EIP-712 typed data for EIP-3009
+            var typedData = BuildEip3009TypedData(tokenName, tokenVersion, ChainId, tokenContractAddress);
+
+            // Message object with the authorization values
+            var message = new TransferWithAuthorization
+            {
+                From = from,
+                To = to,
+                Value = value.Value,
+                ValidAfter = validAfter,
+                ValidBefore = validBefore,
+                Nonce = nonceByte
+            };
+
+            //  Sign the typed data (EIP-712 v4)
+            var ecKey = new EthECKey(privateKey, isPrivate: true);
+
+            var eip712Signer = new Eip712TypedDataSigner();
+            string signature = eip712Signer.SignTypedDataV4(message, typedData, ecKey);
+
+            // Recover signer to verify
+            // var recoveredAddress = eip712Signer.RecoverFromSignatureV4(message, typedData, signature);
+            //Console.WriteLine($"Recovered signer address: {recoveredAddress}");
+            //Console.WriteLine($"Signer matches 'from' ? {string.Equals(recoveredAddress, from, StringComparison.OrdinalIgnoreCase)}\n");
+
+            var header = new Core.Models.v2.PaymentPayloadHeader()
+            {
+                X402Version = 1,
+                Accepted = requirement,
+                Payload = new Core.Models.v2.Payload
+                {
+                    Signature = signature,
+                    Authorization = new Core.Models.v2.Authorization
                     {
                         From = from,
                         To = to,
@@ -141,5 +208,6 @@ namespace x402.Client.EVM
             };
         }
 
+       
     }
 }

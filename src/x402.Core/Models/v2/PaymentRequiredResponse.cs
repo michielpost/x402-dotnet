@@ -10,7 +10,7 @@
         /// </summary>
         public int X402Version { get; set; }
 
-        public ResourceInfo? Resource { get; set; }
+        public required ResourceInfo Resource { get; set; }
 
         /// <summary>
         /// List of accepted payment requirements.

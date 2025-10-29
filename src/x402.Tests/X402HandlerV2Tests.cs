@@ -160,20 +160,6 @@ namespace x402.Tests
             Assert.That(resp.StatusCode, Is.EqualTo((System.Net.HttpStatusCode)StatusCodes.Status402PaymentRequired));
         }
 
-        [Test]
-        public async Task ResourceMismatch_Returns402()
-        {
-            var facilitator = new FakeFacilitatorClient();
-            var reqs = CreateRequirements("/expected");
-            using var host = BuildHost(facilitator, "/expected", reqs);
-            var client = host.GetTestClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, "/expected");
-            request.Headers.Add("PAYMENT-SIGNATURE", CreateHeaderB64(reqs, resource: "/different"));
-
-            var resp = await client.SendAsync(request);
-
-            Assert.That(resp.StatusCode, Is.EqualTo((System.Net.HttpStatusCode)StatusCodes.Status402PaymentRequired));
-        }
 
         [Test]
         public async Task InvalidVerification_Returns402()
@@ -328,23 +314,6 @@ namespace x402.Tests
             var client = host.GetTestClient();
             var request = new HttpRequestMessage(HttpMethod.Get, "/v2-malformed");
             request.Headers.Add("PAYMENT-SIGNATURE", "not-base64");
-
-            var resp = await client.SendAsync(request);
-
-            // Version 2 returns 402 with PAYMENT-REQUIRED header
-            Assert.That(resp.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.PaymentRequired));
-            Assert.That(resp.Headers.Contains("PAYMENT-REQUIRED"), Is.True);
-        }
-
-        [Test]
-        public async Task Version2_ResourceMismatch_Returns402WithPaymentRequiredHeader()
-        {
-            var facilitator = new FakeFacilitatorClient();
-            var reqs = CreateRequirements("/v2-expected");
-            using var host = BuildHost(facilitator, "/v2-expected", reqs, SettlementMode.Optimistic, onSettlement: null, onStartingMarker: null);
-            var client = host.GetTestClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, "/v2-expected");
-            request.Headers.Add("PAYMENT-SIGNATURE", CreateHeaderB64(reqs, resource: "/v2-different"));
 
             var resp = await client.SendAsync(request);
 

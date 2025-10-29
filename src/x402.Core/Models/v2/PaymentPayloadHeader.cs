@@ -72,8 +72,6 @@ namespace x402.Core.Models.v2
         /// EIP-3009 authorization parameter
         /// </summary>
         public required Authorization Authorization { get; set; }
-
-        public string? Resource { get; set; }
     }
 
     public class Authorization

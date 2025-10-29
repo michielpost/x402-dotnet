@@ -2,12 +2,11 @@
 using System.Text.Json;
 using x402.Core.Models.v1;
 
-namespace x402.Client
+namespace x402.Client.v1
 {
     public static class HttpRequestMessageExtensions
     {
         public const string PaymentHeaderV1 = "X-PAYMENT";
-        public const string PaymentHeaderV2 = "PAYMENT-SIGNATURE";
 
         private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
         {
@@ -20,14 +19,7 @@ namespace x402.Client
             var base64header = Convert.ToBase64String(Encoding.UTF8.GetBytes(headerJson));
 
             // Use the appropriate header based on X402 version
-            if (version == 2)
-            {
-                request.Headers.Add(PaymentHeaderV2, base64header);
-            }
-            else
-            {
-                request.Headers.Add(PaymentHeaderV1, base64header);
-            }
+            request.Headers.Add(PaymentHeaderV1, base64header);
         }
     }
 }

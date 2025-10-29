@@ -46,7 +46,7 @@ namespace x402.Facilitator
 
         public async Task<VerificationResponse> VerifyAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements req, CancellationToken cancellationToken = default)
         {
-            logger.LogInformation("Verifying payment payload for resource {Resource} with scheme {Scheme} and asset {Asset}", paymentPayload.Payload.Resource, req.Scheme, req.Asset);
+            logger.LogInformation("Verifying payment payload for resource with scheme {Scheme} and asset {Asset}", req.Scheme, req.Asset);
             var body = new FacilitatorRequest
             {
                 X402Version = paymentPayload.X402Version,
@@ -75,16 +75,16 @@ namespace x402.Facilitator
             var result = await response.Content.ReadFromJsonAsync<VerificationResponse>(JsonOptions, cancellationToken).ConfigureAwait(false);
             if (result is null)
             {
-                logger.LogError("Failed to deserialize verification response for resource {Resource}", paymentPayload.Payload.Resource);
+                logger.LogError("Failed to deserialize verification response");
                 throw new InvalidOperationException("Failed to deserialize verification response");
             }
-            logger.LogInformation("Verification result for resource {Resource}: IsValid={IsValid} Reason={Reason}", paymentPayload.Payload.Resource, result.IsValid, result.InvalidReason);
+            logger.LogInformation("Verification result: IsValid={IsValid} Reason={Reason}", result.IsValid, result.InvalidReason);
             return result;
         }
 
         public async Task<SettlementResponse> SettleAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements req, CancellationToken cancellationToken = default)
         {
-            logger.LogInformation("Settling payment for resource {Resource} on network {Network} to {PayTo}", paymentPayload.Payload.Resource, req.Network, req.PayTo);
+            logger.LogInformation("Settling payment on network {Network} to {PayTo}", req.Network, req.PayTo);
             var body = new FacilitatorRequest
             {
                 X402Version = paymentPayload.X402Version,
@@ -113,10 +113,10 @@ namespace x402.Facilitator
             var result = await response.Content.ReadFromJsonAsync<SettlementResponse>(JsonOptions, cancellationToken).ConfigureAwait(false);
             if (result is null)
             {
-                logger.LogError("Failed to deserialize settlement response for resource {Resource}", paymentPayload.Payload.Resource);
+                logger.LogError("Failed to deserialize settlement response");
                 throw new InvalidOperationException("Failed to deserialize settlement response");
             }
-            logger.LogInformation("Settlement result for resource {Resource}: Success={Success} Tx={Tx}", paymentPayload.Payload.Resource, result.Success, result.Transaction);
+            logger.LogInformation("Settlement result: Success={Success} Tx={Tx}", result.Success, result.Transaction);
             return result;
 
         }
