@@ -1,7 +1,6 @@
 using x402.Core.Models.Facilitator;
-using x402.Core.Models.v1;
 
-namespace x402.Core.Models;
+namespace x402.Core.Models.v1;
 
 /// <summary>
 /// Contains the complete result of X402 payment processing, including all information needed to generate HTTP responses.
@@ -70,7 +69,6 @@ public record X402ProcessingResult
     /// Creates a successful result.
     /// </summary>
     public static X402ProcessingResult Success(
-        int version,
         List<PaymentRequirements> paymentRequirements,
         PaymentRequirements selectedPaymentRequirement,
         VerificationResponse verificationResponse,
@@ -81,7 +79,7 @@ public record X402ProcessingResult
     {
         return new X402ProcessingResult
         {
-            X402Version = version,
+            X402Version = 1,
             CanContinueRequest = true,
             PaymentRequirements = paymentRequirements,
             SelectedPaymentRequirement = selectedPaymentRequirement,
@@ -98,7 +96,6 @@ public record X402ProcessingResult
     /// Creates an error result.
     /// </summary>
     public static X402ProcessingResult CreateError(
-        int version,
         List<PaymentRequirements> paymentRequirements,
         string error,
         int statusCode,
@@ -110,7 +107,7 @@ public record X402ProcessingResult
     {
         return new X402ProcessingResult
         {
-            X402Version = version,
+            X402Version = 1,
             CanContinueRequest = false,
             PaymentRequirements = paymentRequirements,
             Error = error,

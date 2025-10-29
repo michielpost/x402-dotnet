@@ -50,7 +50,7 @@ public SampleResult Protected()
 ```
 Directly in an API Controller (for more control)
 ```cs
-public ResourceController(X402Handler x402Handler)
+public ResourceController(X402HandlerV1 x402Handler)
 {
     this.x402Handler = x402Handler;
 }
@@ -59,14 +59,23 @@ public ResourceController(X402Handler x402Handler)
 [Route("dynamic")]
 public async Task<SampleResult?> Dynamic(string amount)
 {
-    var x402Result = await x402Handler.HandleX402Async(this.HttpContext, facilitator, fullUrl,
-        new PaymentRequirementsBasic
+    var x402Result = await x402Handler.HandleX402Async(this.HttpContext,
+        new PaymentRequiredInfo()
         {
-            Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-            Description = "Dynamic payment",
-            MaxAmountRequired = amount,
-            PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
-        });
+            Resource = new ResourceInfoBasic
+            {
+                Description = "This resource is protected dynamically",
+            },
+            Accepts = new List<PaymentRequirementsBasic>
+            {
+                new PaymentRequirementsBasic
+                {
+                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                    Amount = amount,
+                    PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
+                }
+            }
+        },);
 
     if (!x402Result.CanContinueRequest)
     {
@@ -87,13 +96,23 @@ var paymentOptions = new PaymentMiddlewareOptions
     {
         {  "/resource/middleware", new PaymentRequirementsConfig
             {
-                PaymentRequirements = new PaymentRequirementsBasic {
-                    MaxAmountRequired = "1000",
-                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-                    MimeType = "application/json",
-                    Description = "Payment Required",
+                Version = 1,
+                PaymentRequirements = new PaymentRequiredInfo
+                {
+                    Resource = new ResourceInfoBasic
+                    {
+                         MimeType = "application/json",
+                        Description = "Payment Required",
+                    },
+                    Accepts = new()
+                    {
+                        new PaymentRequirementsBasic {
+                            Amount = "1000",
+                            Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                            PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", // Replace with your actual wallet address
+                        }
+                    },
                     Discoverable = true,
-                    PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", // Replace with your actual wallet address
                 }
             }
         }
@@ -129,7 +148,7 @@ var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef01
     IgnoreAllowances = true
 };
 
-var handler = new PaymentRequiredHandler(wallet);
+var handler = new PaymentRequiredV1Handler(wallet);
 
 var client = new HttpClient(handler);
 var response = await client.GetAsync("https://www.x402.org/protected");

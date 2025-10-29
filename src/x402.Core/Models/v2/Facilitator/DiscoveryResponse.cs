@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
-using x402.Core.Models.v1;
 
-namespace x402.Core.Models.Facilitator
+namespace x402.Core.Models.v2.Facilitator
 {
     public class DiscoveryResponse
     {

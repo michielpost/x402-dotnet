@@ -19,7 +19,7 @@ namespace x402.Tests
     public class PaymentMiddlewareTests
     {
 
-        private static IHost BuildHost(PaymentMiddlewareOptions options, IFacilitatorClient facilitatorClient)
+        private static IHost BuildHost(PaymentMiddlewareOptions options, IFacilitatorV1Client facilitatorClientV1, IFacilitatorV2Client facilitatorClientV2)
         {
             return new HostBuilder()
                 .ConfigureLogging(b => b.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug))
@@ -28,8 +28,10 @@ namespace x402.Tests
                     builder.UseTestServer();
                     builder.ConfigureServices(s =>
                     {
-                        s.AddSingleton<IFacilitatorClient>(facilitatorClient);
-                        s.AddSingleton<X402Handler>();
+                        s.AddSingleton<IFacilitatorV1Client>(facilitatorClientV1);
+                        s.AddSingleton<IFacilitatorV2Client>(facilitatorClientV2);
+                        s.AddSingleton<X402HandlerV1>();
+                        s.AddSingleton<X402HandlerV2>();
                         s.AddSingleton<IAssetInfoProvider, AssetInfoProvider>();
                         s.AddHttpContextAccessor();
                     });
@@ -71,7 +73,7 @@ namespace x402.Tests
                 PaymentRequirements = new Dictionary<string, PaymentRequirementsConfig>()
             };
 
-            using var host = BuildHost(options, new FakeFacilitatorClient());
+            using var host = BuildHost(options, new FakeFacilitatorClient(), new FakeFacilitatorClient());
             var client = host.GetTestClient();
             var resp = await client.GetAsync("/free");
             Assert.That(resp.IsSuccessStatusCode, Is.True);
@@ -86,20 +88,30 @@ namespace x402.Tests
                 {
                     ["/pay"] = new PaymentRequirementsConfig
                     {
-                        PaymentRequirements = new PaymentRequirementsBasic
+                        PaymentRequirements = new PaymentRequiredInfo
                         {
-                            Scheme = PaymentScheme.Exact,
-                            MaxAmountRequired = "100000",
-                            Asset = "USDC",
-                            MimeType = "application/json",
-                            Description = "unit",
-                            PayTo = "0x"
-                        }
+                            Resource = new ResourceInfoBasic
+                            {
+                                MimeType = "application/json",
+                                Description = "unit",
+                            },
+                            Accepts = new List<PaymentRequirementsBasic>()
+                            {
+                                new PaymentRequirementsBasic
+                                {
+                                    Scheme = PaymentScheme.Exact,
+                                    Amount = "100000",
+                                    Asset = "USDC",
+                                    PayTo = "0x"
+                                }
+                            },
+                            Discoverable = false
+                        },
                     }
                 }
             };
 
-            using var host = BuildHost(options, new FakeFacilitatorClient());
+            using var host = BuildHost(options, new FakeFacilitatorClient(), new FakeFacilitatorClient());
             var client = host.GetTestClient();
             var resp = await client.GetAsync("/pay");
             Assert.That(resp.StatusCode, Is.EqualTo((System.Net.HttpStatusCode)StatusCodes.Status402PaymentRequired));
@@ -119,21 +131,30 @@ namespace x402.Tests
                 {
                     ["/payok"] = new PaymentRequirementsConfig
                     {
-                        PaymentRequirements = new PaymentRequirementsBasic
+                        PaymentRequirements = new PaymentRequiredInfo
                         {
-                            Scheme = PaymentScheme.Exact,
-                            MaxAmountRequired = "100000",
-                            Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-                            MimeType = "application/json",
-                            Description = "unit",
-                            PayTo = "0x"
+                            Resource = new ResourceInfoBasic
+                            {
+                                MimeType = "application/json",
+                                Description = "unit",
+                            },
+                            Accepts = new List<PaymentRequirementsBasic>()
+                            {
+                                new PaymentRequirementsBasic
+                                {
+                                    Scheme = PaymentScheme.Exact,
+                                    Amount = "100000",
+                                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                                    PayTo = "0x"
+                                }
+                            },
                         },
                         Version = 1
                     },
                 },
             };
 
-            using var host = BuildHost(options, fake);
+            using var host = BuildHost(options, fake, fake);
             var client = host.GetTestClient();
             var request = new HttpRequestMessage(HttpMethod.Get, "/payok");
             request.Headers.Add("X-PAYMENT", CreateHeaderB64("http://localhost/payok", "100000"));

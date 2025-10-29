@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System.Text.Json;
-using x402.Client;
 using x402.Client.EVM;
+using x402.Client.v1;
 
 Console.WriteLine("Welcome to the x402 client sample app");
 
@@ -33,9 +33,9 @@ var wallet = new EVMWallet(privateKey, networkId)
 {
     IgnoreAllowances = true
 };
-var handler = new PaymentRequiredHandler(wallet);
+var handlerV1 = new PaymentRequiredV1Handler(wallet);
 
-handler.PaymentRequiredReceived += (_, e) =>
+handlerV1.PaymentRequiredReceived += (_, e) =>
 {
     Console.WriteLine($"402 received for {e.Request.RequestUri}");
 
@@ -45,7 +45,7 @@ handler.PaymentRequiredReceived += (_, e) =>
     return true;
 };
 
-handler.PaymentSelected += (_, e) =>
+handlerV1.PaymentSelected += (_, e) =>
 {
     Console.WriteLine();
     Console.WriteLine($"Selected payment requirement: {JsonSerializer.Serialize(e.PaymentRequirements)}");
@@ -55,12 +55,12 @@ handler.PaymentSelected += (_, e) =>
 
 };
 
-handler.PaymentRetrying += (_, e) =>
+handlerV1.PaymentRetrying += (_, e) =>
 {
     Console.WriteLine($"Retrying {e.Request.RequestUri} with payment header, attempt #{e.Attempt}");
 };
 
-var client = new HttpClient(handler);
+var client = new HttpClient(handlerV1);
 
 var address = wallet.Account.Address;
 

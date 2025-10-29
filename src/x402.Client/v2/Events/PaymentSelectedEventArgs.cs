@@ -1,6 +1,6 @@
-﻿using x402.Core.Models.v1;
+﻿using x402.Core.Models.v2;
 
-namespace x402.Client.Events
+namespace x402.Client.v2.Events
 {
     public class PaymentSelectedEventArgs : EventArgs
     {

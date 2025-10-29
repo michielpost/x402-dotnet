@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using x402.Core.Models.Facilitator;
 using x402.Core.Models.v1;
+using x402.Core.Models.v1.Facilitator;
 
 namespace x402.FacilitatorMock.Controllers
 {

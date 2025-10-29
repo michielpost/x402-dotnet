@@ -10,7 +10,7 @@ namespace x402.Models
         /// <summary>
         /// The payment scheme (e.g., "exact").
         /// </summary>
-        public required PaymentRequirementsBasic PaymentRequirements { get; set; }
+        public required PaymentRequiredInfo PaymentRequirements { get; set; }
 
 
         /// <summary>

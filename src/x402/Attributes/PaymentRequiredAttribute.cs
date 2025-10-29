@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using x402.Core.Enums;
 using x402.Core.Interfaces;
-using x402.Core.Models.v1;
 
 namespace x402.Attributes
 {
@@ -66,7 +65,6 @@ namespace x402.Attributes
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<PaymentRequiredAttribute>>();
-            var x402Handler = context.HttpContext.RequestServices.GetRequiredService<X402Handler>();
             var assetInfoProvider = context.HttpContext.RequestServices.GetRequiredService<IAssetInfoProvider>();
 
             var request = context.HttpContext.Request;
@@ -80,33 +78,80 @@ namespace x402.Attributes
                 logger.LogWarning("No asset info found for asset {Asset};", this.Asset);
             }
 
-            var paymentRequirements = new List<PaymentRequirements>
-            {
-                new ()
-                {
-                    Asset = this.Asset,
-                    Description = this.Description,
-                    MaxAmountRequired = this.MaxAmountRequired.ToString(),
-                    MimeType = this.MimeType,
-                    Network = assetInfo?.Network ?? string.Empty,
-                    PayTo = this.PayTo,
-                    Resource = fullUrl,
-                    Scheme = this.Scheme,
-                    MaxTimeoutSeconds = 60,
-                    Extra = new PaymentRequirementsExtra
-                    {
-                        Name = assetInfo?.Name ?? string.Empty,
-                        Version = assetInfo?.Version ?? string.Empty
-                    }
-                }
-            };
-            logger.LogInformation("Built payment requirements for path {Path}", fullUrl);
 
-            var x402Result = await x402Handler.HandleX402Async(paymentRequirements, Discoverable, version: Version, settlementMode: SettlementMode).ConfigureAwait(false);
-            if (!x402Result.CanContinueRequest)
+
+            if (Version == 1)
             {
-                logger.LogWarning("Payment not satisfied for path {Path}; stopping execution", fullUrl);
-                return;
+                var paymentRequirements = new List<x402.Core.Models.v1.PaymentRequirements>
+                {
+                    new ()
+                    {
+                        Asset = this.Asset,
+                        Description = this.Description,
+                        MaxAmountRequired = this.MaxAmountRequired.ToString(),
+                        MimeType = this.MimeType,
+                        Network = assetInfo?.Network ?? string.Empty,
+                        PayTo = this.PayTo,
+                        Resource = fullUrl,
+                        Scheme = this.Scheme,
+                        MaxTimeoutSeconds = 60,
+                        Extra = new x402.Core.Models.v1.PaymentRequirementsExtra
+                        {
+                            Name = assetInfo?.Name ?? string.Empty,
+                            Version = assetInfo?.Version ?? string.Empty
+                        }
+                    }
+                };
+                logger.LogInformation("Built payment requirements for path {Path}", fullUrl);
+
+                var x402Handler = context.HttpContext.RequestServices.GetRequiredService<X402HandlerV1>();
+                var x402Result = await x402Handler.HandleX402Async(paymentRequirements, Discoverable, settlementMode: SettlementMode).ConfigureAwait(false);
+                if (!x402Result.CanContinueRequest)
+                {
+                    logger.LogWarning("Payment not satisfied for path {Path}; stopping execution", fullUrl);
+                    return;
+                }
+            }
+            else if (Version == 2)
+            {
+                var paymentRequirements = new List<x402.Core.Models.v2.PaymentRequirements>
+                {
+                    new ()
+                    {
+                        Asset = this.Asset,
+                        Amount = this.MaxAmountRequired.ToString(),
+                        Network = assetInfo?.Network ?? string.Empty,
+                        PayTo = this.PayTo,
+                        Scheme = this.Scheme,
+                        MaxTimeoutSeconds = 60,
+                        Extra = new x402.Core.Models.v2.PaymentRequirementsExtra
+                        {
+                            Name = assetInfo?.Name ?? string.Empty,
+                            Version = assetInfo?.Version ?? string.Empty
+                        }
+                    }
+                };
+
+                var resourceInfo = new x402.Core.Models.v2.ResourceInfo
+                {
+                    Url = fullUrl,
+                    Description = this.Description,
+                    MimeType = this.MimeType,
+                };
+
+                logger.LogInformation("Built payment requirements for path {Path}", fullUrl);
+
+                var x402Handler = context.HttpContext.RequestServices.GetRequiredService<X402HandlerV2>();
+                var x402Result = await x402Handler.HandleX402Async(resourceInfo, paymentRequirements, Discoverable, settlementMode: SettlementMode).ConfigureAwait(false);
+                if (!x402Result.CanContinueRequest)
+                {
+                    logger.LogWarning("Payment not satisfied for path {Path}; stopping execution", fullUrl);
+                    return;
+                }
+            }
+            else
+            {
+                throw new Exception($"Unsupported X402 version: {Version}");
             }
 
             logger.LogDebug("Payment verified for path {Path}; executing next action", fullUrl);

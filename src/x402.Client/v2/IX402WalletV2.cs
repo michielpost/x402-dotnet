@@ -1,9 +1,9 @@
 ﻿using x402.Client.Models;
-using x402.Core.Models.v1;
+using x402.Core.Models.v2;
 
-namespace x402.Client
+namespace x402.Client.v2
 {
-    public interface IX402Wallet
+    public interface IX402WalletV2
     {
         List<AssetAllowance> AssetAllowances { get; set; }
         bool IgnoreAllowances { get; set; }

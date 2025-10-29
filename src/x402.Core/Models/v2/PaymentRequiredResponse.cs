@@ -10,7 +10,7 @@
         /// </summary>
         public int X402Version { get; set; }
 
-        public Resource? Resource { get; set; }
+        public required ResourceInfo Resource { get; set; }
 
         /// <summary>
         /// List of accepted payment requirements.
@@ -25,7 +25,7 @@
         public Dictionary<string, ExtensionData>? Extensions { get; set; }
     }
 
-    public class Resource
+    public class ResourceInfo
     {
         /// <summary>
         /// The resource path.

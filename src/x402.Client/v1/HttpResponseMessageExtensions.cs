@@ -2,12 +2,11 @@
 using System.Text.Json;
 using x402.Core.Models.Responses;
 
-namespace x402.Client
+namespace x402.Client.v1
 {
     public static class HttpResponseMessageExtensions
     {
         public static readonly string PaymentResponseHeaderV1 = "X-PAYMENT-RESPONSE";
-        public static readonly string PaymentResponseHeaderV2 = "PAYMENT-RESPONSE";
 
         public static SettlementResponseHeader? ReadSettlementResponseHeader(this HttpResponseMessage response, JsonSerializerOptions? jsonOptions = null)
         {
@@ -16,10 +15,6 @@ namespace x402.Client
             if (response.Headers.TryGetValues(PaymentResponseHeaderV1, out var v1Value))
             {
                 values = v1Value;
-            }
-            else if (response.Headers.TryGetValues(PaymentResponseHeaderV2, out var v2Value))
-            {
-                values = v2Value;
             }
 
             if (values == null)

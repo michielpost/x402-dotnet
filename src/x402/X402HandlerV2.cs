@@ -7,21 +7,17 @@ using x402.Core.Interfaces;
 using x402.Core.Models;
 using x402.Core.Models.Facilitator;
 using x402.Core.Models.Responses;
-using x402.Core.Models.v1;
+using x402.Core.Models.v2;
 using x402.Facilitator;
 
 namespace x402;
 
-public class X402Handler
+public class X402HandlerV2
 {
-    public static readonly string X402ResultKey = "X402HandleResult";
+    public static readonly string X402ResultKey = "X402HandleResultV2";
 
     public static readonly string PaymentRequiredHeader = "PAYMENT-REQUIRED";
-
-    public static readonly string PaymentHeaderV1 = "X-PAYMENT";
     public static readonly string PaymentHeaderV2 = "PAYMENT-SIGNATURE";
-
-    public static readonly string PaymentResponseHeaderV1 = "X-PAYMENT-RESPONSE";
     public static readonly string PaymentResponseHeaderV2 = "PAYMENT-RESPONSE";
 
     private readonly JsonSerializerOptions jsonOptions = new()
@@ -32,14 +28,14 @@ public class X402Handler
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
     };
 
-    private readonly ILogger<X402Handler> logger;
-    private readonly IFacilitatorClient facilitator;
+    private readonly ILogger<X402HandlerV2> logger;
+    private readonly IFacilitatorV2Client facilitator;
     private readonly IAssetInfoProvider assetInfoProvider;
     private readonly IHttpContextAccessor httpContextAccessor;
 
-    public X402Handler(
-        ILogger<X402Handler> logger,
-        IFacilitatorClient facilitator,
+    public X402HandlerV2(
+        ILogger<X402HandlerV2> logger,
+        IFacilitatorV2Client facilitator,
         IAssetInfoProvider assetInfoProvider,
         IHttpContextAccessor httpContextAccessor)
     {
@@ -50,25 +46,29 @@ public class X402Handler
     }
 
     public async Task<X402ProcessingResult> HandleX402Async(
-        PaymentRequirementsBasic paymentRequirementsBasic,
+        PaymentRequiredInfo paymentRequiredInfo,
         bool discoverable,
-        int version = 1,
         SettlementMode settlementMode = SettlementMode.Optimistic,
         Func<HttpContext, SettlementResponse?, Exception?, Task>? onSettlement = null,
         Func<HttpContext, PaymentRequirements, OutputSchema, OutputSchema>? onSetOutputSchema = null)
     {
-        var paymentRequirements = FillPaymentRequirements(paymentRequirementsBasic);
-        List<PaymentRequirements> list = new() { paymentRequirements };
+        var paymentRequirements = paymentRequiredInfo.Accepts.Select(x => FillPaymentRequirements(x)).ToList();
 
-        var result = await HandleX402Async(list, discoverable, version, settlementMode, onSettlement, onSetOutputSchema);
+        ResourceInfo resourceInfo = new ResourceInfo
+        {
+            Description = paymentRequiredInfo.Resource?.Description ?? string.Empty,
+            MimeType = paymentRequiredInfo.Resource?.MimeType ?? string.Empty,
+        };
+
+        var result = await HandleX402Async(resourceInfo, paymentRequirements, discoverable, settlementMode, onSettlement, onSetOutputSchema);
         StoreResult(result);
         return result;
     }
 
     public async Task<X402ProcessingResult> HandleX402Async(
+        ResourceInfo resourceInfo,
         List<PaymentRequirements> paymentRequirements,
         bool discoverable,
-        int version = 1,
         SettlementMode settlementMode = SettlementMode.Optimistic,
         Func<HttpContext, SettlementResponse?, Exception?, Task>? onSettlement = null,
         Func<HttpContext, PaymentRequirements, OutputSchema, OutputSchema>? onSetOutputSchema = null)
@@ -76,10 +76,11 @@ public class X402Handler
         var context = GetHttpContext();
         var fullUrl = $"{context.Request.Scheme}://{context.Request.Host}{context.Request.Path}{context.Request.QueryString}".ToLowerInvariant();
 
+        if (string.IsNullOrWhiteSpace(resourceInfo.Url))
+            resourceInfo.Url = fullUrl;
+
         foreach (var paymentRequirementsItem in paymentRequirements)
         {
-            paymentRequirementsItem.Resource = fullUrl;
-
             var outputSchema = new OutputSchema
             {
                 Input = new Input
@@ -101,21 +102,18 @@ public class X402Handler
                     logger.LogError(ex, "onSetOutputSchema callback threw for path {Path}", fullUrl);
                 }
             }
-            paymentRequirementsItem.OutputSchema = outputSchema;
         }
 
         logger.LogDebug("HandleX402 invoked for path {Path}", fullUrl);
 
-        //First read V2 header, then fallback to V1 header for compatibility
+        //Read V2 header
         string? header = context.Request.Headers[PaymentHeaderV2].FirstOrDefault();
-        if (header == null)
-            header = context.Request.Headers[PaymentHeaderV1].FirstOrDefault();
 
         // Process the payment logic
-        var processingResult = await ProcessPaymentAsync(version, paymentRequirements, header, fullUrl, settlementMode);
+        var processingResult = await ProcessPaymentAsync(paymentRequirements, resourceInfo, header, fullUrl, settlementMode);
 
         // Handle HTTP response based on processing result
-        await HandleHttpResponseAsync(context, version, processingResult, settlementMode, onSettlement);
+        await HandleHttpResponseAsync(context, processingResult, settlementMode, onSettlement);
 
         StoreResult(processingResult);
         return processingResult;
@@ -125,19 +123,19 @@ public class X402Handler
     /// Processes payment logic without HTTP-specific concerns.
     /// </summary>
     private async Task<X402ProcessingResult> ProcessPaymentAsync(
-        int version,
         List<PaymentRequirements> paymentRequirements,
+        ResourceInfo resourceInfo,
         string? paymentHeader,
         string fullUrl,
         SettlementMode settlementMode)
     {
         if (string.IsNullOrEmpty(paymentHeader))
         {
-            logger.LogInformation("No PAYMENT_SIGNATURE or X-PAYMENT header present for path {Path}; responding 402", fullUrl);
+            logger.LogInformation("No PAYMENT_SIGNATURE header present for path {Path}; responding 402", fullUrl);
             return X402ProcessingResult.CreateError(
-                version,
                 paymentRequirements,
-                "PAYMENT_SIGNATURE or X-PAYMENT header is required",
+                resourceInfo,
+                "PAYMENT_SIGNATURE header is required",
                 StatusCodes.Status402PaymentRequired,
                 fullUrl: fullUrl);
         }
@@ -147,12 +145,12 @@ public class X402Handler
             var payload = PaymentPayloadHeader.FromHeader(paymentHeader);
             logger.LogDebug("Parsed header for path {Path}", fullUrl);
 
-            var validationResult = await ValidatePayload(version, paymentRequirements, payload, fullUrl);
+            var validationResult = await ValidatePayload(paymentRequirements, resourceInfo, payload, fullUrl);
             if (!validationResult.CanContinueRequest || validationResult.SelectedPaymentRequirement == null)
             {
                 return X402ProcessingResult.CreateError(
-                    version,
                     paymentRequirements,
+                resourceInfo,
                     validationResult.Error ?? "Validation failed",
                     StatusCodes.Status402PaymentRequired,
                     fullUrl: fullUrl);
@@ -165,8 +163,8 @@ public class X402Handler
             {
                 logger.LogInformation("Verification invalid for path {Path}: {Reason}", fullUrl, vr.InvalidReason);
                 return X402ProcessingResult.CreateError(
-                    version,
                     paymentRequirements,
+                resourceInfo,
                     vr.InvalidReason ?? "Verification failed",
                     StatusCodes.Status402PaymentRequired,
                     vr,
@@ -183,8 +181,8 @@ public class X402Handler
                 {
                     var errorMsg = preSettledResponse?.ErrorReason ?? settlementException?.Message ?? FacilitatorErrorCodes.UnexpectedSettleError;
                     return X402ProcessingResult.CreateError(
-                        version,
                         paymentRequirements,
+                resourceInfo,
                         errorMsg,
                         StatusCodes.Status402PaymentRequired,
                         vr,
@@ -197,8 +195,8 @@ public class X402Handler
 
             logger.LogDebug("Payment verified; proceeding to response for path {Path}", fullUrl);
             return X402ProcessingResult.Success(
-                version,
                 paymentRequirements,
+                resourceInfo,
                 validationResult.SelectedPaymentRequirement,
                 vr,
                 preSettledResponse,
@@ -210,8 +208,8 @@ public class X402Handler
         {
             logger.LogWarning("Malformed payment header for path {Path}", fullUrl);
             return X402ProcessingResult.CreateError(
-                version,
                 paymentRequirements,
+                resourceInfo,
                 "Malformed X-PAYMENT header",
                 StatusCodes.Status402PaymentRequired,
                 fullUrl: fullUrl);
@@ -220,8 +218,8 @@ public class X402Handler
         {
             logger.LogError(ex, "Payment verification IO error for path {Path}", fullUrl);
             return X402ProcessingResult.CreateError(
-                version,
                 paymentRequirements,
+                resourceInfo,
                 $"Payment verification failed: {ex.Message}",
                 StatusCodes.Status500InternalServerError,
                 fullUrl: fullUrl);
@@ -230,8 +228,8 @@ public class X402Handler
         {
             logger.LogError(ex, "Unexpected error during payment verification for path {Path}", fullUrl);
             return X402ProcessingResult.CreateError(
-                version,
                 paymentRequirements,
+                resourceInfo,
                 $"Internal server error during payment verification. {ex.Message}",
                 StatusCodes.Status500InternalServerError,
                 fullUrl: fullUrl);
@@ -243,7 +241,6 @@ public class X402Handler
     /// </summary>
     private async Task HandleHttpResponseAsync(
         HttpContext context,
-        int version,
         X402ProcessingResult processingResult,
         SettlementMode settlementMode,
         Func<HttpContext, SettlementResponse?, Exception?, Task>? onSettlement)
@@ -254,7 +251,7 @@ public class X402Handler
             if (!context.Response.HasStarted)
             {
                 if (processingResult.StatusCode == StatusCodes.Status402PaymentRequired)
-                    await Respond402Async(context, version, processingResult.PaymentRequirements, processingResult.Error);
+                    await Respond402Async(context, processingResult.PaymentRequirements, processingResult.ResourceInfo, processingResult.Error);
                 else
                     await Respond500Async(context, processingResult.Error);
             }
@@ -288,7 +285,7 @@ public class X402Handler
                         logger.LogWarning("Settlement failed for path {Path}: {Reason}", processingResult.FullUrl, errorMsg);
                         if (settlementMode == SettlementMode.Pessimistic && !context.Response.HasStarted)
                         {
-                            await Respond402Async(context, version, processingResult.PaymentRequirements, errorMsg);
+                            await Respond402Async(context, processingResult.PaymentRequirements, processingResult.ResourceInfo, errorMsg);
                         }
                         return;
                     }
@@ -296,7 +293,7 @@ public class X402Handler
 
                 if (sr != null)
                 {
-                    AppendPaymentResponseHeader(context, processingResult.X402Version, sr, processingResult.PaymentPayload?.ExtractPayerFromPayload(), processingResult.FullUrl);
+                    AppendPaymentResponseHeader(context, sr, processingResult.PaymentPayload?.ExtractPayerFromPayload(), processingResult.FullUrl);
                 }
             }
             catch (Exception ex)
@@ -305,7 +302,7 @@ public class X402Handler
                 logger.LogError(ex, "Settlement error for path {Path}", processingResult.FullUrl);
                 if (settlementMode == SettlementMode.Pessimistic && !context.Response.HasStarted)
                 {
-                    await Respond402Async(context, version, processingResult.PaymentRequirements, "settlement error: " + ex.Message);
+                    await Respond402Async(context, processingResult.PaymentRequirements, processingResult.ResourceInfo, "settlement error: " + ex.Message);
                 }
                 return;
             }
@@ -359,23 +356,14 @@ public class X402Handler
         }
     }
 
-    private void AppendPaymentResponseHeader(HttpContext context, int version, SettlementResponse sr, string? payer, string fullUrl)
+    private void AppendPaymentResponseHeader(HttpContext context, SettlementResponse sr, string? payer, string fullUrl)
     {
         try
         {
             var base64Header = CreatePaymentResponseHeader(sr, payer);
 
-            if (version == 1)
-            {
-                context.Response.Headers.Append(PaymentResponseHeaderV1, base64Header);
-                context.Response.Headers.Append("Access-Control-Expose-Headers", PaymentResponseHeaderV1);
-
-            }
-            else if (version == 2)
-            {
-                context.Response.Headers.Append(PaymentResponseHeaderV2, base64Header);
-                context.Response.Headers.Append("Access-Control-Expose-Headers", PaymentResponseHeaderV2);
-            }
+            context.Response.Headers.Append(PaymentResponseHeaderV2, base64Header);
+            context.Response.Headers.Append("Access-Control-Expose-Headers", PaymentResponseHeaderV2);
 
             logger.LogInformation("Settlement succeeded for path {Path}; response header appended (payer={Payer})", fullUrl, payer);
         }
@@ -405,35 +393,27 @@ public class X402Handler
         return context;
     }
 
-    private async Task<X402ProcessingResult> ValidatePayload(int version, List<PaymentRequirements> paymentRequirements, PaymentPayloadHeader payload, string fullUrl)
+    private async Task<X402ProcessingResult> ValidatePayload(List<PaymentRequirements> paymentRequirements, ResourceInfo resourceInfo, PaymentPayloadHeader payload, string fullUrl)
     {
-        if (!string.IsNullOrEmpty(payload.Payload.Resource) && !string.Equals(payload.Payload.Resource, fullUrl, StringComparison.InvariantCultureIgnoreCase))
-        {
-            logger.LogWarning("Resource mismatch: payload {PayloadResource} vs request {RequestPath}", payload.Payload.Resource, fullUrl);
-            return X402ProcessingResult.CreateError(
-                version,
-                paymentRequirements,
-                $"Resource mismatch: payload {payload.Payload.Resource} vs request {fullUrl}",
-                StatusCodes.Status402PaymentRequired,
-                fullUrl: fullUrl);
-        }
-
         var selectedRequirement = paymentRequirements.FirstOrDefault(pr =>
-            pr.Scheme == payload.Scheme &&
-            pr.Network == payload.Network &&
+            pr.Scheme == payload.Accepted.Scheme &&
+            pr.Network == payload.Accepted.Network &&
+            pr.Amount == payload.Accepted.Amount &&
+            pr.Asset == payload.Accepted.Asset &&
+            pr.PayTo == payload.Accepted.PayTo &&
             pr.PayTo == payload.Payload.Authorization.To &&
-            pr.MaxAmountRequired == payload.Payload.Authorization.Value);
+            pr.Amount == payload.Payload.Authorization.Value);
 
         if (selectedRequirement == null)
         {
             logger.LogWarning("No matching payment requirements found for payload: Scheme={PayloadScheme}, Network={PayloadNetwork}, PayTo={AuthorizationTo}, Amount={AuthorizationValue}",
-                payload.Scheme,
-                payload.Network,
+                payload.Accepted.Scheme,
+                payload.Accepted.Network,
                 payload.Payload.Authorization.To,
                 payload.Payload.Authorization.Value);
             return X402ProcessingResult.CreateError(
-                version,
                 paymentRequirements,
+                resourceInfo,
                 "No matching payment requirements found for the provided payload",
                 StatusCodes.Status402PaymentRequired,
                 fullUrl: fullUrl);
@@ -446,8 +426,8 @@ public class X402Handler
         {
             logger.LogWarning("Authorization expired: validBefore {ValidBefore} is in the past", authorization.ValidBefore);
             return X402ProcessingResult.CreateError(
-                version,
                 paymentRequirements,
+                resourceInfo,
                 $"Authorization expired: validBefore {authorization.ValidBefore} is in the past",
                 StatusCodes.Status402PaymentRequired,
                 fullUrl: fullUrl);
@@ -458,15 +438,15 @@ public class X402Handler
         {
             logger.LogWarning("Authorization not yet valid: validAfter {ValidAfter} is in the future", authorization.ValidAfter);
             return X402ProcessingResult.CreateError(
-                version,
                 paymentRequirements,
+                resourceInfo,
                 $"Authorization not yet valid: validAfter {authorization.ValidAfter} is in the future",
                 StatusCodes.Status402PaymentRequired,
                 fullUrl: fullUrl);
         }
 
 
-        return X402ProcessingResult.Success(version, paymentRequirements, selectedRequirement, null!, fullUrl: fullUrl);
+        return X402ProcessingResult.Success(paymentRequirements, resourceInfo, selectedRequirement, null!, fullUrl: fullUrl);
     }
 
     private string CreatePaymentResponseHeader(SettlementResponse sr, string? payer)
@@ -482,7 +462,7 @@ public class X402Handler
         return Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonString));
     }
 
-    private Task Respond402Async(HttpContext context, int version, List<PaymentRequirements> paymentRequirements, string? error)
+    private Task Respond402Async(HttpContext context, List<PaymentRequirements> paymentRequirements, ResourceInfo resource, string? error)
     {
         if (context.Response.HasStarted)
         {
@@ -492,8 +472,9 @@ public class X402Handler
 
         var prr = new PaymentRequiredResponse
         {
-            X402Version = version,
+            X402Version = 2,
             Accepts = paymentRequirements,
+            Resource = resource,
             Error = error
         };
 
@@ -501,16 +482,8 @@ public class X402Handler
 
         context.Response.StatusCode = StatusCodes.Status402PaymentRequired;
 
-        if (version == 1)
-        {
-            context.Response.ContentType = "application/json";
-            return context.Response.WriteAsync(json);
-        }
-        else if (version == 2)
-        {
-            context.Response.Headers.Append(PaymentRequiredHeader, Convert.ToBase64String(Encoding.UTF8.GetBytes(json)));
-            context.Response.Headers.Append("Access-Control-Expose-Headers", PaymentRequiredHeader);
-        }
+        context.Response.Headers.Append(PaymentRequiredHeader, Convert.ToBase64String(Encoding.UTF8.GetBytes(json)));
+        context.Response.Headers.Append("Access-Control-Expose-Headers", PaymentRequiredHeader);
 
         return Task.CompletedTask;
     }
@@ -541,12 +514,10 @@ public class X402Handler
         {
             Scheme = basic.Scheme,
             Network = assetInfo?.Network ?? string.Empty,
-            MaxAmountRequired = basic.MaxAmountRequired,
+            Amount = basic.Amount,
             Asset = basic.Asset,
-            MimeType = basic.MimeType,
             PayTo = basic.PayTo,
             MaxTimeoutSeconds = basic.MaxTimeoutSeconds,
-            Description = basic.Description,
             Extra = new PaymentRequirementsExtra
             {
                 Name = assetInfo?.Name ?? string.Empty,
