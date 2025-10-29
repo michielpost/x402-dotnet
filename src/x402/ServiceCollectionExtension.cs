@@ -9,7 +9,8 @@ namespace x402
     {
         public static IServiceCollection AddX402(this IServiceCollection services)
         {
-            services.AddSingleton<X402Handler>();
+            services.AddSingleton<X402HandlerV1>();
+            services.AddSingleton<X402HandlerV2>();
             services.AddSingleton<IAssetInfoProvider, AssetInfoProvider>();
             services.AddHttpContextAccessor();
 
@@ -18,7 +19,12 @@ namespace x402
 
         public static IServiceCollection WithHttpFacilitator(this IServiceCollection services, string facilitatorUrl)
         {
-            services.AddHttpClient<IFacilitatorClient, HttpFacilitatorClient>(client =>
+            services.AddHttpClient<IFacilitatorV1Client, HttpFacilitatorClient>(client =>
+            {
+                client.BaseAddress = new Uri(facilitatorUrl);
+            });
+
+            services.AddHttpClient<IFacilitatorV2Client, HttpFacilitatorClient>(client =>
             {
                 client.BaseAddress = new Uri(facilitatorUrl);
             });

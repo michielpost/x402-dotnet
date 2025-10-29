@@ -8,7 +8,7 @@
         /// <summary>
         /// The X402 version.
         /// </summary>
-        public int X402Version { get; set; }
+        public int X402Version { get; set; } = 1;
 
         /// <summary>
         /// List of accepted payment requirements.

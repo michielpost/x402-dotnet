@@ -11,9 +11,9 @@ namespace x402.SampleWeb.Controllers
     [Route("[controller]")]
     public class ResourceV2Controller : ControllerBase
     {
-        private readonly X402Handler x402Handler;
+        private readonly X402HandlerV2 x402Handler;
 
-        public ResourceV2Controller(X402Handler x402Handler)
+        public ResourceV2Controller(X402HandlerV2 x402Handler)
         {
             this.x402Handler = x402Handler;
         }
@@ -42,7 +42,7 @@ namespace x402.SampleWeb.Controllers
         public ActionResult<SampleResult> Protected()
         {
             // Optional: Retrieve the X402 result from HttpContext
-            var x402Result = HttpContext.GetX402Result();
+            var x402Result = HttpContext.GetX402ResultV2();
             if (x402Result == null)
             {
                 // Handle unexpected case (should not happen since we just called HandleX402Async)
@@ -71,15 +71,24 @@ namespace x402.SampleWeb.Controllers
         public async Task<SampleResult?> Dynamic(string amount)
         {
             var x402Result = await x402Handler.HandleX402Async(
-                new PaymentRequirementsBasic
+                new PaymentRequiredInfo
                 {
-                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-                    Description = "Dynamic payment",
-                    MaxAmountRequired = amount,
-                    PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
+                    Resource = new ResourceInfoBasic
+                    {
+                        Description = "Dynamic payment",
+
+                    },
+                    Accepts = new List<PaymentRequirementsBasic>
+                    {
+                        new PaymentRequirementsBasic
+                        {
+                            Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                            Amount = amount,
+                            PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
+                        }
+                    }
                 },
                 discoverable: true,
-                version: 2,
                 SettlementMode.Pessimistic,
                 onSettlement: (context, response, ex) =>
                 {
@@ -100,15 +109,24 @@ namespace x402.SampleWeb.Controllers
         public async Task<SampleResult?> SendMsg([FromBody] SampleRequest req)
         {
             var x402Result = await x402Handler.HandleX402Async(
-                new PaymentRequirementsBasic
+                new PaymentRequiredInfo
                 {
-                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-                    Description = "Send a message",
-                    MaxAmountRequired = "1000",
-                    PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
+                    Resource = new ResourceInfoBasic
+                    {
+                        Description = "Send a message",
+
+                    },
+                    Accepts = new List<PaymentRequirementsBasic>
+                    {
+                        new PaymentRequirementsBasic
+                        {
+                            Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                            Amount = "1000",
+                            PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
+                        }
+                    }
                 },
                 discoverable: true,
-                version: 2,
                 SettlementMode.Pessimistic,
                 onSetOutputSchema: (context, reqs, schema) =>
                 {

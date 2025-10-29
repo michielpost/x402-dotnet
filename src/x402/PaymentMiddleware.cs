@@ -12,7 +12,8 @@ namespace x402
         private readonly RequestDelegate _next;
         private readonly ILogger<PaymentMiddleware> logger;
         private readonly PaymentMiddlewareOptions paymentMiddlewareOptions;
-        private readonly X402Handler x402Handler;
+        private readonly X402HandlerV1 x402HandlerV1;
+        private readonly X402HandlerV2 x402HandlerV2;
 
         /// <summary>
         /// Creates a payment middleware that enforces X-402 payments on configured paths or endpoints.
@@ -22,13 +23,15 @@ namespace x402
         /// <exception cref="ArgumentNullException"></exception>
         public PaymentMiddleware(RequestDelegate next,
             ILogger<PaymentMiddleware> logger,
-            X402Handler x402Handler,
+            X402HandlerV1 x402HandlerV1,
+            X402HandlerV2 x402HandlerV2,
             PaymentMiddlewareOptions paymentMiddlewareOptions)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
             this.logger = logger;
             this.paymentMiddlewareOptions = paymentMiddlewareOptions;
-            this.x402Handler = x402Handler;
+            this.x402HandlerV1 = x402HandlerV1;
+            this.x402HandlerV2 = x402HandlerV2;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -51,16 +54,31 @@ namespace x402
                 return;
             }
 
-            logger.LogInformation("Enforcing x402 payment for path {Path} with scheme {Scheme} asset {Asset}", resourceFullUrl, paymentConfig.PaymentRequirements.Scheme, paymentConfig.PaymentRequirements.Asset);
+            logger.LogInformation("Enforcing x402 payment for path {Path}", resourceFullUrl);
 
-            var x402Result = await x402Handler.HandleX402Async(paymentConfig.PaymentRequirements, paymentConfig.PaymentRequirements.Discoverable, paymentConfig.Version, settlementMode: paymentMiddlewareOptions.SettlementMode).ConfigureAwait(false);
-            if (!x402Result.CanContinueRequest)
+            if(paymentConfig.Version == 1)
             {
-                logger.LogWarning("Payment not satisfied for path {Path}; responding with 402/500 already handled", resourceFullUrl);
-                return;
+                var x402Result = await x402HandlerV1.HandleX402Async(paymentConfig.PaymentRequirements, paymentConfig.PaymentRequirements.Discoverable, settlementMode: paymentMiddlewareOptions.SettlementMode).ConfigureAwait(false);
+                if (!x402Result.CanContinueRequest)
+                {
+                    logger.LogWarning("Payment not satisfied for path {Path}; responding with 402/500 already handled", resourceFullUrl);
+                    return;
+                }
             }
-
-            //Payment verified, continue to next middleware
+            else if (paymentConfig.Version == 2)
+            {
+                var x402Result = await x402HandlerV2.HandleX402Async(paymentConfig.PaymentRequirements, paymentConfig.PaymentRequirements.Discoverable, settlementMode: paymentMiddlewareOptions.SettlementMode).ConfigureAwait(false);
+                if (!x402Result.CanContinueRequest)
+                {
+                    logger.LogWarning("Payment not satisfied for path {Path}; responding with 402/500 already handled", resourceFullUrl);
+                    return;
+                }
+            }
+            else
+            {
+                throw new Exception($"Unsupported X-402 version {paymentConfig.Version} for path {resourceFullUrl}");
+            }
+                //Payment verified, continue to next middleware
             logger.LogDebug("Payment verified for path {Path}; continuing to next middleware", resourceFullUrl);
             await _next(context);
         }

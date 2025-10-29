@@ -2,11 +2,12 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using x402.Core.Models.Facilitator;
-using x402.Core.Models.v1;
+using x402.Core.Models.v2.Facilitator;
+using x402.Core.Models.v2;
 
 namespace x402.Facilitator
 {
-    public class HttpFacilitatorClient : IFacilitatorClient
+    public partial class HttpFacilitatorClient : IFacilitatorV2Client
     {
         private readonly HttpClient httpClient;
         private readonly ILogger<HttpFacilitatorClient> logger;
@@ -45,7 +46,7 @@ namespace x402.Facilitator
 
         public async Task<VerificationResponse> VerifyAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements req, CancellationToken cancellationToken = default)
         {
-            logger.LogInformation("Verifying payment payload for resource {Resource} with scheme {Scheme} and asset {Asset}", req.Resource, req.Scheme, req.Asset);
+            logger.LogInformation("Verifying payment payload for resource {Resource} with scheme {Scheme} and asset {Asset}", paymentPayload.Payload.Resource, req.Scheme, req.Asset);
             var body = new FacilitatorRequest
             {
                 X402Version = paymentPayload.X402Version,
@@ -74,16 +75,16 @@ namespace x402.Facilitator
             var result = await response.Content.ReadFromJsonAsync<VerificationResponse>(JsonOptions, cancellationToken).ConfigureAwait(false);
             if (result is null)
             {
-                logger.LogError("Failed to deserialize verification response for resource {Resource}", req.Resource);
+                logger.LogError("Failed to deserialize verification response for resource {Resource}", paymentPayload.Payload.Resource);
                 throw new InvalidOperationException("Failed to deserialize verification response");
             }
-            logger.LogInformation("Verification result for resource {Resource}: IsValid={IsValid} Reason={Reason}", req.Resource, result.IsValid, result.InvalidReason);
+            logger.LogInformation("Verification result for resource {Resource}: IsValid={IsValid} Reason={Reason}", paymentPayload.Payload.Resource, result.IsValid, result.InvalidReason);
             return result;
         }
 
         public async Task<SettlementResponse> SettleAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements req, CancellationToken cancellationToken = default)
         {
-            logger.LogInformation("Settling payment for resource {Resource} on network {Network} to {PayTo}", req.Resource, req.Network, req.PayTo);
+            logger.LogInformation("Settling payment for resource {Resource} on network {Network} to {PayTo}", paymentPayload.Payload.Resource, req.Network, req.PayTo);
             var body = new FacilitatorRequest
             {
                 X402Version = paymentPayload.X402Version,
@@ -112,15 +113,15 @@ namespace x402.Facilitator
             var result = await response.Content.ReadFromJsonAsync<SettlementResponse>(JsonOptions, cancellationToken).ConfigureAwait(false);
             if (result is null)
             {
-                logger.LogError("Failed to deserialize settlement response for resource {Resource}", req.Resource);
+                logger.LogError("Failed to deserialize settlement response for resource {Resource}", paymentPayload.Payload.Resource);
                 throw new InvalidOperationException("Failed to deserialize settlement response");
             }
-            logger.LogInformation("Settlement result for resource {Resource}: Success={Success} Tx={Tx}", req.Resource, result.Success, result.Transaction);
+            logger.LogInformation("Settlement result for resource {Resource}: Success={Success} Tx={Tx}", paymentPayload.Payload.Resource, result.Success, result.Transaction);
             return result;
 
         }
 
-        public async Task<SupportedResponse> SupportedAsync(CancellationToken cancellationToken = default)
+        public async Task<SupportedResponse> SupportedV2Async(CancellationToken cancellationToken = default)
         {
             logger.LogDebug("Requesting supported facilitator kinds");
             var url = BuildUrl("/supported", HttpMethod.Get);
@@ -141,7 +142,7 @@ namespace x402.Facilitator
             return result ?? new();
         }
 
-        public async Task<DiscoveryResponse> DiscoveryAsync(string? type = null, int? limit = null, int? offset = null, CancellationToken cancellationToken = default)
+        public async Task<DiscoveryResponse> DiscoveryV2Async(string? type = null, int? limit = null, int? offset = null, CancellationToken cancellationToken = default)
         {
             logger.LogDebug("Requesting discovery resource list");
 

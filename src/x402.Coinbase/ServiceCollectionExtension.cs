@@ -11,7 +11,8 @@ namespace x402.Coinbase
         {
             // Coinbase facilitator client
             services.Configure<CoinbaseOptions>(configuration.GetSection(nameof(CoinbaseOptions)));
-            services.AddHttpClient<IFacilitatorClient, CoinbaseFacilitatorClient>();
+            services.AddHttpClient<IFacilitatorV1Client, CoinbaseFacilitatorClient>();
+            services.AddHttpClient<IFacilitatorV2Client, CoinbaseFacilitatorClient>();
 
             return services;
         }

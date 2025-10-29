@@ -11,10 +11,10 @@ namespace x402.SampleWeb.Controllers
     [Route("[controller]")]
     public class MainnetResourceController : ControllerBase
     {
-        private readonly IFacilitatorClient facilitator;
-        private readonly X402Handler x402Handler;
+        private readonly IFacilitatorV1Client facilitator;
+        private readonly X402HandlerV1 x402Handler;
 
-        public MainnetResourceController(IFacilitatorClient facilitator, X402Handler x402Handler)
+        public MainnetResourceController(IFacilitatorV1Client facilitator, X402HandlerV1 x402Handler)
         {
             this.facilitator = facilitator;
             this.x402Handler = x402Handler;
@@ -26,15 +26,23 @@ namespace x402.SampleWeb.Controllers
         public async Task<SampleResult?> SendMsg([FromBody] SampleRequest req)
         {
             var x402Result = await x402Handler.HandleX402Async(
-                new PaymentRequirementsBasic
+                new PaymentRequiredInfo()
                 {
-                    Asset = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-                    Description = "Send a message",
-                    MaxAmountRequired = "1000",
-                    PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
+                    Resource = new ResourceInfoBasic
+                    {
+                        Description = "Send a message",
+                    },
+                    Accepts = new List<PaymentRequirementsBasic>
+                    {
+                        new PaymentRequirementsBasic
+                        {
+                            Asset = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                            Amount = "1000",
+                            PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
+                        }
+                    }
                 },
                 discoverable: true,
-                version: 1,
                 SettlementMode.Pessimistic,
                 onSetOutputSchema: (context, reqs, schema) =>
                 {

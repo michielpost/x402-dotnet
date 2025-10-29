@@ -1,5 +1,6 @@
 ﻿using x402.Core.Models.Facilitator;
-using x402.Core.Models.v1;
+using x402.Core.Models.v2.Facilitator;
+using x402.Core.Models.v2;
 
 namespace x402.Facilitator
 {
@@ -7,7 +8,7 @@ namespace x402.Facilitator
     /// Client for interacting with the x402 Facilitator service.
     /// Handles payment verification and settlement.
     /// </summary>
-    public interface IFacilitatorClient
+    public interface IFacilitatorV2Client
     {
 
         /// <summary>
@@ -33,10 +34,10 @@ namespace x402.Facilitator
         /// </summary>
         /// <param name="cancellationToken">Optional cancellation token to cancel the operation.</param>
         /// <returns></returns>
-        Task<SupportedResponse> SupportedAsync(CancellationToken cancellationToken = default);
+        Task<SupportedResponse> SupportedV2Async(CancellationToken cancellationToken = default);
 
 
-        Task<DiscoveryResponse> DiscoveryAsync(string? type = null, int? limit = null, int? offset = null, CancellationToken cancellationToken = default);
+        Task<DiscoveryResponse> DiscoveryV2Async(string? type = null, int? limit = null, int? offset = null, CancellationToken cancellationToken = default);
 
 
     }
