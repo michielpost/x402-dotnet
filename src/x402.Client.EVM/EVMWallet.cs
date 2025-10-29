@@ -44,7 +44,7 @@ namespace x402.Client.EVM
             return new EVMWallet(account.PrivateKey, chainId);
         }
 
-        protected override PaymentPayloadHeader CreateHeader(PaymentRequirements requirement, CancellationToken cancellationToken)
+        public override PaymentPayloadHeader CreateHeader(PaymentRequirements requirement, CancellationToken cancellationToken = default)
         {
             // Prepare EIP-3009 TransferWithAuthorization fields
             string tokenName = requirement.Extra?.Name ?? string.Empty;

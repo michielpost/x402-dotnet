@@ -1,4 +1,5 @@
 ﻿using System.Net.Http.Json;
+using x402.Core.Models.v1;
 
 namespace x402.Client.EVM.IntegrationTests
 {
@@ -28,6 +29,44 @@ namespace x402.Client.EVM.IntegrationTests
             Assert.That(response.IsSuccessStatusCode, Is.True);
             Console.WriteLine($"Final: {(int)response.StatusCode} {response.ReasonPhrase}");
         }
+
+        /// <summary>
+        /// This test does not first request payment details, but directly submits the payment header
+        /// </summary>
+        /// <returns></returns>
+        [Test]
+        public async Task TestWithoutHandler()
+        {
+            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", 84532UL) //base-sepolia chain ID
+            {
+                IgnoreAllowances = true
+            };
+
+            PaymentPayloadHeader header = wallet.CreateHeader(new PaymentRequirements
+            {
+                Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                MaxAmountRequired = "10000",
+                Network = "base-sepolia",
+                PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+                Extra = new PaymentRequirementsExtra
+                {
+                    Name = "USDC",
+                    Version = "2",
+                }
+            });
+
+            var client = new HttpClient();
+
+
+            var request = new HttpRequestMessage(HttpMethod.Get, "https://www.x402.org/protected");
+            request.AddPaymentHeader(header, 1);
+
+            var response = await client.SendAsync(request);
+
+            Assert.That(response.IsSuccessStatusCode, Is.True);
+            Console.WriteLine($"Final: {(int)response.StatusCode} {response.ReasonPhrase}");
+        }
+
 
         [Test]
         public async Task TestPost()

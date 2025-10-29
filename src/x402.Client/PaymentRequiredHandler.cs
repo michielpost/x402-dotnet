@@ -9,14 +9,8 @@ namespace x402.Client
     {
         private readonly IX402Wallet _wallet;
         private readonly int _maxRetries;
-        public const string PaymentHeaderV1 = "X-PAYMENT";
-        public const string PaymentHeaderV2 = "PAYMENT-SIGNATURE";
-        public const string PaymentRequiredHeader = "PAYMENT-REQUIRED";
 
-        protected static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
-        {
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-        };
+        public const string PaymentRequiredHeader = "PAYMENT-REQUIRED";
 
         public event PaymentRequiredEventHandler? PaymentRequiredReceived;
         public event EventHandler<PaymentSelectedEventArgs>? PaymentSelected;
@@ -32,7 +26,7 @@ namespace x402.Client
             _maxRetries = maxRetries;
         }
 
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken = default)
         {
             var retries = 0;
             var response = await base.SendAsync(request, cancellationToken);
@@ -58,18 +52,7 @@ namespace x402.Client
                     break;
 
                 var retryRequest = await CloneHttpRequestAsync(request);
-                var headerJson = JsonSerializer.Serialize(payment.Header, JsonOptions);
-                var base64header = Convert.ToBase64String(Encoding.UTF8.GetBytes(headerJson));
-                
-                // Use the appropriate header based on X402 version
-                if (paymentRequiredResponse.X402Version == 2)
-                {
-                    retryRequest.Headers.Add(PaymentHeaderV2, base64header);
-                }
-                else
-                {
-                    retryRequest.Headers.Add(PaymentHeaderV1, base64header);
-                }
+                retryRequest.AddPaymentHeader(payment.Header, paymentRequiredResponse.X402Version);
 
                 response.Dispose();
 
@@ -122,7 +105,7 @@ namespace x402.Client
                             var jsonString = Encoding.UTF8.GetString(decodedBytes);
                             var parsed = JsonSerializer.Deserialize<PaymentRequiredResponse>(jsonString,
                                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                            
+
                             if (parsed != null && parsed.X402Version == 2)
                             {
                                 return parsed;

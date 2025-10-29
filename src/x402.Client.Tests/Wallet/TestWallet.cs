@@ -12,7 +12,7 @@ namespace x402.Client.Tests.Wallet
             AssetAllowances = assetAllowances;
         }
 
-        protected override PaymentPayloadHeader CreateHeader(PaymentRequirements requirement, CancellationToken cancellationToken)
+        public override PaymentPayloadHeader CreateHeader(PaymentRequirements requirement, CancellationToken cancellationToken)
         {
             var header = new PaymentPayloadHeader()
             {

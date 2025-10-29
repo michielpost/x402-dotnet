@@ -8,7 +8,7 @@ namespace x402.Client
         public List<AssetAllowance> AssetAllowances { get; set; } = new();
         public bool IgnoreAllowances { get; set; }
 
-        public virtual (PaymentRequirements? Requirement, PaymentPayloadHeader? Header) RequestPayment(IReadOnlyList<PaymentRequirements> requirements, CancellationToken cancellationToken)
+        public virtual (PaymentRequirements? Requirement, PaymentPayloadHeader? Header) RequestPayment(IReadOnlyList<PaymentRequirements> requirements, CancellationToken cancellationToken = default)
         {
             var allowedRequirements = requirements
                 .Where(r => AssetAllowances.Any(a =>
@@ -27,7 +27,7 @@ namespace x402.Client
             return (selectedRequirement, header);
         }
 
-        protected abstract PaymentPayloadHeader CreateHeader(PaymentRequirements requirement, CancellationToken cancellationToken);
+        public abstract PaymentPayloadHeader CreateHeader(PaymentRequirements requirement, CancellationToken cancellationToken = default);
     }
 }
 

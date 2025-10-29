@@ -226,11 +226,11 @@ namespace x402.Client.Tests
             Assert.That(inner.SeenRequests.Count, Is.EqualTo(2));
 
             var retryRequest = inner.SeenRequests.Last();
-            Assert.That(retryRequest.Headers.TryGetValues(PaymentRequiredHandler.PaymentHeaderV1, out var values), Is.True);
+            Assert.That(retryRequest.Headers.TryGetValues(HttpRequestMessageExtensions.PaymentHeaderV1, out var values), Is.True);
             Assert.That(values!.Single(), Is.Not.Empty);
-            
+
             // Should NOT have version 2 header
-            Assert.That(retryRequest.Headers.Contains(PaymentRequiredHandler.PaymentHeaderV2), Is.False);
+            Assert.That(retryRequest.Headers.Contains(HttpRequestMessageExtensions.PaymentHeaderV2), Is.False);
         }
 
         [Test]
@@ -298,7 +298,7 @@ namespace x402.Client.Tests
             };
             var json = JsonSerializer.Serialize(body, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
             var base64Header = Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
-            
+
             var v2Response = new HttpResponseMessage(HttpStatusCode.PaymentRequired);
             v2Response.Headers.Add(PaymentRequiredHandler.PaymentRequiredHeader, base64Header);
 
@@ -320,11 +320,11 @@ namespace x402.Client.Tests
             Assert.That(inner.SeenRequests.Count, Is.EqualTo(2));
 
             var retryRequest = inner.SeenRequests.Last();
-            Assert.That(retryRequest.Headers.TryGetValues(PaymentRequiredHandler.PaymentHeaderV2, out var values), Is.True);
+            Assert.That(retryRequest.Headers.TryGetValues(HttpRequestMessageExtensions.PaymentHeaderV2, out var values), Is.True);
             Assert.That(values!.Single(), Is.Not.Empty);
-            
+
             // Should NOT have version 1 header
-            Assert.That(retryRequest.Headers.Contains(PaymentRequiredHandler.PaymentHeaderV1), Is.False);
+            Assert.That(retryRequest.Headers.Contains(HttpRequestMessageExtensions.PaymentHeaderV1), Is.False);
         }
 
         [Test]
@@ -347,7 +347,7 @@ namespace x402.Client.Tests
                 Accepts = new List<PaymentRequirements> { requirement }
             };
             var json = JsonSerializer.Serialize(body, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-            
+
             var response = new HttpResponseMessage(HttpStatusCode.PaymentRequired)
             {
                 Content = new StringContent(json, Encoding.UTF8, "application/json")
@@ -392,7 +392,7 @@ namespace x402.Client.Tests
             };
             var json = JsonSerializer.Serialize(body, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
             var base64Header = Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
-            
+
             var response = new HttpResponseMessage(HttpStatusCode.PaymentRequired)
             {
                 Content = new StringContent("invalid body", Encoding.UTF8, "text/plain")
