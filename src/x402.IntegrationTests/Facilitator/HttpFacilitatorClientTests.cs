@@ -1,6 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using x402.Client.EVM;
+using x402.Core;
+using x402.Core.Enums;
 using x402.Core.Models.v1;
 using x402.Facilitator;
 
@@ -110,6 +113,77 @@ namespace x402.IntegrationTests.Facilitator
 
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Items.Count, Is.GreaterThan(0));
+        }
+
+        [Test]
+        public async Task FullTest()
+        {
+            //var apiUrl = "https://facilitator.payai.network";
+            //var apiUrl = "https://facilitator.mogami.tech";
+            //var apiUrl = "https://facilitator.mcpay.tech";
+            //var apiUrl = "https://facilitator.daydreams.systems/";
+            //var apiUrl = "https://open.x402.host";
+            var apiUrl = "https://facilitator.dirtroad.dev";
+
+            var httpClient = new HttpClient
+            {
+                BaseAddress = new Uri(apiUrl)
+            };
+
+            var facilitatorClient = new HttpFacilitatorClient(httpClient, new NullLogger<HttpFacilitatorClient>());
+
+            var result = await facilitatorClient.SupportedAsync();
+
+
+            var assetInfo = new AssetInfoProvider();
+
+            foreach (var kind in result.Kinds)
+            {
+                TestContext.Out.WriteLine($"Supported kind: {kind}");
+
+                var asset = assetInfo.GetAll()
+                    .Where(x => x.IsEvm)
+                    .Where(x => x.Network == kind.Network).FirstOrDefault();
+                if(asset == null)
+                {
+                    TestContext.Out.WriteLine($"No asset found for network {kind.Network}, skipping...");
+                    continue;
+                }
+
+                var wallet = new EVMWallet("0x1123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", asset.ChainId)
+                {
+                    IgnoreAllowances = true
+                };
+
+
+                PaymentRequirements requirements = new PaymentRequirements()
+                {
+                    Asset = asset.ContractAddress,
+                    MaxAmountRequired = "1000",
+                    Network = kind.Network,
+                    Scheme = PaymentScheme.Exact,
+                    PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+                    Resource = "https://localhost/api",
+                    Description = "Full test payment",
+                    MimeType = "application/json",
+                    Extra = new PaymentRequirementsExtra
+                    {
+                        Name = asset.Name,
+                        Version = asset.Version,
+                    }
+                };
+
+                PaymentPayloadHeader header = wallet.CreateHeader(requirements);
+
+
+                var verifyResult = await facilitatorClient.VerifyAsync(header, requirements);
+                TestContext.Out.WriteLine($"Verify result for kind {kind}: IsValid={verifyResult.IsValid}");
+
+                var settleResult = await facilitatorClient.SettleAsync(header, requirements);
+                TestContext.Out.WriteLine($"Settle result for kind {kind}: IsValid={settleResult.Success}");
+
+            }
+
         }
     }
 }

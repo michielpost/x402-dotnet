@@ -27,6 +27,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\x402.Client.EVM\x402.Client.EVM.csproj" />
 		<ProjectReference Include="..\x402\x402.csproj" />
 	</ItemGroup>
 

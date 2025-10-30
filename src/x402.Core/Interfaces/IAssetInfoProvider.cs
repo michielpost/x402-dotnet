@@ -23,5 +23,12 @@ namespace x402.Core.Interfaces
         /// <param name="alias"></param>
         /// <param name="contractAddress"></param>
         void AddAlias(string alias, string contractAddress);
+
+        /// <summary>
+        /// Retrieves a list containing information about all available assets.
+        /// </summary>
+        /// <returns>A list of <see cref="AssetInfo"/> objects representing all assets. The list will be empty if no assets are
+        /// available.</returns>
+        List<AssetInfo> GetAll();
     }
 }
