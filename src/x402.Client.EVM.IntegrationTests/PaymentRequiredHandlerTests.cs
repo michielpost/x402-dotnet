@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Json;
 using x402.Client.v1;
+using x402.Client.v2;
 using x402.Core.Models.v1;
 
 namespace x402.Client.EVM.IntegrationTests
@@ -18,9 +19,12 @@ namespace x402.Client.EVM.IntegrationTests
             {
                 IgnoreAllowances = true
             };
-            var handler = new PaymentRequiredV1Handler(wallet);
 
-            var client = new HttpClient(handler);
+            //Handle both V1 and V2 payment required responses
+            var handlerV1 = new PaymentRequiredV1Handler(wallet);
+            var handlerV2 = new PaymentRequiredV2Handler(wallet, handlerV1);
+
+            var client = new HttpClient(handlerV2);
 
             //var response = await client.GetAsync("https://x402-dotnet.azurewebsites.net/Resource/protected");
             //var response = await client.GetAsync("https://localhost:7154/resource/protected");

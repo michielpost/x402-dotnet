@@ -18,9 +18,9 @@ namespace x402.Client.v2
         public event EventHandler<PaymentRetryEventArgs>? PaymentRetrying;
 
         public PaymentRequiredV2Handler(IX402WalletV2 wallet, int maxRetries = 1)
-            : this(wallet, maxRetries, new HttpClientHandler()) { }
+            : this(wallet, new HttpClientHandler(), maxRetries) { }
 
-        public PaymentRequiredV2Handler(IX402WalletV2 wallet, int maxRetries, HttpMessageHandler innerHandler)
+        public PaymentRequiredV2Handler(IX402WalletV2 wallet, HttpMessageHandler innerHandler, int maxRetries = 1)
             : base(innerHandler)
         {
             _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
@@ -35,8 +35,9 @@ namespace x402.Client.v2
             while (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired &&
                    retries < _maxRetries)
             {
-                // Try to parse as v2 first (header-based), then fall back to v1 (body-based)
                 var paymentRequiredResponse = await ParsePaymentRequiredResponseAsync(response);
+                if (paymentRequiredResponse == null)
+                    break;
 
                 // Notify subscribers
                 var canContinue = OnPaymentRequiredReceived(new PaymentRequiredEventArgs(request, response, paymentRequiredResponse));
@@ -90,11 +91,11 @@ namespace x402.Client.v2
         protected virtual void OnPaymentRetrying(PaymentRetryEventArgs e)
             => PaymentRetrying?.Invoke(this, e);
 
-        private static async Task<PaymentRequiredResponse> ParsePaymentRequiredResponseAsync(HttpResponseMessage response)
+        private static async Task<PaymentRequiredResponse?> ParsePaymentRequiredResponseAsync(HttpResponseMessage response)
         {
             try
             {
-                // Version 2: Try to parse from PAYMENT-REQUIRED header first
+                // Version 2: Try to parse from PAYMENT-REQUIRED header
                 if (response.Headers.TryGetValues(PaymentRequiredHeader, out var headerValues))
                 {
                     var headerValue = headerValues.FirstOrDefault();
@@ -119,12 +120,12 @@ namespace x402.Client.v2
                     }
                 }
 
-                return new PaymentRequiredResponse() { Resource = new() };
             }
             catch
             {
-                return new PaymentRequiredResponse() { Resource = new() };
             }
+
+            return null;
         }
 
         private static async Task<HttpRequestMessage> CloneHttpRequestAsync(HttpRequestMessage request)

@@ -1,5 +1,4 @@
-﻿using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 using x402.Client.Events;
 using x402.Client.v1.Events;
 using x402.Core.Models.v1;
@@ -11,16 +10,14 @@ namespace x402.Client.v1
         private readonly IX402WalletV1 _wallet;
         private readonly int _maxRetries;
 
-        public const string PaymentRequiredHeader = "PAYMENT-REQUIRED";
-
         public event PaymentRequiredEventHandler? PaymentRequiredReceived;
         public event EventHandler<PaymentSelectedEventArgs>? PaymentSelected;
         public event EventHandler<PaymentRetryEventArgs>? PaymentRetrying;
 
         public PaymentRequiredV1Handler(IX402WalletV1 wallet, int maxRetries = 1)
-            : this(wallet, maxRetries, new HttpClientHandler()) { }
+            : this(wallet, new HttpClientHandler(), maxRetries) { }
 
-        public PaymentRequiredV1Handler(IX402WalletV1 wallet, int maxRetries, HttpMessageHandler innerHandler)
+        public PaymentRequiredV1Handler(IX402WalletV1 wallet, HttpMessageHandler innerHandler, int maxRetries = 1)
             : base(innerHandler)
         {
             _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
@@ -35,8 +32,10 @@ namespace x402.Client.v1
             while (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired &&
                    retries < _maxRetries)
             {
-                // Try to parse as v2 first (header-based), then fall back to v1 (body-based)
+                // Get payment required details from response body
                 var paymentRequiredResponse = await ParsePaymentRequiredResponseAsync(response);
+                if(paymentRequiredResponse == null)
+                    break;
 
                 // Notify subscribers
                 var canContinue = OnPaymentRequiredReceived(new PaymentRequiredEventArgs(request, response, paymentRequiredResponse));
@@ -90,35 +89,10 @@ namespace x402.Client.v1
         protected virtual void OnPaymentRetrying(PaymentRetryEventArgs e)
             => PaymentRetrying?.Invoke(this, e);
 
-        private static async Task<PaymentRequiredResponse> ParsePaymentRequiredResponseAsync(HttpResponseMessage response)
+        private static async Task<PaymentRequiredResponse?> ParsePaymentRequiredResponseAsync(HttpResponseMessage response)
         {
             try
             {
-                // Version 2: Try to parse from PAYMENT-REQUIRED header first
-                if (response.Headers.TryGetValues(PaymentRequiredHeader, out var headerValues))
-                {
-                    var headerValue = headerValues.FirstOrDefault();
-                    if (!string.IsNullOrWhiteSpace(headerValue))
-                    {
-                        try
-                        {
-                            var decodedBytes = Convert.FromBase64String(headerValue);
-                            var jsonString = Encoding.UTF8.GetString(decodedBytes);
-                            var parsed = JsonSerializer.Deserialize<PaymentRequiredResponse>(jsonString,
-                                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                            if (parsed != null && parsed.X402Version == 2)
-                            {
-                                return parsed;
-                            }
-                        }
-                        catch
-                        {
-                            // Fall through to try body parsing
-                        }
-                    }
-                }
-
                 // Version 1: Parse from JSON body
                 var content = await response.Content.ReadAsStringAsync();
                 if (string.IsNullOrWhiteSpace(content))
@@ -131,8 +105,9 @@ namespace x402.Client.v1
             }
             catch
             {
-                return new PaymentRequiredResponse();
             }
+
+            return null;
         }
 
         private static async Task<HttpRequestMessage> CloneHttpRequestAsync(HttpRequestMessage request)
