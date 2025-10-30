@@ -70,6 +70,9 @@ namespace x402.Core.Models.v1
     {
         public string? Name { get; set; }
         public string? Version { get; set; }
+
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement> ExtensionData { get; set; } = new();
     }
 
     public class OutputSchema

@@ -66,9 +66,9 @@ namespace x402.Core
             {
                 ChainId = 137,
                 Network = "polygon",
-                ContractAddress = "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359", // USD Coin
+                ContractAddress = "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", // USD Coin
                 Name = "USD Coin",
-                Version = "1",
+                Version = "2",
                 IsEvm = true
             },
             new AssetInfo
@@ -77,7 +77,7 @@ namespace x402.Core
                 Network = "polygon-amoy",
                 ContractAddress = "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582", // USDC
                 Name = "USDC",
-                Version = "1",
+                Version = "2",
                 IsEvm = true
             },
             new AssetInfo
@@ -93,9 +93,9 @@ namespace x402.Core
             {
                 ChainId = 3338,
                 Network = "peaq",
-                ContractAddress = "0x8d5c3a2b7e4f1d8a9c0b1e2f3a4b5c6d7e8f9g0h", // USDC (bridged standard)
+                ContractAddress = "0xbbA60da06c2c5424f03f7434542280FCAd453d10", // USDC (bridged standard)
                 Name = "USDC",
-                Version = "1",
+                Version = "2",
                 IsEvm = false,
             },
             new AssetInfo
