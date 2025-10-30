@@ -48,7 +48,7 @@ public class X402HandlerV2
     public async Task<X402ProcessingResult> HandleX402Async(
         PaymentRequiredInfo paymentRequiredInfo,
         bool discoverable,
-        SettlementMode settlementMode = SettlementMode.Optimistic,
+        SettlementMode settlementMode = SettlementMode.Pessimistic,
         Func<HttpContext, SettlementResponse?, Exception?, Task>? onSettlement = null,
         Func<HttpContext, PaymentRequirements, OutputSchema, OutputSchema>? onSetOutputSchema = null)
     {
@@ -69,7 +69,7 @@ public class X402HandlerV2
         ResourceInfo resourceInfo,
         List<PaymentRequirements> paymentRequirements,
         bool discoverable,
-        SettlementMode settlementMode = SettlementMode.Optimistic,
+        SettlementMode settlementMode = SettlementMode.Pessimistic,
         Func<HttpContext, SettlementResponse?, Exception?, Task>? onSettlement = null,
         Func<HttpContext, PaymentRequirements, OutputSchema, OutputSchema>? onSetOutputSchema = null)
     {
@@ -276,6 +276,18 @@ public class X402HandlerV2
             Exception? innerSettlementException = null;
             try
             {
+                if (settlementMode == SettlementMode.DoNotSettle)
+                {
+                    logger.LogInformation("Settlement skipped (DoNotSettle) for path {Path}", processingResult.FullUrl);
+                    sr = new SettlementResponse
+                    {
+                        Success = true,
+                        Transaction = null,
+                        Payer = processingResult.PaymentPayload?.ExtractPayerFromPayload(),
+                        Network = processingResult.SelectedPaymentRequirement?.Network
+                    };
+                }
+
                 if (sr == null && processingResult.PaymentPayload != null && processingResult.SelectedPaymentRequirement != null)
                 {
                     sr = await facilitator.SettleAsync(processingResult.PaymentPayload, processingResult.SelectedPaymentRequirement);

@@ -9,6 +9,6 @@ namespace x402.Models
         /// </summary>
         public Dictionary<string, PaymentRequirementsConfig> PaymentRequirements { get; set; } = new();
 
-        public SettlementMode SettlementMode { get; set; } = SettlementMode.Optimistic;
+        public SettlementMode SettlementMode { get; set; } = SettlementMode.Pessimistic;
     }
 }

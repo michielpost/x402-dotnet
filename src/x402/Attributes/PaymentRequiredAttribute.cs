@@ -38,7 +38,7 @@ namespace x402.Attributes
         public string Description { get; set; } = string.Empty;
         public string MimeType { get; set; } = string.Empty;
 
-        public SettlementMode SettlementMode { get; set; } = SettlementMode.Optimistic;
+        public SettlementMode SettlementMode { get; set; } = SettlementMode.Pessimistic;
 
         /// <summary>
         /// List endpoint with facilitator discovery service when set to true.
