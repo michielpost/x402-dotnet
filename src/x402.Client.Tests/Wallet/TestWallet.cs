@@ -11,7 +11,7 @@ namespace x402.Client.Tests.Wallet
             AssetAllowances = assetAllowances;
         }
 
-        public override Core.Models.v1.PaymentPayloadHeader CreateHeader(Core.Models.v1.PaymentRequirements requirement, CancellationToken cancellationToken)
+        public override Task<Core.Models.v1.PaymentPayloadHeader> CreateHeaderAsync(Core.Models.v1.PaymentRequirements requirement, CancellationToken cancellationToken)
         {
             var header = new Core.Models.v1.PaymentPayloadHeader()
             {
@@ -32,10 +32,10 @@ namespace x402.Client.Tests.Wallet
                 },
             };
 
-            return header;
+            return Task.FromResult(header);
         }
 
-        public override Core.Models.v2.PaymentPayloadHeader CreateHeader(Core.Models.v2.PaymentRequirements requirement, CancellationToken cancellationToken = default)
+        public override Task<Core.Models.v2.PaymentPayloadHeader> CreateHeaderAsync(Core.Models.v2.PaymentRequirements requirement, CancellationToken cancellationToken = default)
         {
             var header = new Core.Models.v2.PaymentPayloadHeader()
             {
@@ -54,7 +54,7 @@ namespace x402.Client.Tests.Wallet
                 },
             };
 
-            return header;
+            return Task.FromResult(header);
         }
     }
 }

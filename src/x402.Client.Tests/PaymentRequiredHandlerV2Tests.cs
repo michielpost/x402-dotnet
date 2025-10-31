@@ -98,7 +98,7 @@ namespace x402.Client.Tests
                 new HttpResponseMessage(HttpStatusCode.OK)
             });
 
-            var handler = new PaymentRequiredV2Handler(wallet, maxRetries: 2)
+            var handler = new PaymentRequiredV2Handler(new WalletProvider(wallet), maxRetries: 2)
             {
                 InnerHandler = inner
             };
@@ -125,7 +125,7 @@ namespace x402.Client.Tests
 
             var inner = new QueueMessageHandler(new[] { Build402() });
 
-            var handler = new PaymentRequiredV2Handler(wallet, maxRetries: 3)
+            var handler = new PaymentRequiredV2Handler(new WalletProvider(wallet), maxRetries: 3)
             {
                 InnerHandler = inner
             };
@@ -154,7 +154,7 @@ namespace x402.Client.Tests
                 new HttpResponseMessage(HttpStatusCode.OK)
             });
 
-            var handler = new PaymentRequiredV2Handler(wallet, maxRetries: 1)
+            var handler = new PaymentRequiredV2Handler(new WalletProvider(wallet), maxRetries: 1)
             {
                 InnerHandler = inner
             };
@@ -182,7 +182,7 @@ namespace x402.Client.Tests
                 new HttpResponseMessage(HttpStatusCode.OK)
             });
 
-            var handler = new PaymentRequiredV2Handler(wallet, maxRetries: 2)
+            var handler = new PaymentRequiredV2Handler(new WalletProvider(wallet), maxRetries: 2)
             {
                 InnerHandler = inner
             };
@@ -235,7 +235,7 @@ namespace x402.Client.Tests
                 new HttpResponseMessage(HttpStatusCode.OK)
             });
 
-            var handler = new PaymentRequiredV2Handler(wallet, maxRetries: 2)
+            var handler = new PaymentRequiredV2Handler(new WalletProvider(wallet), maxRetries: 2)
             {
                 InnerHandler = inner
             };
@@ -290,7 +290,7 @@ namespace x402.Client.Tests
                 new HttpResponseMessage(HttpStatusCode.OK)
             });
 
-            var handler = new PaymentRequiredV2Handler(wallet, maxRetries: 2)
+            var handler = new PaymentRequiredV2Handler(new WalletProvider(wallet), maxRetries: 2)
             {
                 InnerHandler = inner
             };

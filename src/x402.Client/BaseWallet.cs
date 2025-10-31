@@ -11,7 +11,7 @@ namespace x402.Client
 
         #region v2
 
-        public virtual (Core.Models.v1.PaymentRequirements? Requirement, Core.Models.v1.PaymentPayloadHeader? Header) RequestPayment(Core.Models.v1.PaymentRequiredResponse paymentRequiredResponse, CancellationToken cancellationToken = default)
+        public virtual async Task<(Core.Models.v1.PaymentRequirements? Requirement, Core.Models.v1.PaymentPayloadHeader? Header)> RequestPaymentAsync(Core.Models.v1.PaymentRequiredResponse paymentRequiredResponse, CancellationToken cancellationToken = default)
         {
             var allowedRequirements = paymentRequiredResponse.Accepts
                 .Where(r => AssetAllowances.Any(a =>
@@ -26,16 +26,16 @@ namespace x402.Client
             if (selectedRequirement == null)
                 return (null, null);
 
-            var header = CreateHeader(selectedRequirement, cancellationToken);
+            var header = await CreateHeaderAsync(selectedRequirement, cancellationToken);
             return (selectedRequirement, header);
         }
 
-        public abstract Core.Models.v1.PaymentPayloadHeader CreateHeader(Core.Models.v1.PaymentRequirements requirement, CancellationToken cancellationToken = default);
+        public abstract Task<Core.Models.v1.PaymentPayloadHeader> CreateHeaderAsync(Core.Models.v1.PaymentRequirements requirement, CancellationToken cancellationToken = default);
         #endregion
 
 
         #region v2
-        public virtual (Core.Models.v2.PaymentRequirements? Requirement, Core.Models.v2.PaymentPayloadHeader? Header) RequestPayment(Core.Models.v2.PaymentRequiredResponse paymentRequiredResponse, CancellationToken cancellationToken = default)
+        public virtual async Task<(Core.Models.v2.PaymentRequirements? Requirement, Core.Models.v2.PaymentPayloadHeader? Header)> RequestPaymentAsync(Core.Models.v2.PaymentRequiredResponse paymentRequiredResponse, CancellationToken cancellationToken = default)
         {
             var allowedRequirements = paymentRequiredResponse.Accepts
                 .Where(r => AssetAllowances.Any(a =>
@@ -50,11 +50,11 @@ namespace x402.Client
             if (selectedRequirement == null)
                 return (null, null);
 
-            var header = CreateHeader(selectedRequirement, cancellationToken);
+            var header = await CreateHeaderAsync(selectedRequirement, cancellationToken);
             return (selectedRequirement, header);
         }
 
-        public abstract Core.Models.v2.PaymentPayloadHeader CreateHeader(Core.Models.v2.PaymentRequirements requirement, CancellationToken cancellationToken = default);
+        public abstract Task<Core.Models.v2.PaymentPayloadHeader> CreateHeaderAsync(Core.Models.v2.PaymentRequirements requirement, CancellationToken cancellationToken = default);
         #endregion
     }
 }

@@ -1,5 +1,10 @@
 <Solution>
   <Folder Name="/Samples/" />
+  <Folder Name="/Samples/Blazor/">
+    <Project Path="x402.BlazorSample/Client/x402.BlazorSample.Client.csproj" Id="a3c3eb12-e15d-4dcd-bbff-b3cb421a7a34" />
+    <Project Path="x402.BlazorSample/Server/x402.BlazorSample.Server.csproj" Id="ca167360-2e2d-4316-b1c3-c901c6a0663d" />
+    <Project Path="x402.BlazorSample/Shared/x402.BlazorSample.Shared.csproj" Id="83bbbfc1-1f1b-497a-a667-32e736fbf3eb" />
+  </Folder>
   <Folder Name="/Samples/Client/">
     <Project Path="X402.Client.ConsoleSample/X402.Client.ConsoleSample.csproj" Id="301ebfe8-5536-47aa-9d95-e6d5f0dbd888" />
   </Folder>

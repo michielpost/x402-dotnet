@@ -21,8 +21,8 @@ namespace x402.Client.EVM.IntegrationTests
             };
 
             //Handle both V1 and V2 payment required responses
-            var handlerV1 = new PaymentRequiredV1Handler(wallet);
-            var handlerV2 = new PaymentRequiredV2Handler(wallet, handlerV1);
+            var handlerV1 = new PaymentRequiredV1Handler(new v1.WalletProvider(wallet));
+            var handlerV2 = new PaymentRequiredV2Handler(new v2.WalletProvider(wallet), handlerV1);
 
             var client = new HttpClient(handlerV2);
 
@@ -49,7 +49,7 @@ namespace x402.Client.EVM.IntegrationTests
                 IgnoreAllowances = true
             };
 
-            PaymentPayloadHeader header = wallet.CreateHeader(new PaymentRequirements
+            PaymentPayloadHeader header = await wallet.CreateHeaderAsync(new PaymentRequirements
             {
                 Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                 MaxAmountRequired = "10000",
@@ -82,7 +82,7 @@ namespace x402.Client.EVM.IntegrationTests
             {
                 IgnoreAllowances = true
             };
-            var handler = new PaymentRequiredV1Handler(wallet);
+            var handler = new PaymentRequiredV1Handler(new v1.WalletProvider(wallet));
 
             var client = new HttpClient(handler);
 

@@ -5,22 +5,23 @@ using x402.Core.Models.v1;
 
 namespace x402.Client.v1
 {
+
     public class PaymentRequiredV1Handler : DelegatingHandler
     {
-        private readonly IX402WalletV1 _wallet;
+        private readonly IWalletProvider _walletProvider;
         private readonly int _maxRetries;
 
         public event PaymentRequiredEventHandler? PaymentRequiredReceived;
         public event EventHandler<PaymentSelectedEventArgs>? PaymentSelected;
         public event EventHandler<PaymentRetryEventArgs>? PaymentRetrying;
 
-        public PaymentRequiredV1Handler(IX402WalletV1 wallet, int maxRetries = 1)
-            : this(wallet, new HttpClientHandler(), maxRetries) { }
+        public PaymentRequiredV1Handler(IWalletProvider walletProvider, int maxRetries = 1)
+            : this(walletProvider, new HttpClientHandler(), maxRetries) { }
 
-        public PaymentRequiredV1Handler(IX402WalletV1 wallet, HttpMessageHandler innerHandler, int maxRetries = 1)
+        public PaymentRequiredV1Handler(IWalletProvider walletProvider, HttpMessageHandler innerHandler, int maxRetries = 1)
             : base(innerHandler)
         {
-            _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
+            _walletProvider = walletProvider ?? throw new ArgumentNullException(nameof(walletProvider));
             _maxRetries = maxRetries;
         }
 
@@ -29,21 +30,25 @@ namespace x402.Client.v1
             var retries = 0;
             var response = await base.SendAsync(request, cancellationToken);
 
+            if (_walletProvider.Wallet == null)
+                return response;
+
             while (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired &&
                    retries < _maxRetries)
             {
                 // Get payment required details from response body
                 var paymentRequiredResponse = await ParsePaymentRequiredResponseAsync(response);
-                if(paymentRequiredResponse == null)
+                if (paymentRequiredResponse == null)
                     break;
 
                 // Notify subscribers
                 var canContinue = OnPaymentRequiredReceived(new PaymentRequiredEventArgs(request, response, paymentRequiredResponse));
 
+
                 if (!canContinue || paymentRequiredResponse.Accepts.Count == 0)
                     break;
 
-                var payment = _wallet.RequestPayment(paymentRequiredResponse, cancellationToken);
+                var payment = await _walletProvider.Wallet.RequestPaymentAsync(paymentRequiredResponse, cancellationToken);
 
                 // Notify subscribers
                 OnPaymentSelected(new PaymentSelectedEventArgs(request, payment.Requirement, payment.Header, retries + 1));

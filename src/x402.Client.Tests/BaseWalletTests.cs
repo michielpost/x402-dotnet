@@ -17,19 +17,19 @@ namespace x402.Client.Tests
         };
 
         [Test]
-        public void Returns_Null_When_No_Allowances_And_Ignore_False()
+        public async Task Returns_Null_When_No_Allowances_And_Ignore_False()
         {
             var wallet = new TestWallet(new());
             wallet.IgnoreAllowances = false;
 
-            var (selected, header) = wallet.RequestPayment(new PaymentRequiredResponse() { Accepts = new() { Req("0xA") } }, CancellationToken.None);
+            var (selected, header) = await wallet.RequestPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { Req("0xA") } }, CancellationToken.None);
 
             Assert.That(selected, Is.Null);
             Assert.That(header, Is.Null);
         }
 
         [Test]
-        public void Selects_First_Matching_Requirement()
+        public async Task Selects_First_Matching_Requirement()
         {
             var wallet = new TestWallet(new()
             {
@@ -39,7 +39,7 @@ namespace x402.Client.Tests
             var r1 = Req("0xA");
             var r2 = Req("0xB");
 
-            var (selected, header) = wallet.RequestPayment(new PaymentRequiredResponse() { Accepts = new() { r1, r2 } }, CancellationToken.None);
+            var (selected, header) = await wallet.RequestPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { r1, r2 } }, CancellationToken.None);
 
             Assert.That(selected, Is.EqualTo(r2));
             Assert.That(header, Is.Not.Null);
@@ -48,20 +48,20 @@ namespace x402.Client.Tests
         }
 
         [Test]
-        public void IgnoreAllowances_Bypasses_Checks()
+        public async Task IgnoreAllowances_Bypasses_Checks()
         {
             var wallet = new TestWallet(new());
             wallet.IgnoreAllowances = true;
 
             var r = Req("0xZZ");
-            var (selected, header) = wallet.RequestPayment(new PaymentRequiredResponse() { Accepts = new() { r } }, CancellationToken.None);
+            var (selected, header) = await wallet.RequestPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { r } }, CancellationToken.None);
 
             Assert.That(selected, Is.EqualTo(r));
             Assert.That(header, Is.Not.Null);
         }
 
         [Test]
-        public void Enforces_Total_And_Per_Request_Allowances()
+        public async Task Enforces_Total_And_Per_Request_Allowances()
         {
             var wallet = new TestWallet(new()
             {
@@ -73,9 +73,9 @@ namespace x402.Client.Tests
             var rD = Req("0xD", amount: "600"); // exceeds per-request
             var rOk = Req("0xD", amount: "400"); // within per-request
 
-            var (selected1, header1) = wallet.RequestPayment(new PaymentRequiredResponse() { Accepts = new() { rC } }, CancellationToken.None);
-            var (selected2, header2) = wallet.RequestPayment(new PaymentRequiredResponse() { Accepts = new() { rD } }, CancellationToken.None);
-            var (selected3, header3) = wallet.RequestPayment(new PaymentRequiredResponse() { Accepts = new() { rC, rD, rOk } }, CancellationToken.None);
+            var (selected1, header1) = await wallet.RequestPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { rC } }, CancellationToken.None);
+            var (selected2, header2) = await wallet.RequestPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { rD } }, CancellationToken.None);
+            var (selected3, header3) = await wallet.RequestPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { rC, rD, rOk } }, CancellationToken.None);
 
             Assert.That(selected1, Is.Null);
             Assert.That(header1, Is.Null);

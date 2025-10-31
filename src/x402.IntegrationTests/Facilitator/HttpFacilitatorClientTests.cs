@@ -144,7 +144,7 @@ namespace x402.IntegrationTests.Facilitator
                 var asset = assetInfo.GetAll()
                     .Where(x => x.IsEvm)
                     .Where(x => x.Network == kind.Network).FirstOrDefault();
-                if(asset == null)
+                if (asset == null)
                 {
                     TestContext.Out.WriteLine($"No asset found for network {kind.Network}, skipping...");
                     continue;
@@ -173,7 +173,7 @@ namespace x402.IntegrationTests.Facilitator
                     }
                 };
 
-                PaymentPayloadHeader header = wallet.CreateHeader(requirements);
+                PaymentPayloadHeader header = await wallet.CreateHeaderAsync(requirements);
 
 
                 var verifyResult = await facilitatorClient.VerifyAsync(header, requirements);

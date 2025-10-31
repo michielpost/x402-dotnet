@@ -6,9 +6,10 @@ using x402.Core.Models.v2;
 
 namespace x402.Client.v2
 {
+
     public class PaymentRequiredV2Handler : DelegatingHandler
     {
-        private readonly IX402WalletV2 _wallet;
+        private readonly IWalletProvider _walletProvider;
         private readonly int _maxRetries;
 
         public const string PaymentRequiredHeader = "PAYMENT-REQUIRED";
@@ -17,13 +18,13 @@ namespace x402.Client.v2
         public event EventHandler<PaymentSelectedEventArgs>? PaymentSelected;
         public event EventHandler<PaymentRetryEventArgs>? PaymentRetrying;
 
-        public PaymentRequiredV2Handler(IX402WalletV2 wallet, int maxRetries = 1)
-            : this(wallet, new HttpClientHandler(), maxRetries) { }
+        public PaymentRequiredV2Handler(IWalletProvider walletProvider, int maxRetries = 1)
+            : this(walletProvider, new HttpClientHandler(), maxRetries) { }
 
-        public PaymentRequiredV2Handler(IX402WalletV2 wallet, HttpMessageHandler innerHandler, int maxRetries = 1)
+        public PaymentRequiredV2Handler(IWalletProvider walletProvider, HttpMessageHandler innerHandler, int maxRetries = 1)
             : base(innerHandler)
         {
-            _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
+            _walletProvider = walletProvider ?? throw new ArgumentNullException(nameof(walletProvider));
             _maxRetries = maxRetries;
         }
 
@@ -31,6 +32,9 @@ namespace x402.Client.v2
         {
             var retries = 0;
             var response = await base.SendAsync(request, cancellationToken);
+
+            if (_walletProvider.Wallet == null)
+                return response;
 
             while (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired &&
                    retries < _maxRetries)
@@ -45,7 +49,7 @@ namespace x402.Client.v2
                 if (!canContinue || paymentRequiredResponse.Accepts.Count == 0)
                     break;
 
-                var payment = _wallet.RequestPayment(paymentRequiredResponse, cancellationToken);
+                var payment = await _walletProvider.Wallet.RequestPaymentAsync(paymentRequiredResponse, cancellationToken);
 
                 // Notify subscribers
                 OnPaymentSelected(new PaymentSelectedEventArgs(request, payment.Requirement, payment.Header, retries + 1));

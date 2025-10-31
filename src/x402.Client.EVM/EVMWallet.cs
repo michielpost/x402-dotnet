@@ -3,20 +3,23 @@ using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Signer;
 using Nethereum.Signer.EIP712;
 using Nethereum.Web3.Accounts;
-using System.Numerics;
 using System.Security.Cryptography;
 
 namespace x402.Client.EVM
 {
-    public class EVMWallet : BaseWallet
+    public partial class EVMWallet : BaseWallet
     {
-        public Account Account { get; }
         public ulong ChainId { get; }
+        public string OwnerAddress { get; }
 
         public TimeSpan AddValidAfterFromNow { get; set; } = TimeSpan.FromMinutes(-1);
         public TimeSpan AddValidBeforeFromNow { get; set; } = TimeSpan.FromMinutes(15);
 
-        byte[] privateKey;
+        public Account? Account { get; }
+
+        byte[]? privateKey;
+
+        private readonly Func<string, Task<string>>? signFunction;
 
         public EVMWallet(string hexPrivateKey, ulong chainId)
         {
@@ -28,6 +31,7 @@ namespace x402.Client.EVM
 
             Account = new Nethereum.Web3.Accounts.Account(privateKey);
             ChainId = chainId;
+            OwnerAddress = Account.Address;
         }
 
         public EVMWallet(byte[] privateKey, ulong chainId)
@@ -37,6 +41,7 @@ namespace x402.Client.EVM
 
             Account = new Nethereum.Web3.Accounts.Account(privateKey);
             ChainId = chainId;
+            OwnerAddress = Account.Address;
         }
 
         public static EVMWallet FromMnemonic(string mnemonic, string password, int accountIndex, ulong chainId)
@@ -46,142 +51,28 @@ namespace x402.Client.EVM
             return new EVMWallet(account.PrivateKey, chainId);
         }
 
-        public override Core.Models.v1.PaymentPayloadHeader CreateHeader(Core.Models.v1.PaymentRequirements requirement, CancellationToken cancellationToken = default)
+        public EVMWallet(Func<string, Task<string>> signFunction, string ownerAddress, ulong chainId)
         {
-            // Prepare EIP-3009 TransferWithAuthorization fields
-            string tokenName = requirement.Extra?.Name ?? string.Empty;
-            string tokenVersion = requirement.Extra?.Version ?? string.Empty;
-            string tokenContractAddress = requirement.Asset;
-            string to = requirement.PayTo;
-
-            string from = Account.Address;
-
-            // value should be token units in smallest denomination (uint256)
-            var amount = BigInteger.Parse(requirement.MaxAmountRequired);
-            var value = new Nethereum.Hex.HexTypes.HexBigInteger(amount);
-
-            // Validity window: use unix timestamps
-            ulong validAfter = (ulong)DateTimeOffset.UtcNow.Add(AddValidAfterFromNow).ToUnixTimeSeconds(); // valid immediately
-            ulong validBefore = (ulong)DateTimeOffset.UtcNow.Add(AddValidBeforeFromNow).ToUnixTimeSeconds(); // valid for 15 minutes
-
-            // Create a proper bytes32 nonce: 32 random bytes -> 0x-prefixed hex
-            var nonceByte = GenerateBytes32Nonce();
-
-            // Build EIP-712 typed data for EIP-3009
-            var typedData = BuildEip3009TypedData(tokenName, tokenVersion, ChainId, tokenContractAddress);
-
-            // Message object with the authorization values
-            var message = new TransferWithAuthorization
-            {
-                From = from,
-                To = to,
-                Value = value.Value,
-                ValidAfter = validAfter,
-                ValidBefore = validBefore,
-                Nonce = nonceByte
-            };
-
-            //  Sign the typed data (EIP-712 v4)
-            var ecKey = new EthECKey(privateKey, isPrivate: true);
-
-            var eip712Signer = new Eip712TypedDataSigner();
-            string signature = eip712Signer.SignTypedDataV4(message, typedData, ecKey);
-
-            // Recover signer to verify
-            // var recoveredAddress = eip712Signer.RecoverFromSignatureV4(message, typedData, signature);
-            //Console.WriteLine($"Recovered signer address: {recoveredAddress}");
-            //Console.WriteLine($"Signer matches 'from' ? {string.Equals(recoveredAddress, from, StringComparison.OrdinalIgnoreCase)}\n");
-
-            var header = new Core.Models.v1.PaymentPayloadHeader()
-            {
-                X402Version = 1,
-                Scheme = requirement.Scheme,
-                Network = requirement.Network,
-                Payload = new Core.Models.v1.Payload
-                {
-                    Resource = requirement.Resource,
-                    Signature = signature,
-                    Authorization = new Core.Models.v1.Authorization
-                    {
-                        From = from,
-                        To = to,
-                        Value = value.Value.ToString(), // value as numeric string to avoid precision issues
-                        ValidAfter = validAfter.ToString(),
-                        ValidBefore = validBefore.ToString(),
-                        Nonce = nonceByte.ToHex(prefix: true), //nonce is bytes32: pass as hex string (0x...)
-                    }
-                }
-            };
-
-            return header;
+            this.signFunction = signFunction;
+            ChainId = chainId;
+            OwnerAddress = ownerAddress;
         }
 
-        public override Core.Models.v2.PaymentPayloadHeader CreateHeader(Core.Models.v2.PaymentRequirements requirement, CancellationToken cancellationToken = default)
+        private Task<string> SignAsync(string data)
         {
-            // Prepare EIP-3009 TransferWithAuthorization fields
-            string tokenName = requirement.Extra?.Name ?? string.Empty;
-            string tokenVersion = requirement.Extra?.Version ?? string.Empty;
-            string tokenContractAddress = requirement.Asset;
-            string to = requirement.PayTo;
+            if (data == null) throw new ArgumentNullException(nameof(data));
 
-            string from = Account.Address;
+            if (signFunction != null)
+                return signFunction(data);
 
-            // value should be token units in smallest denomination (uint256)
-            var amount = BigInteger.Parse(requirement.Amount);
-            var value = new Nethereum.Hex.HexTypes.HexBigInteger(amount);
-
-            // Validity window: use unix timestamps
-            ulong validAfter = (ulong)DateTimeOffset.UtcNow.Add(AddValidAfterFromNow).ToUnixTimeSeconds(); // valid immediately
-            ulong validBefore = (ulong)DateTimeOffset.UtcNow.Add(AddValidBeforeFromNow).ToUnixTimeSeconds(); // valid for 15 minutes
-
-            // Create a proper bytes32 nonce: 32 random bytes -> 0x-prefixed hex
-            var nonceByte = GenerateBytes32Nonce();
-
-            // Build EIP-712 typed data for EIP-3009
-            var typedData = BuildEip3009TypedData(tokenName, tokenVersion, ChainId, tokenContractAddress);
-
-            // Message object with the authorization values
-            var message = new TransferWithAuthorization
-            {
-                From = from,
-                To = to,
-                Value = value.Value,
-                ValidAfter = validAfter,
-                ValidBefore = validBefore,
-                Nonce = nonceByte
-            };
-
+            //Use internal signing
             //  Sign the typed data (EIP-712 v4)
             var ecKey = new EthECKey(privateKey, isPrivate: true);
 
             var eip712Signer = new Eip712TypedDataSigner();
-            string signature = eip712Signer.SignTypedDataV4(message, typedData, ecKey);
+            string signature = eip712Signer.SignTypedDataV4(data, ecKey);
 
-            // Recover signer to verify
-            // var recoveredAddress = eip712Signer.RecoverFromSignatureV4(message, typedData, signature);
-            //Console.WriteLine($"Recovered signer address: {recoveredAddress}");
-            //Console.WriteLine($"Signer matches 'from' ? {string.Equals(recoveredAddress, from, StringComparison.OrdinalIgnoreCase)}\n");
-
-            var header = new Core.Models.v2.PaymentPayloadHeader()
-            {
-                X402Version = 1,
-                Accepted = requirement,
-                Payload = new Core.Models.v2.Payload
-                {
-                    Signature = signature,
-                    Authorization = new Core.Models.v2.Authorization
-                    {
-                        From = from,
-                        To = to,
-                        Value = value.Value.ToString(), // value as numeric string to avoid precision issues
-                        ValidAfter = validAfter.ToString(),
-                        ValidBefore = validBefore.ToString(),
-                        Nonce = nonceByte.ToHex(prefix: true), //nonce is bytes32: pass as hex string (0x...)
-                    }
-                }
-            };
-
-            return header;
+            return Task.FromResult(signature);
         }
 
         private static byte[] GenerateBytes32Nonce()

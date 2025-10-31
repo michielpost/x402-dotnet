@@ -19,7 +19,7 @@ namespace x402.Client.EVM.Tests
         }
 
         [Test]
-        public void RequestPaymentAsync_BuildsHeaderWithExpectedMappings()
+        public async Task RequestPaymentAsync_BuildsHeaderWithExpectedMappings()
         {
             // Arrange
             var requirement = BuildRequirement();
@@ -32,7 +32,7 @@ namespace x402.Client.EVM.Tests
             };
 
             // Act
-            var (selected, header) = wallet.RequestPayment(new PaymentRequiredResponse() { Accepts = requirements }, CancellationToken.None);
+            var (selected, header) = await wallet.RequestPaymentAsync(new PaymentRequiredResponse() { Accepts = requirements }, CancellationToken.None);
 
             // Assert
             Assert.That(selected, Is.Not.Null);
@@ -59,7 +59,7 @@ namespace x402.Client.EVM.Tests
         }
 
         [Test]
-        public void RequestPaymentAsync_GeneratesEip712SignatureFormat()
+        public async Task RequestPaymentAsync_GeneratesEip712SignatureFormat()
         {
             // Arrange
             var requirements = new List<PaymentRequirements> { BuildRequirement() };
@@ -69,7 +69,7 @@ namespace x402.Client.EVM.Tests
             };
 
             // Act
-            var (_, header) = wallet.RequestPayment(new PaymentRequiredResponse() { Accepts = requirements }, CancellationToken.None);
+            var (_, header) = await wallet.RequestPaymentAsync(new PaymentRequiredResponse() { Accepts = requirements }, CancellationToken.None);
 
             // Assert
             Assert.That(header, Is.Not.Null);

@@ -33,7 +33,7 @@ var wallet = new EVMWallet(privateKey, networkId)
 {
     IgnoreAllowances = true
 };
-var handlerV1 = new PaymentRequiredV1Handler(wallet);
+var handlerV1 = new PaymentRequiredV1Handler(new WalletProvider(wallet));
 
 handlerV1.PaymentRequiredReceived += (_, e) =>
 {
@@ -62,7 +62,7 @@ handlerV1.PaymentRetrying += (_, e) =>
 
 var client = new HttpClient(handlerV1);
 
-var address = wallet.Account.Address;
+var address = wallet.OwnerAddress;
 
 Console.WriteLine($"Using wallet address: {address}");
 
