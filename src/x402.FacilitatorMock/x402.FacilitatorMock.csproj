@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\x402-dotnet.ServiceDefaults\x402-dotnet.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\x402\x402.csproj" />
+    <ProjectReference Include="..\x402.Core\x402.Core.csproj" />
   </ItemGroup>
 
 </Project>

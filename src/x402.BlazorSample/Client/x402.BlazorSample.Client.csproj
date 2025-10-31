@@ -15,7 +15,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.10" PrivateAssets="all" />
 	  <PackageReference Include="Nethereum.Metamask.Blazor" Version="5.0.0" />
 	  <PackageReference Include="Nethereum.UI" Version="5.0.0" />
-	  <PackageReference Include="Nethereum.Web3" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
