@@ -27,6 +27,7 @@ Install the `x402.Client.EVM` package from NuGet:
 - Pay using the embedded EVM compatible wallet (Ethereum / Base)
 - Set allowances per request or globally
 - X402.Client.ConsoleSample sample application included
+- Blazor Sample project available
 
 ## How to use?
 

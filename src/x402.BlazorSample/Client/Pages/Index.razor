@@ -1,9 +1,6 @@
 ﻿@page "/"
-@implements IDisposable;
-@inject IJSRuntime jsRuntime;
+@implements IDisposable
 @inject SelectedEthereumHostProviderService selectedHostProviderService
-@inject NavigationManager _navigationManager
-@inject AuthenticationStateProvider _siweAuthenticationStateProvider;
 @inject HttpClient HttpClient
 @inject IWalletProvider WalletProvider
 @using Nethereum.ABI.EIP712
@@ -16,253 +13,189 @@
 @using x402.Client.v1
 @using x402.Core.Models.v1
 <div style="text-align:center; font-family:sans-serif;">
-    <h1>
-        MetaMask Test page
-    </h1>
-  
+	<h1>
+		MetaMask Test page
+	</h1>
+	<Metamask SelectedAccountTruncateLength="15" ConnectText="Please Connect" InstallMetamaskText="Please install Metamask" />
+
 </div>
 
 <Metamask SelectedAccountTruncateLength="15" ConnectText="Please Connect" InstallMetamaskText="Please install Metamask" />
 
 <AuthorizeView Roles="EthereumConnected">
-    <Authorized>
-        <div class="card m-1">
-            <div class="card-body">
-                <div class="row">
-                    <label class="col-sm-3 col-form-label-lg">Selected Account:</label>
-                    <div class="col-sm-6">
-                        @SelectedAccount
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card-body">
-                <div class="row">
-                    <label class="col-sm-3 col-form-label-lg">Selected Network ChainId:</label>
-                    <div class="col-sm-6">
-                        @SelectedChainId
-                    </div>
-                </div>
-            </div>
-        </div>
+	<Authorized>
 
-        <div class="card m-1">
-            <div class="card-body">
-                <div class="row">
-                    <label class="col-sm-3 col-form-label-lg">Request Data</label>
-                    <div class="col-sm-6">
-                        <button @onclick="@SignV4">Request Data</button>
-                        <div>@RecoveredAccount</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+		<div class="card m-1">
+			<div class="card-body">
+				<div class="row">
+					<label class="col-sm-3 col-form-label-lg">Request Data</label>
+					<div class="col-sm-6">
+						<button @onclick="@MakeRequest">Request Data</button>
+						<div>@Result</div>
+					</div>
+				</div>
+			</div>
+		</div>
 
-        <div class="card m-1">
-            <div class="card-body">
-                <div class="row">
-                    <label class="col-sm-3 col-form-label-lg">Change Chain</label>
-                    <div class="col-sm-6">
-                        <button @onclick="@(() => ChangeChainTo(84532UL))">Change Chain To Base Sepolia</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+	</Authorized>
+	<NotAuthorized>
 
-        <div class="card m-1">
-            <div class="card-body">
-                <div class="row">
-                    <label class="col-sm-3 col-form-label-lg">Add Chain</label>
-                    <div class="col-sm-6">
-                        <button @onclick="@AddBaseSepoliaChain">Add Chain (Base Sepolia)</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </Authorized>
-    <NotAuthorized>
-
-        <div>
-            Please connect to Ethereum !
-        </div>
+		<div>
+			Please connect MetaMask to continue !
+		</div>
 
 
-    </NotAuthorized>
+	</NotAuthorized>
 </AuthorizeView>
 
 
 @code {
-    [CascadingParameter]
-    public Task<AuthenticationState> AuthenticationState { get; set; } = default!;
+	[CascadingParameter]
+	public Task<AuthenticationState> AuthenticationState { get; set; } = default!;
 
-    bool EthereumAvailable { get; set; }
-    string? SelectedAccount { get; set; }
-    long SelectedChainId { get; set; }
-    string? BlockHash { get; set; }
-    string? TransactionHash { get; set; }
-    string? ErrorTransferMessage { get; set; }
-    string? ErrorAuthenticateMessage { get; set; }
-    string? UserName { get; set; }
-    string? RecoveredAccount { get; set; }
-    string? RecoveredAccountMessage { get; set; }
-    protected string? AuthenticatedAccount { get; set; }
-    IEthereumHostProvider? _ethereumHostProvider;
+	string? SelectedAccount { get; set; }
+	string? UserName { get; set; }
+	long SelectedChainId { get; set; }
+	string? Result { get; set; }
+	IEthereumHostProvider? _ethereumHostProvider;
 
-    protected override void OnInitialized()
-    {
-        //metamask is selected
-        _ethereumHostProvider = selectedHostProviderService.SelectedHost;
-        _ethereumHostProvider.SelectedAccountChanged += HostProvider_SelectedAccountChanged;
-        _ethereumHostProvider.NetworkChanged += HostProvider_NetworkChanged;
-        _ethereumHostProvider.EnabledChanged += HostProviderOnEnabledChanged;
-    }
+	protected override void OnInitialized()
+	{
+		//metamask is selected
+		_ethereumHostProvider = selectedHostProviderService.SelectedHost;
+		_ethereumHostProvider.SelectedAccountChanged += HostProvider_SelectedAccountChanged;
+	}
 
-    public void Dispose()
-    {
-        if (_ethereumHostProvider != null)
-        {
-            _ethereumHostProvider.SelectedAccountChanged -= HostProvider_SelectedAccountChanged;
-            _ethereumHostProvider.NetworkChanged -= HostProvider_NetworkChanged;
-            _ethereumHostProvider.EnabledChanged -= HostProviderOnEnabledChanged;
-        }
-    }
+	public void Dispose()
+	{
+		if (_ethereumHostProvider != null)
+		{
+			_ethereumHostProvider.SelectedAccountChanged -= HostProvider_SelectedAccountChanged;
+		}
+	}
 
-    protected override async Task OnInitializedAsync()
-    {
-        if (_ethereumHostProvider != null)
-        {
-            EthereumAvailable = await _ethereumHostProvider.CheckProviderAvailabilityAsync();
-            if (EthereumAvailable)
-            {
-                SelectedAccount = await _ethereumHostProvider.GetProviderSelectedAccountAsync();
-                await GetChainId();
-            }
-        }
+	protected override async Task OnInitializedAsync()
+	{
+		if (_ethereumHostProvider != null)
+		{
+			var ethereumAvailable = await _ethereumHostProvider.CheckProviderAvailabilityAsync();
+			if (ethereumAvailable)
+			{
+				SelectedAccount = await _ethereumHostProvider.GetProviderSelectedAccountAsync();
+			}
+		}
 
-        var authState = await AuthenticationState;
-        if (authState != null)
-        {
-            UserName = authState.User.FindFirst(c => c.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
-        }
-    }
+		var authState = await AuthenticationState;
+		if (authState != null)
+		{
+			UserName = authState.User.FindFirst(c => c.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
+		}
+	}
 
 
-    private async Task HostProviderOnEnabledChanged(bool enabled)
-    {
-        if (enabled)
-        {
-            await GetChainId();
-            this.StateHasChanged();
-        }
-    }
-
-    private async Task GetChainId()
-    {
-        if(_ethereumHostProvider == null)
-            return;
-
-        var web3 = await _ethereumHostProvider.GetWeb3Async();
-        var chainId = await web3.Eth.ChainId.SendRequestAsync();
-        SelectedChainId = (long)chainId.Value;
-    }
-
-    private async Task HostProvider_SelectedAccountChanged(string account)
-    {
-        SelectedAccount = account;
-        await GetChainId();
-        this.StateHasChanged();
-    }
-
-    private async Task HostProvider_NetworkChanged(long chainId)
-    {
-        SelectedChainId = chainId;
-        this.StateHasChanged();
-    }
+	private async Task HostProvider_SelectedAccountChanged(string account)
+	{
+		SelectedAccount = account;
+		this.StateHasChanged();
+	}
 
 
-    protected async Task AddBaseSepoliaChain()
-    {
-        if (_ethereumHostProvider == null)
-            return;
+	protected async Task AddBaseSepoliaChain()
+	{
+		if (_ethereumHostProvider == null)
+			return;
 
-        var web3 = await _ethereumHostProvider.GetWeb3Async();
+		var web3 = await _ethereumHostProvider.GetWeb3Async();
 
-        var baseSepoliaChain = new AddEthereumChainParameter()
-        {
-            ChainId = new HexBigInteger(84532), // Base Sepolia Chain ID
-            ChainName = "Base Sepolia",
-            NativeCurrency = new NativeCurrency()
-            {
-                Decimals = 18,
-                Name = "Ether",
-                Symbol = "ETH"
-            },
-            RpcUrls = new List<string>
-        {
-            "https://sepolia.base.org",
-            "https://base-sepolia-rpc.publicnode.com"
-        },
-            BlockExplorerUrls = new List<string>
-        {
-            "https://sepolia.basescan.org"
-        }
-        };
+		var baseSepoliaChain = new AddEthereumChainParameter()
+		{
+			ChainId = new HexBigInteger(84532), // Base Sepolia Chain ID
+			ChainName = "Base Sepolia",
+			NativeCurrency = new NativeCurrency()
+			{
+				Decimals = 18,
+				Name = "Ether",
+				Symbol = "ETH"
+			},
+			RpcUrls = new List<string>
+			{
+				"https://sepolia.base.org",
+				"https://base-sepolia-rpc.publicnode.com"
+			},
+				BlockExplorerUrls = new List<string>
+			{
+				"https://sepolia.basescan.org"
+			}
+		};
 
-        try
-        {
-            var result = await web3.Eth.HostWallet.AddEthereumChain.SendRequestAsync(baseSepoliaChain);
-        }
-        catch (Exception ex)
-        {
-            // You might want to log or handle the error properly here
-        }
-    }
+		try
+		{
+			var result = await web3.Eth.HostWallet.AddEthereumChain.SendRequestAsync(baseSepoliaChain);
+		}
+		catch (Exception ex)
+		{
+			// You might want to log or handle the error properly here
+		}
+	}
 
-    protected async Task ChangeChainTo(ulong chainId)
-    {
-        if (_ethereumHostProvider == null)
-            return;
+	protected async Task ChangeChainTo(ulong chainId)
+	{
+		if (_ethereumHostProvider == null)
+			return;
 
-        try
-        {
-            var web3 = await _ethereumHostProvider.GetWeb3Async();
-            var result = await web3.Eth.HostWallet.SwitchEthereumChain.SendRequestAsync(new SwitchEthereumChainParameter() { ChainId = new HexBigInteger(chainId) });
-        }
-        catch (Exception ex)
-        {
+		try
+		{
+			var web3 = await _ethereumHostProvider.GetWeb3Async();
+			var result = await web3.Eth.HostWallet.SwitchEthereumChain.SendRequestAsync(new SwitchEthereumChainParameter() { ChainId = new HexBigInteger(chainId) });
+		}
+		catch (Exception ex)
+		{
 
-        }
-    }
+		}
+	}
 
-    protected async Task SignV4()
-    {
-        RecoveredAccount = "";
+	protected async Task MakeRequest()
+	{
+		Result = "";
 
-        if (_ethereumHostProvider == null)
-            return;
+		if (_ethereumHostProvider == null)
+			return;
 
-        var web3 = await _ethereumHostProvider.GetWeb3Async();
-        var chainId = await web3.Eth.ChainId.SendRequestAsync();
+		var web3 = await _ethereumHostProvider.GetWeb3Async();
+		var chainId = new HexBigInteger(84532);
 
-        if(SelectedAccount == null)
-        {
-            RecoveredAccount = "No account selected";
-            return;
-        }
+		await AddBaseSepoliaChain();
+		Result = "Added chainId";
 
-        var wallet = new EVMWallet((s) => web3.Eth.AccountSigning.SignTypedDataV4.SendRequestAsync(s), SelectedAccount, (ulong)chainId.Value)
-        {
-            IgnoreAllowances = true
-        };
-        WalletProvider.Wallet = wallet;
 
-        var request = new HttpRequestMessage(HttpMethod.Get, "https://localhost:7176/resource/protected")
-        {
-        };
-        var response = await HttpClient.SendAsync(request);
+		await ChangeChainTo(84532);
+		Result = "Changed chainId";
 
-        RecoveredAccount = await response.Content.ReadAsStringAsync();
-    }
+		var selectedChainId = await web3.Eth.ChainId.SendRequestAsync();
+		if (selectedChainId.Value != chainId.Value)
+		{
+			Result = "Failed to change chainId";
+			return;
+		}
 
-  
+		if (SelectedAccount == null)
+		{
+			Result = "No account selected";
+			return;
+		}
+
+		var wallet = new EVMWallet((s) => web3.Eth.AccountSigning.SignTypedDataV4.SendRequestAsync(s), SelectedAccount, (ulong)chainId.Value)
+		{
+			IgnoreAllowances = true
+		};
+		WalletProvider.Wallet = wallet;
+
+		var request = new HttpRequestMessage(HttpMethod.Get, "https://localhost:7176/resource/protected")
+		{
+		};
+		var response = await HttpClient.SendAsync(request);
+
+		Result = await response.Content.ReadAsStringAsync();
+	}
+
 }
