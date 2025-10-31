@@ -47,7 +47,6 @@ public class X402HandlerV2
 
     public async Task<X402ProcessingResult> HandleX402Async(
         PaymentRequiredInfo paymentRequiredInfo,
-        bool discoverable,
         SettlementMode settlementMode = SettlementMode.Pessimistic,
         Func<HttpContext, SettlementResponse?, Exception?, Task>? onSettlement = null,
         Func<HttpContext, PaymentRequirements, OutputSchema, OutputSchema>? onSetOutputSchema = null)
@@ -60,7 +59,7 @@ public class X402HandlerV2
             MimeType = paymentRequiredInfo.Resource?.MimeType ?? string.Empty,
         };
 
-        var result = await HandleX402Async(resourceInfo, paymentRequirements, discoverable, settlementMode, onSettlement, onSetOutputSchema);
+        var result = await HandleX402Async(resourceInfo, paymentRequirements, paymentRequiredInfo.Discoverable, settlementMode, onSettlement, onSetOutputSchema);
         StoreResult(result);
         return result;
     }

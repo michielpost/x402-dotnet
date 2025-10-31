@@ -92,7 +92,6 @@
 		}
 	}
 
-
 	private async Task HostProvider_SelectedAccountChanged(string account)
 	{
 		SelectedAccount = account;
@@ -132,9 +131,9 @@
 		{
 			var result = await web3.Eth.HostWallet.AddEthereumChain.SendRequestAsync(baseSepoliaChain);
 		}
-		catch (Exception ex)
+		catch (Exception)
 		{
-			// You might want to log or handle the error properly here
+			
 		}
 	}
 
@@ -148,7 +147,7 @@
 			var web3 = await _ethereumHostProvider.GetWeb3Async();
 			var result = await web3.Eth.HostWallet.SwitchEthereumChain.SendRequestAsync(new SwitchEthereumChainParameter() { ChainId = new HexBigInteger(chainId) });
 		}
-		catch (Exception ex)
+		catch (Exception)
 		{
 
 		}

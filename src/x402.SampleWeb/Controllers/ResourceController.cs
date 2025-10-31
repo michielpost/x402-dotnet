@@ -85,9 +85,9 @@ namespace x402.SampleWeb.Controllers
                             Amount = amount,
                             PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
                         }
-                    }
+                    },
+                    Discoverable = true
                 },
-                discoverable: true,
                 SettlementMode.Pessimistic,
                 onSettlement: (context, response, ex) =>
                 {
@@ -122,9 +122,9 @@ namespace x402.SampleWeb.Controllers
                             Amount = "1000",
                             PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
                         },
-                    }
+                    },
+                    Discoverable = true
                 },
-                discoverable: true,
                 SettlementMode.Pessimistic,
                 onSetOutputSchema: (context, reqs, schema) =>
                 {

@@ -45,14 +45,13 @@ public class X402HandlerV1
 
     public async Task<X402ProcessingResult> HandleX402Async(
         PaymentRequiredInfo paymentRequiredInfo,
-        bool discoverable,
         SettlementMode settlementMode = SettlementMode.Pessimistic,
         Func<HttpContext, SettlementResponse?, Exception?, Task>? onSettlement = null,
         Func<HttpContext, PaymentRequirements, OutputSchema, OutputSchema>? onSetOutputSchema = null)
     {
         var paymentRequirements = paymentRequiredInfo.Accepts.Select(x => FillPaymentRequirements(x, paymentRequiredInfo.Resource)).ToList();
 
-        var result = await HandleX402Async(paymentRequirements, discoverable, settlementMode, onSettlement, onSetOutputSchema);
+        var result = await HandleX402Async(paymentRequirements, paymentRequiredInfo.Discoverable, settlementMode, onSettlement, onSetOutputSchema);
         StoreResult(result);
         return result;
     }
