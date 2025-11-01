@@ -16,9 +16,15 @@ namespace x402.Client.v1
         public event EventHandler<PaymentRetryEventArgs>? PaymentRetrying;
 
         public PaymentRequiredV1Handler(IWalletProvider walletProvider, int maxRetries = 1)
-            : this(walletProvider, new HttpClientHandler(), maxRetries) { }
+        {
+            _walletProvider = walletProvider ?? throw new ArgumentNullException(nameof(walletProvider));
+            _maxRetries = maxRetries;
+        }
 
-        public PaymentRequiredV1Handler(IWalletProvider walletProvider, HttpMessageHandler innerHandler, int maxRetries = 1)
+        public static PaymentRequiredV1Handler Create(IWalletProvider walletProvider, HttpMessageHandler? innerHandler = null, int maxRetries = 1) => new(walletProvider, innerHandler ?? new HttpClientHandler(), maxRetries);
+
+        // Manual chaining constructor, private so it's not called by WebAssembly
+        private PaymentRequiredV1Handler(IWalletProvider walletProvider, HttpMessageHandler innerHandler, int maxRetries = 1)
             : base(innerHandler)
         {
             _walletProvider = walletProvider ?? throw new ArgumentNullException(nameof(walletProvider));

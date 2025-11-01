@@ -12,18 +12,25 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped<IWalletProvider, WalletProvider>();
+builder.Services.AddSingleton<IWalletProvider, WalletProvider>();
 builder.Services.AddTransient<PaymentRequiredV1Handler>();
 
-builder.Services.AddScoped(sp =>
+//builder.Services.AddScoped(sp =>
+//{
+//    var handler = sp.GetRequiredService<PaymentRequiredV1Handler>();
+//    var client = new HttpClient(handler)
+//    {
+//        BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
+//    };
+//    return client;
+//});
+
+builder.Services.AddHttpClient("x402", client =>
 {
-    var handler = sp.GetRequiredService<PaymentRequiredV1Handler>();
-    var client = new HttpClient(handler)
-    {
-        BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
-    };
-    return client;
-});
+    client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
+})
+.AddHttpMessageHandler<PaymentRequiredV1Handler>();
+
 
 builder.Services.AddAuthorizationCore();
 builder.Services.AddSingleton<IMetamaskInterop, MetamaskBlazorInterop>();

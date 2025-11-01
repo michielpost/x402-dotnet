@@ -6,7 +6,6 @@ using x402.Core.Models.v2;
 
 namespace x402.Client.v2
 {
-
     public class PaymentRequiredV2Handler : DelegatingHandler
     {
         private readonly IWalletProvider _walletProvider;
@@ -18,10 +17,17 @@ namespace x402.Client.v2
         public event EventHandler<PaymentSelectedEventArgs>? PaymentSelected;
         public event EventHandler<PaymentRetryEventArgs>? PaymentRetrying;
 
-        public PaymentRequiredV2Handler(IWalletProvider walletProvider, int maxRetries = 1)
-            : this(walletProvider, new HttpClientHandler(), maxRetries) { }
 
-        public PaymentRequiredV2Handler(IWalletProvider walletProvider, HttpMessageHandler innerHandler, int maxRetries = 1)
+        public PaymentRequiredV2Handler(IWalletProvider walletProvider, int maxRetries = 1)
+        {
+            _walletProvider = walletProvider ?? throw new ArgumentNullException(nameof(walletProvider));
+            _maxRetries = maxRetries;
+        }
+
+        public static PaymentRequiredV2Handler Create(IWalletProvider walletProvider, HttpMessageHandler innerHandler, int maxRetries = 1) => new(walletProvider, innerHandler, maxRetries);
+
+        // Manual chaining constructor, private so it's not called by WebAssembly
+        private PaymentRequiredV2Handler(IWalletProvider walletProvider, HttpMessageHandler innerHandler, int maxRetries = 1)
             : base(innerHandler)
         {
             _walletProvider = walletProvider ?? throw new ArgumentNullException(nameof(walletProvider));

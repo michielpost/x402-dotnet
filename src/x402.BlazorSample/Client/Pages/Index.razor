@@ -1,7 +1,7 @@
 ﻿@page "/"
 @implements IDisposable
 @inject SelectedEthereumHostProviderService selectedHostProviderService
-@inject HttpClient HttpClient
+@inject IHttpClientFactory HttpClientFactory
 @inject IWalletProvider WalletProvider
 @using Nethereum.ABI.EIP712
 @using Nethereum.Hex.HexTypes
@@ -121,7 +121,7 @@
 				"https://sepolia.base.org",
 				"https://base-sepolia-rpc.publicnode.com"
 			},
-				BlockExplorerUrls = new List<string>
+			BlockExplorerUrls = new List<string>
 			{
 				"https://sepolia.basescan.org"
 			}
@@ -133,7 +133,7 @@
 		}
 		catch (Exception)
 		{
-			
+
 		}
 	}
 
@@ -192,7 +192,9 @@
 		var request = new HttpRequestMessage(HttpMethod.Get, "https://localhost:7176/resource/protected")
 		{
 		};
-		var response = await HttpClient.SendAsync(request);
+
+		var httpClient = HttpClientFactory.CreateClient("x402");
+		var response = await httpClient.SendAsync(request);
 
 		Result = await response.Content.ReadAsStringAsync();
 	}
