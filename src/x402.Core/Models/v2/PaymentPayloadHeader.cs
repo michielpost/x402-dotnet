@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Text;
+using System.Text.Json;
 
 namespace x402.Core.Models.v2
 {
@@ -50,6 +51,21 @@ namespace x402.Core.Models.v2
             {
                 throw new ArgumentException("Malformed X-PAYMENT header", ex);
             }
+        }
+
+        public string ToBase64Header()
+        {
+            JsonSerializerOptions headerJsonOptions = new(JsonSerializerDefaults.Web)
+            {
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+            };
+
+
+            var headerJson = JsonSerializer.Serialize(this, headerJsonOptions);
+            var base64header = Convert.ToBase64String(Encoding.UTF8.GetBytes(headerJson));
+
+            return base64header;
+
         }
 
         /// <summary>

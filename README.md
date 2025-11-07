@@ -6,7 +6,7 @@
 ### x402 on the server
 Install the `x402` packages from NuGet:
 - [x402](https://nuget.org/packages/x402)
-- [x402.Coinbase](https://nuget.org/packages/x402)
+- [x402.Coinbase](https://nuget.org/packages/x402) to use the Coinbase facilitator
 
 **Features:**
 - Add an x402-compatible paywall to any URL  
@@ -16,10 +16,12 @@ Install the `x402` packages from NuGet:
 - Handle payment settlement using any remote facilitator  
 - Optionally use the Coinbase facilitator (with API key)
 - Extensible AssetInfoProvider that fills in network and coin data based on the asset address
+- **Solana** support, return a 402 request for USDC on Solana
 
 ### x402 enabled HttpClient
 Install the `x402.Client.EVM` package from NuGet:
 - [x402.Client.EVM](https://nuget.org/packages/x402.Client.EVM)
+- `x402.Client.Solana` package to pay with USDC on Solana
 
 **Features:**
 - Transparant access x402-protected resources
@@ -159,6 +161,9 @@ Console.WriteLine($"Final: {(int)response.StatusCode} {response.ReasonPhrase}");
 
 See `X402.Client.ConsoleSample` for a complete example.
 
+## x402-dotnet Facilitator
+Explore the `x402.FacilitatorWeb` project for a dotnet based facilitator for EVM and Solana networks.
+
 
 ## How to test?
 Follow these steps to test a x402 payment on the sample website hosted on Azure:
@@ -170,14 +175,14 @@ Follow these steps to test a x402 payment on the sample website hosted on Azure:
 - Payment will complete and show the result: `Protected by middleware`
 
 
-## Facilitators
+
+## Public Facilitators
 List of facilitators you can use:
 - https://api.cdp.coinbase.com/platform/v2/x402/ (Coinbase, requires API key)
 - https://facilitator.payai.network
 - https://facilitator.mogami.tech/
-- https://facilitator.mcpay.tech (Proxy Facilitator)
 
-View more facilitators and their status on https://x402dev.com
+View more facilitators and their status on https://www.x402dev.com
 
 
 ## Development

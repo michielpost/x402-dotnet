@@ -63,7 +63,7 @@ namespace x402.Client.v2
                 _walletProvider.RaiseOnHeaderCreated(new HeaderCreatedEventArgs<PaymentPayloadHeader>(header, retries));
 
                 var retryRequest = await CloneHttpRequestAsync(request);
-                retryRequest.AddPaymentHeader(header, paymentRequiredResponse.X402Version);
+                retryRequest.AddPaymentHeader(header);
 
                 response.Dispose();
 

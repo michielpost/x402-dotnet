@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using System.Reflection.PortableExecutable;
+using System.Text;
+using System.Text.Json;
 using x402.Core.Enums;
 
 namespace x402.Core.Models.v1
@@ -61,6 +63,21 @@ namespace x402.Core.Models.v1
         public string? ExtractPayerFromPayload()
         {
             return Payload?.Authorization?.From;
+        }
+
+        public string ToBase64Header()
+        {
+            JsonSerializerOptions headerJsonOptions = new(JsonSerializerDefaults.Web)
+            {
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+            };
+
+
+            var headerJson = JsonSerializer.Serialize(this, headerJsonOptions);
+            var base64header = Convert.ToBase64String(Encoding.UTF8.GetBytes(headerJson));
+
+            return base64header;
+
         }
     }
 

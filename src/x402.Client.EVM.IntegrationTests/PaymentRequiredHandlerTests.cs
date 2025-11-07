@@ -66,7 +66,7 @@ namespace x402.Client.EVM.IntegrationTests
 
 
             var request = new HttpRequestMessage(HttpMethod.Get, "https://www.x402.org/protected");
-            request.AddPaymentHeader(header, 1);
+            request.AddPaymentHeader(header);
 
             var response = await client.SendAsync(request);
 

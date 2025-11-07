@@ -66,7 +66,7 @@ namespace x402.Client.Solana.IntegrationTests
             var client = new HttpClient();
 
             var request = new HttpRequestMessage(HttpMethod.Get, "https://httpbin.org/status/200");
-            request.AddPaymentHeader(header, 1);
+            request.AddPaymentHeader(header);
 
             var response = await client.SendAsync(request);
 
