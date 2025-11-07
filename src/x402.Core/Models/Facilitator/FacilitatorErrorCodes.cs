@@ -46,5 +46,11 @@
 
         /// <summary>Unexpected error occurred during payment settlement.</summary>
         public static readonly string UnexpectedSettleError = "unexpected_settle_error";
+
+        /// <summary>Transaction simulation failed.</summary>
+        public static readonly string SimulationFailed = "simulation_failed";
+
+        /// <summary>Unexpected error occurred during processing.</summary>
+        public static readonly string UnexpectedError = "unexpected_error";
     }
 }

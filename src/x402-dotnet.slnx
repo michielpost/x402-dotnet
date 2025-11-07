@@ -12,6 +12,7 @@
     <Project Path="x402-dotnet.AppHost/x402-dotnet.AppHost.csproj" Id="ac4b40a4-37f1-4b1c-b1e8-a072636e5134" />
     <Project Path="x402-dotnet.ServiceDefaults/x402-dotnet.ServiceDefaults.csproj" />
     <Project Path="x402.FacilitatorMock/x402.FacilitatorMock.csproj" />
+    <Project Path="x402.FacilitatorWeb/x402.FacilitatorWeb.csproj" />
     <Project Path="x402.SampleWeb/x402.SampleWeb.csproj" />
   </Folder>
   <Folder Name="/Tests/">
@@ -27,5 +28,8 @@
   <Project Path="x402.Client/x402.Client.csproj" Id="8894227d-ca9d-44b7-b822-49f8c76be1d4" />
   <Project Path="x402.Coinbase/x402.Coinbase.csproj" Id="e5c0ff35-3e08-4994-a2f1-b375d6f5a1b5" />
   <Project Path="x402.Core/x402.Core.csproj" Id="4bcd596f-d9fd-4303-96a3-82597c871a22" />
+  <Project Path="x402.Facilitator.EVM/x402.Facilitator.EVM.csproj" Id="8570a9eb-24ff-4dcc-a200-4727a7786115" />
+  <Project Path="x402.Facilitator.Solana/x402.Facilitator.Solana.csproj" Id="73197c2f-91e7-4846-8591-49a72b81e2e7" />
+  <Project Path="x402.Facilitator/x402.Facilitator.csproj" Id="4fb22d74-359c-439e-931e-94b1278db117" />
   <Project Path="x402/x402.csproj" />
 </Solution>
