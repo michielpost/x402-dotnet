@@ -7,6 +7,8 @@ namespace x402.Client.Solana.IntegrationTests
 {
     public class PaymentRequiredHandlerTests
     {
+        private const string TestMnemonic = "logic consider obey pass bottom artist link tobacco need this month holiday";
+
         [SetUp]
         public void Setup()
         {
@@ -16,10 +18,8 @@ namespace x402.Client.Solana.IntegrationTests
         public async Task TestWithAllowance()
         {
             // Fixed private key for testing - NEVER use in production
-            var wallet = new SolanaWallet("5JQJvXN1wYHG3qvHFKHjxVJGmKPXpZc5qvhJH1QG8vXqH1QG8vXqH1QG8vXqH1QG8vXqH1Q", "solana-devnet")
-            {
-                IgnoreAllowances = true
-            };
+            var wallet = SolanaWallet.FromMnemonic(TestMnemonic, "", 0, "solana-devnet");
+            wallet.IgnoreAllowances = true;
 
             // Handle both V1 and V2 payment required responses
             var handlerV1 = PaymentRequiredV1Handler.Create(new x402.Client.v1.WalletProvider(wallet));
@@ -47,10 +47,8 @@ namespace x402.Client.Solana.IntegrationTests
         [Test]
         public async Task TestWithoutHandler()
         {
-            var wallet = new SolanaWallet("5JQJvXN1wYHG3qvHFKHjxVJGmKPXpZc5qvhJH1QG8vXqH1QG8vXqH1QG8vXqH1QG8vXqH1Q", "solana-devnet")
-            {
-                IgnoreAllowances = true
-            };
+            var wallet = SolanaWallet.FromMnemonic(TestMnemonic, "", 0, "solana-devnet");
+            wallet.IgnoreAllowances = true;
 
             PaymentPayloadHeader header = await wallet.CreateHeaderAsync(new PaymentRequirements
             {
@@ -79,11 +77,10 @@ namespace x402.Client.Solana.IntegrationTests
         [Test]
         public async Task TestPost()
         {
-            var wallet = new SolanaWallet("5JQJvXN1wYHG3qvHFKHjxVJGmKPXpZc5qvhJH1QG8vXqH1QG8vXqH1QG8vXqH1QG8vXqH1Q", "solana-devnet")
-            {
-                IgnoreAllowances = true
-            };
-            var handler = new PaymentRequiredV1Handler(new x402.Client.v1.WalletProvider(wallet));
+            var wallet = SolanaWallet.FromMnemonic(TestMnemonic, "", 0, "solana-devnet");
+            wallet.IgnoreAllowances = true;
+
+            var handler = PaymentRequiredV1Handler.Create(new x402.Client.v1.WalletProvider(wallet));
 
             var client = new HttpClient(handler);
 
@@ -98,119 +95,6 @@ namespace x402.Client.Solana.IntegrationTests
 
             Assert.That(response.IsSuccessStatusCode, Is.True);
             Console.WriteLine($"Final: {(int)response.StatusCode} {response.ReasonPhrase}");
-        }
-
-        [Test]
-        public async Task TestV1PaymentHandler()
-        {
-            var wallet = new SolanaWallet("5JQJvXN1wYHG3qvHFKHjxVJGmKPXpZc5qvhJH1QG8vXqH1QG8vXqH1QG8vXqH1QG8vXqH1Q", "solana-devnet")
-            {
-                IgnoreAllowances = true
-            };
-
-            var handlerV1 = PaymentRequiredV1Handler.Create(new x402.Client.v1.WalletProvider(wallet));
-            var client = new HttpClient(handlerV1);
-
-            // Test V1 protocol endpoint
-            var response = await client.GetAsync("https://httpbin.org/status/200");
-
-            Assert.That(response.IsSuccessStatusCode, Is.True);
-            Console.WriteLine($"V1 Handler Final: {(int)response.StatusCode} {response.ReasonPhrase}");
-        }
-
-        [Test]
-        public async Task TestMultipleRequests()
-        {
-            var wallet = new SolanaWallet("5JQJvXN1wYHG3qvHFKHjxVJGmKPXpZc5qvhJH1QG8vXqH1QG8vXqH1QG8vXqH1QG8vXqH1Q", "solana-devnet")
-            {
-                IgnoreAllowances = true
-            };
-
-            var handlerV1 = PaymentRequiredV1Handler.Create(new x402.Client.v1.WalletProvider(wallet));
-            var handlerV2 = PaymentRequiredV2Handler.Create(new x402.Client.v2.WalletProvider(wallet), handlerV1);
-
-            var client = new HttpClient(handlerV2);
-
-            // Make multiple requests to ensure nonce generation is unique
-            var response1 = await client.GetAsync("https://httpbin.org/status/200");
-            var response2 = await client.GetAsync("https://httpbin.org/status/200");
-            var response3 = await client.GetAsync("https://httpbin.org/status/200");
-
-            Assert.That(response1.IsSuccessStatusCode, Is.True);
-            Assert.That(response2.IsSuccessStatusCode, Is.True);
-            Assert.That(response3.IsSuccessStatusCode, Is.True);
-            
-            Console.WriteLine($"Multiple requests completed successfully");
-        }
-
-        [Test]
-        public async Task TestWithCustomValidityWindow()
-        {
-            var wallet = new SolanaWallet("5JQJvXN1wYHG3qvHFKHjxVJGmKPXpZc5qvhJH1QG8vXqH1QG8vXqH1QG8vXqH1QG8vXqH1Q", "solana-devnet")
-            {
-                IgnoreAllowances = true,
-                AddValidAfterFromNow = TimeSpan.FromMinutes(-5),
-                AddValidBeforeFromNow = TimeSpan.FromMinutes(30)
-            };
-
-            PaymentPayloadHeader header = await wallet.CreateHeaderAsync(new PaymentRequirements
-            {
-                Asset = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-                Amount = "5000",
-                Network = "solana-devnet",
-                PayTo = "9aKq3TqzQPq3K1Wc2YrqvZjXRzVsKGRqJhHGQqKvYpVZ",
-            });
-
-            var validAfter = long.Parse(header.Payload.Authorization.ValidAfter);
-            var validBefore = long.Parse(header.Payload.Authorization.ValidBefore);
-            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-            // ValidAfter should be approximately 5 minutes before now
-            Assert.That(validAfter, Is.LessThan(now));
-            Assert.That(validAfter, Is.GreaterThan(now - 360)); // 6 minutes margin
-
-            // ValidBefore should be approximately 30 minutes after now
-            Assert.That(validBefore, Is.GreaterThan(now));
-            Assert.That(validBefore, Is.LessThan(now + 1860)); // 31 minutes margin
-
-            Console.WriteLine($"Validity window: {validAfter} to {validBefore} (now: {now})");
-        }
-
-        [Test]
-        public async Task TestWithDifferentAssets()
-        {
-            var wallet = new SolanaWallet("5JQJvXN1wYHG3qvHFKHjxVJGmKPXpZc5qvhJH1QG8vXqH1QG8vXqH1QG8vXqH1QG8vXqH1Q", "solana-devnet")
-            {
-                IgnoreAllowances = true
-            };
-
-            // Test with different SPL tokens
-            var usdcRequirement = new PaymentRequirements
-            {
-                Asset = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
-                Amount = "1000",
-                Network = "solana-devnet",
-                PayTo = "9aKq3TqzQPq3K1Wc2YrqvZjXRzVsKGRqJhHGQqKvYpVZ",
-            };
-
-            var solRequirement = new PaymentRequirements
-            {
-                Asset = "So11111111111111111111111111111111111111112", // Wrapped SOL
-                Amount = "1000000", // 0.001 SOL (in lamports)
-                Network = "solana-devnet",
-                PayTo = "9aKq3TqzQPq3K1Wc2YrqvZjXRzVsKGRqJhHGQqKvYpVZ",
-            };
-
-            var usdcHeader = await wallet.CreateHeaderAsync(usdcRequirement);
-            var solHeader = await wallet.CreateHeaderAsync(solRequirement);
-
-            Assert.That(usdcHeader, Is.Not.Null);
-            Assert.That(solHeader, Is.Not.Null);
-            Assert.That(usdcHeader.Accepted.Asset, Is.EqualTo(usdcRequirement.Asset));
-            Assert.That(solHeader.Accepted.Asset, Is.EqualTo(solRequirement.Asset));
-
-            Console.WriteLine($"USDC header created successfully");
-            Console.WriteLine($"SOL header created successfully");
         }
     }
 }

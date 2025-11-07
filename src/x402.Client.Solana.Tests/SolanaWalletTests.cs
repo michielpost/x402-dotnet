@@ -17,6 +17,8 @@ namespace x402.Client.Solana.Tests
             };
         }
 
+        private const string TestMnemonic = "logic consider obey pass bottom artist link tobacco need this month holiday";
+
         [Test]
         public async Task RequestPaymentAsync_BuildsHeaderWithExpectedMappings()
         {
@@ -26,10 +28,8 @@ namespace x402.Client.Solana.Tests
 
             // Fixed private key (base58) for deterministic address
             // This is a test key - never use in production
-            var wallet = new SolanaWallet("1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b", "solana-devnet")
-            {
-                IgnoreAllowances = true
-            };
+            var wallet = SolanaWallet.FromMnemonic(TestMnemonic, "", 0, "solana-devnet");
+            wallet.IgnoreAllowances = true;
 
             // Act
             var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() 
@@ -74,10 +74,8 @@ namespace x402.Client.Solana.Tests
         {
             // Arrange
             var requirements = new List<PaymentRequirements> { BuildRequirement() };
-            var wallet = new SolanaWallet("5JQJvXN1wYHG3qvHFKHjxVJGmKPXpZc5qvhJH1QG8vXqH1QG8vXqH1QG8vXqH1QG8vXqH1Q", "solana-devnet")
-            {
-                IgnoreAllowances = true
-            };
+            var wallet = SolanaWallet.FromMnemonic(TestMnemonic, "", 0, "solana-devnet");
+            wallet.IgnoreAllowances = true;
 
             // Act
             var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() 
@@ -110,10 +108,8 @@ namespace x402.Client.Solana.Tests
             var requirement = BuildRequirement();
             requirement.Network = "solana-mainnet";
             
-            var wallet = new SolanaWallet("5JQJvXN1wYHG3qvHFKHjxVJGmKPXpZc5qvhJH1QG8vXqH1QG8vXqH1QG8vXqH1QG8vXqH1Q", "solana-mainnet")
-            {
-                IgnoreAllowances = true
-            };
+            var wallet = SolanaWallet.FromMnemonic(TestMnemonic, "", 0, "solana-mainnet");
+            wallet.IgnoreAllowances = true;
 
             // Act
             var header = await wallet.CreateHeaderAsync(requirement, CancellationToken.None);
@@ -130,10 +126,8 @@ namespace x402.Client.Solana.Tests
             var requirement = BuildRequirement();
             requirement.Amount = "50000";
             
-            var wallet = new SolanaWallet("5JQJvXN1wYHG3qvHFKHjxVJGmKPXpZc5qvhJH1QG8vXqH1QG8vXqH1QG8vXqH1QG8vXqH1Q", "solana-devnet")
-            {
-                IgnoreAllowances = true
-            };
+            var wallet = SolanaWallet.FromMnemonic(TestMnemonic, "", 0, "solana-devnet");
+            wallet.IgnoreAllowances = true;
 
             // Act
             var header = await wallet.CreateHeaderAsync(requirement, CancellationToken.None);
@@ -148,10 +142,8 @@ namespace x402.Client.Solana.Tests
         {
             // Arrange
             var requirement = BuildRequirement();
-            var wallet = new SolanaWallet("5JQJvXN1wYHG3qvHFKHjxVJGmKPXpZc5qvhJH1QG8vXqH1QG8vXqH1QG8vXqH1QG8vXqH1Q", "solana-devnet")
-            {
-                IgnoreAllowances = true
-            };
+            var wallet = SolanaWallet.FromMnemonic(TestMnemonic, "", 0, "solana-devnet");
+            wallet.IgnoreAllowances = true;
 
             // Act
             var header1 = await wallet.CreateHeaderAsync(requirement, CancellationToken.None);
@@ -166,12 +158,10 @@ namespace x402.Client.Solana.Tests
         {
             // Arrange
             var requirement = BuildRequirement();
-            var wallet = new SolanaWallet("5JQJvXN1wYHG3qvHFKHjxVJGmKPXpZc5qvhJH1QG8vXqH1QG8vXqH1QG8vXqH1QG8vXqH1Q", "solana-devnet")
-            {
-                IgnoreAllowances = true,
-                AddValidAfterFromNow = TimeSpan.FromMinutes(-2),
-                AddValidBeforeFromNow = TimeSpan.FromMinutes(10)
-            };
+            var wallet = SolanaWallet.FromMnemonic(TestMnemonic, "", 0, "solana-devnet");
+            wallet.IgnoreAllowances = true;
+            wallet.AddValidAfterFromNow = TimeSpan.FromMinutes(-2);
+            wallet.AddValidBeforeFromNow = TimeSpan.FromMinutes(10);
 
             var beforeCreation = DateTimeOffset.UtcNow;
 
