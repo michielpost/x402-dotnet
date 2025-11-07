@@ -7,6 +7,8 @@ namespace x402.Client.v2
     {
         List<AssetAllowance> AssetAllowances { get; set; }
         bool IgnoreAllowances { get; set; }
+        string Network { get; set; }
+
 
         /// <summary>
         /// Given a list of payment requirements, returns one that can be fulfilled,

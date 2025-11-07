@@ -7,7 +7,7 @@ namespace x402.Client.v2
     {
         public IX402WalletV2? Wallet { get; set; }
 
-        bool RaisePrepareWallet(PrepareWalletEventArgs<PaymentRequiredResponse> paymentRequiredEventArgs);
+        Task<bool> RaisePrepareWallet(PrepareWalletEventArgs<PaymentRequiredResponse> paymentRequiredEventArgs);
         event PrepareWalletventHandler<PaymentRequiredResponse>? PrepareWallet;
 
 

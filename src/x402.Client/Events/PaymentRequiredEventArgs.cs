@@ -1,6 +1,6 @@
 ﻿namespace x402.Client.Events
 {
-    public delegate bool PrepareWalletventHandler<T>(object sender, PrepareWalletEventArgs<T> e) where T : class;
+    public delegate Task<bool> PrepareWalletventHandler<T>(object? sender, PrepareWalletEventArgs<T> e) where T : class;
 
     public class PrepareWalletEventArgs<T> : EventArgs where T : class
     {

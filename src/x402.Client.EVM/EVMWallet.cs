@@ -21,7 +21,7 @@ namespace x402.Client.EVM
 
         private readonly Func<string, Task<string>>? signFunction;
 
-        public EVMWallet(string hexPrivateKey, ulong chainId)
+        public EVMWallet(string hexPrivateKey, string network, ulong chainId) : base(network)
         {
             if (hexPrivateKey.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
                 hexPrivateKey = hexPrivateKey.Substring(2);
@@ -34,7 +34,7 @@ namespace x402.Client.EVM
             OwnerAddress = Account.Address;
         }
 
-        public EVMWallet(byte[] privateKey, ulong chainId)
+        public EVMWallet(byte[] privateKey, string network, ulong chainId) : base(network)
         {
             // Convert hex string to byte[]
             this.privateKey = privateKey;
@@ -44,18 +44,18 @@ namespace x402.Client.EVM
             OwnerAddress = Account.Address;
         }
 
-        public static EVMWallet FromMnemonic(string mnemonic, string password, int accountIndex, ulong chainId)
-        {
-            var wallet = new Nethereum.HdWallet.Wallet(mnemonic, password);
-            var account = wallet.GetAccount(accountIndex);
-            return new EVMWallet(account.PrivateKey, chainId);
-        }
-
-        public EVMWallet(Func<string, Task<string>> signFunction, string ownerAddress, ulong chainId)
+        public EVMWallet(Func<string, Task<string>> signFunction, string ownerAddress, string network, ulong chainId) : base(network)
         {
             this.signFunction = signFunction;
             ChainId = chainId;
             OwnerAddress = ownerAddress;
+        }
+
+        public static EVMWallet FromMnemonic(string mnemonic, string password, int accountIndex, string network, ulong chainId)
+        {
+            var wallet = new Nethereum.HdWallet.Wallet(mnemonic, password);
+            var account = wallet.GetAccount(accountIndex);
+            return new EVMWallet(account.PrivateKey, network, chainId);
         }
 
         private Task<string> SignAsync(string data)

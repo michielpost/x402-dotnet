@@ -15,7 +15,7 @@ namespace x402.Client.EVM.IntegrationTests
         [Test]
         public async Task TestWithAllowance()
         {
-            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", 84532UL) //base-sepolia chain ID
+            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "base-sepolia", 84532UL) //base-sepolia chain ID
             {
                 IgnoreAllowances = true
             };
@@ -44,7 +44,7 @@ namespace x402.Client.EVM.IntegrationTests
         [Test]
         public async Task TestWithoutHandler()
         {
-            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", 84532UL) //base-sepolia chain ID
+            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "base-sepolia", 84532UL) //base-sepolia chain ID
             {
                 IgnoreAllowances = true
             };
@@ -78,7 +78,7 @@ namespace x402.Client.EVM.IntegrationTests
         [Test]
         public async Task TestPost()
         {
-            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", 84532UL) //base-sepolia chain ID
+            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "base-sepolia", 84532UL) //base-sepolia chain ID
             {
                 IgnoreAllowances = true
             };

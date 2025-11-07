@@ -15,7 +15,7 @@ namespace x402.Client.v2
         public event EventHandler<PaymentSelectedEventArgs<PaymentRequirements>>? PaymentSelected;
         public event EventHandler<HeaderCreatedEventArgs<PaymentPayloadHeader>>? HeaderCreated;
 
-        public virtual bool RaisePrepareWallet(PrepareWalletEventArgs<PaymentRequiredResponse> e)
+        public virtual async Task<bool> RaisePrepareWallet(PrepareWalletEventArgs<PaymentRequiredResponse> e)
         {
             var canContinue = true;
             if (PrepareWallet != null)
@@ -23,7 +23,7 @@ namespace x402.Client.v2
                 // If any subscriber returns false, we should not continue
                 foreach (PrepareWalletventHandler<PaymentRequiredResponse> handler in PrepareWallet.GetInvocationList())
                 {
-                    if (!handler(this, e))
+                    if (!await handler(this, e))
                     {
                         canContinue = false;
                         break;

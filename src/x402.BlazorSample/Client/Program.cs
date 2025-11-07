@@ -7,6 +7,8 @@ using Nethereum.Metamask.Blazor;
 using Nethereum.UI;
 using x402.BlazorSample.Client;
 using x402.Client.v1;
+using x402.Core;
+using x402.Core.Interfaces;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -30,6 +32,8 @@ builder.Services.AddHttpClient("x402", client =>
     client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
 })
 .AddHttpMessageHandler<PaymentRequiredV1Handler>();
+
+builder.Services.AddSingleton<IAssetInfoProvider, AssetInfoProvider>();
 
 
 builder.Services.AddAuthorizationCore();

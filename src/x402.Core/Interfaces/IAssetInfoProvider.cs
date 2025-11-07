@@ -12,6 +12,14 @@ namespace x402.Core.Interfaces
         AssetInfo? GetAssetInfo(string contractAddress);
 
         /// <summary>
+        /// Retrieves asset information associated with the specified network.
+        /// </summary>
+        /// <param name="network">The name of the network for which to obtain asset information. Cannot be null or empty.</param>
+        /// <returns>An <see cref="AssetInfo"/> object containing details about the asset for the specified network, or <see
+        /// langword="null"/> if no asset information is available for the network.</returns>
+        AssetInfo? GetAssetInfoByNetwork(string network);
+
+        /// <summary>
         /// Add custom asset info.
         /// </summary>
         /// <param name="assetInfo"></param>

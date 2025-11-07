@@ -3,6 +3,7 @@
 @inject SelectedEthereumHostProviderService selectedHostProviderService
 @inject IHttpClientFactory HttpClientFactory
 @inject IWalletProvider WalletProvider
+@inject IAssetInfoProvider AssetInfoProvider
 @using Nethereum.ABI.EIP712
 @using Nethereum.Hex.HexTypes
 @using Nethereum.RPC.HostWallet
@@ -10,7 +11,9 @@
 @using Nethereum.Signer.EIP712
 @using System.Security.Claims
 @using x402.Client.EVM
+@using x402.Client.Events
 @using x402.Client.v1
+@using x402.Core.Interfaces
 @using x402.Core.Models.v1
 <div style="text-align:center; font-family:sans-serif;">
 	<h1>
@@ -32,7 +35,7 @@
 					<div class="col-sm-6">
 						<button @onclick="@MakeRequest">Request Data</button>
 						<div>@Tx</div>
-						<div>@Result</div>
+						<textarea rows="15" style="width:100%">@Result</textarea>
 					</div>
 				</div>
 			</div>
@@ -66,6 +69,10 @@
 		//metamask is selected
 		_ethereumHostProvider = selectedHostProviderService.SelectedHost;
 		_ethereumHostProvider.SelectedAccountChanged += HostProvider_SelectedAccountChanged;
+
+		WalletProvider.PrepareWallet += WalletProvider_PrepareWallet;
+		WalletProvider.PaymentSelected += WalletProvider_PaymentSelected;
+		WalletProvider.HeaderCreated += WalletProvider_HeaderCreated;
 	}
 
 	public void Dispose()
@@ -74,6 +81,10 @@
 		{
 			_ethereumHostProvider.SelectedAccountChanged -= HostProvider_SelectedAccountChanged;
 		}
+
+		WalletProvider.PrepareWallet -= WalletProvider_PrepareWallet;
+		WalletProvider.PaymentSelected -= WalletProvider_PaymentSelected;
+		WalletProvider.HeaderCreated -= WalletProvider_HeaderCreated;
 	}
 
 	protected override async Task OnInitializedAsync()
@@ -100,6 +111,150 @@
 		this.StateHasChanged();
 	}
 
+	private void WriteResultLine(string line)
+	{
+		Result += line + "\r\n";
+		StateHasChanged();
+	}
+
+	protected async Task MakeRequest()
+	{
+		Result = "";
+		Tx = null;
+
+		var request = new HttpRequestMessage(HttpMethod.Get, "https://localhost:7176/resource/protected");
+
+		var httpClient = HttpClientFactory.CreateClient("x402");
+		var response = await httpClient.SendAsync(request);
+
+        WriteResultLine("Request completed:");
+        WriteResultLine($"Response Status Code: {response.StatusCode}");
+
+		if (response.IsSuccessStatusCode)
+		{
+			var tx = response.ReadSettlementResponseHeader()?.Transaction;
+			if (!string.IsNullOrEmpty(tx))
+			{
+				WriteResultLine($"Transaction hash: {tx}");
+			}
+		}
+
+		WriteResultLine(await response.Content.ReadAsStringAsync());
+	}
+
+	private async Task<bool> WalletProvider_PrepareWallet(object? sender, PrepareWalletEventArgs<PaymentRequiredResponse> eventArgs)
+	{
+        WriteResultLine("Preparing wallet for x402 payment requirements");
+
+		var networks = eventArgs.PaymentRequiredResponse.Accepts.Select(x => x.Network).Distinct();
+
+		if (networks.Count() > 1)
+		{
+			WriteResultLine($"Received x402 requirements for these networks: ");
+			WriteResultLine(string.Join(", ", networks));
+		}
+		else
+		{
+			WriteResultLine($"Received x402 requirements for network: {string.Join(", ", networks)}");
+		}
+
+		var network = networks.First();
+
+		//Get known assets
+		var assetInfo = AssetInfoProvider.GetAssetInfoByNetwork(network);
+		if (assetInfo != null)
+		{
+			WriteResultLine($"Known network: {assetInfo.Network} ({assetInfo.ChainId})");
+		}
+		else
+		{
+			WriteResultLine($"Unknown network: {network}");
+			return false;
+		}
+
+
+		if (_ethereumHostProvider == null)
+		{
+			WriteResultLine($"Enable MetaMask to proceed.");
+
+			return false;
+		}
+
+		WriteResultLine($"Preparing wallet");
+
+		var web3 = await _ethereumHostProvider.GetWeb3Async();
+
+
+		var chainId = new HexBigInteger(assetInfo.ChainId);
+
+		var changeResult = await ChangeChainTo(assetInfo.ChainId);
+		if (!string.IsNullOrEmpty(changeResult))
+		{
+			WriteResultLine($"Error changing MetaMask to ChainId: {assetInfo.ChainId}: {changeResult}");
+			return false;
+		}
+		else
+		{
+			WriteResultLine($"Changed MetaMask to ChainId: {assetInfo.ChainId}");
+		}
+
+
+		var selectedChainId = await web3.Eth.ChainId.SendRequestAsync();
+		if (selectedChainId.Value != chainId.Value)
+		{
+			WriteResultLine("Failed to change chainId");
+			return false;
+		}
+
+		if (SelectedAccount == null)
+		{
+			WriteResultLine("No account selected in MetaMask");
+			return false;
+		}
+
+		var wallet = new EVMWallet((s) => web3.Eth.AccountSigning.SignTypedDataV4.SendRequestAsync(s), SelectedAccount, assetInfo.Network, assetInfo.ChainId)
+		{
+			IgnoreAllowances = true
+		};
+		WalletProvider.Wallet = wallet;
+
+		return true;
+	}
+
+	private void WalletProvider_PaymentSelected(object? sender, PaymentSelectedEventArgs<PaymentRequirements> eventArgs)
+	{
+		if (eventArgs.PaymentRequirements == null)
+		{
+			WriteResultLine("No payment selected");
+		}
+		else
+		{
+			WriteResultLine($"Payment selected: {eventArgs.PaymentRequirements.MaxAmountRequired} {eventArgs.PaymentRequirements.Asset} on {eventArgs.PaymentRequirements.Network}");
+		}
+	}
+
+	private void WalletProvider_HeaderCreated(object? sender, HeaderCreatedEventArgs<PaymentPayloadHeader> eventArgs)
+	{
+		WriteResultLine("Payment header created:");
+		WriteResultLine($"Payload: {eventArgs.PaymentPayloadHeader.Payload}");
+	}
+
+	protected async Task<string> ChangeChainTo(ulong chainId)
+	{
+		if (_ethereumHostProvider == null)
+			return "_ethereumHostProvider is null";
+
+		try
+		{
+			var web3 = await _ethereumHostProvider.GetWeb3Async();
+			var result = await web3.Eth.HostWallet.SwitchEthereumChain.SendRequestAsync(new SwitchEthereumChainParameter() { ChainId = new HexBigInteger(chainId) });
+			return result;
+		}
+		catch (Exception ex)
+		{
+			return $"Error chaing MetaMask chain to {chainId}: {ex.Message}";
+		}
+	}
 
 	protected async Task AddBaseSepoliaChain()
 	{
@@ -136,78 +291,6 @@
 		catch (Exception)
 		{
 
-		}
-	}
-
-	protected async Task ChangeChainTo(ulong chainId)
-	{
-		if (_ethereumHostProvider == null)
-			return;
-
-		try
-		{
-			var web3 = await _ethereumHostProvider.GetWeb3Async();
-			var result = await web3.Eth.HostWallet.SwitchEthereumChain.SendRequestAsync(new SwitchEthereumChainParameter() { ChainId = new HexBigInteger(chainId) });
-		}
-		catch (Exception)
-		{
-
-		}
-	}
-
-	protected async Task MakeRequest()
-	{
-		Result = "";
-		Tx = null;
-
-		if (_ethereumHostProvider == null)
-			return;
-
-		var web3 = await _ethereumHostProvider.GetWeb3Async();
-		var chainId = new HexBigInteger(84532);
-
-		await AddBaseSepoliaChain();
-		Result = "Added chainId";
-
-
-		await ChangeChainTo(84532);
-		Result = "Changed chainId";
-
-		var selectedChainId = await web3.Eth.ChainId.SendRequestAsync();
-		if (selectedChainId.Value != chainId.Value)
-		{
-			Result = "Failed to change chainId";
-			return;
-		}
-
-		if (SelectedAccount == null)
-		{
-			Result = "No account selected";
-			return;
-		}
-
-		var wallet = new EVMWallet((s) => web3.Eth.AccountSigning.SignTypedDataV4.SendRequestAsync(s), SelectedAccount, (ulong)chainId.Value)
-		{
-			IgnoreAllowances = true
-		};
-		WalletProvider.Wallet = wallet;
-
-		var request = new HttpRequestMessage(HttpMethod.Get, "https://localhost:7176/resource/protected")
-		{
-		};
-
-		var httpClient = HttpClientFactory.CreateClient("x402");
-		var response = await httpClient.SendAsync(request);
-
-		Result = await response.Content.ReadAsStringAsync();
-
-		if(response.IsSuccessStatusCode)
-		{
-			var tx = response.ReadSettlementResponseHeader()?.Transaction;
-			if (!string.IsNullOrEmpty(tx))
-			{
-				Tx = $"Transaction hash: {tx}";
-			}
 		}
 	}
 

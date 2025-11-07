@@ -176,6 +176,14 @@ namespace x402.Core
                 string.Equals(info.ContractAddress, contractAddress, StringComparison.OrdinalIgnoreCase));
         }
 
+        public virtual AssetInfo? GetAssetInfoByNetwork(string network)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(network);
+
+            return AssetInfos.FirstOrDefault(info =>
+                string.Equals(info.Network, network, StringComparison.OrdinalIgnoreCase));
+        }
+
         public virtual List<AssetInfo> GetAll()
         {
             return AssetInfos;

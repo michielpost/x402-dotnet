@@ -26,7 +26,7 @@ namespace x402.Client.EVM.Tests
             var requirements = new List<PaymentRequirements> { requirement };
 
             // Fixed private key (32 bytes hex) for deterministic address; signature will still vary due to nonce/time
-            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", 84532UL) //base-sepolia chain ID
+            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "base-sepolia", 84532UL) //base-sepolia chain ID
             {
                 IgnoreAllowances = true
             };
@@ -64,7 +64,7 @@ namespace x402.Client.EVM.Tests
         {
             // Arrange
             var requirements = new List<PaymentRequirements> { BuildRequirement() };
-            var wallet = new EVMWallet("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 84532UL) //base-sepolia chain ID
+            var wallet = new EVMWallet("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "base-sepolia", 84532UL) //base-sepolia chain ID
             {
                 IgnoreAllowances = true
             };

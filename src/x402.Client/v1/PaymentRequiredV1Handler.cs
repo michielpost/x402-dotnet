@@ -31,9 +31,6 @@ namespace x402.Client.v1
             var retries = 0;
             var response = await base.SendAsync(request, cancellationToken);
 
-            if (_walletProvider.Wallet == null)
-                return response;
-
             while (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired &&
                    retries < _maxRetries)
             {
@@ -42,8 +39,11 @@ namespace x402.Client.v1
                 if (paymentRequiredResponse == null)
                     break;
 
-                // Notify subscribers
-                var canContinue = _walletProvider.RaisePrepareWallet(new PrepareWalletEventArgs<PaymentRequiredResponse>(request, response, paymentRequiredResponse));
+                // Notify subscribers 
+                var canContinue = await _walletProvider.RaisePrepareWalletAsync(new PrepareWalletEventArgs<PaymentRequiredResponse>(request, response, paymentRequiredResponse));
+
+                if (_walletProvider.Wallet == null)
+                    return response;
 
                 if (!canContinue || paymentRequiredResponse.Accepts.Count == 0)
                     break;

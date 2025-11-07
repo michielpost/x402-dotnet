@@ -151,7 +151,7 @@ namespace x402.IntegrationTests.Facilitator
                     continue;
                 }
 
-                var wallet = new EVMWallet("0x1123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", asset.ChainId)
+                var wallet = new EVMWallet("0x1123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", asset.Network, asset.ChainId)
                 {
                     IgnoreAllowances = true
                 };

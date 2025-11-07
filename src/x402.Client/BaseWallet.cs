@@ -8,6 +8,12 @@ namespace x402.Client
     {
         public List<AssetAllowance> AssetAllowances { get; set; } = new();
         public bool IgnoreAllowances { get; set; }
+        public string Network { get; set; }
+
+        protected BaseWallet(string network)
+        {
+            Network = network;
+        }
 
         #region v2
 
@@ -19,6 +25,7 @@ namespace x402.Client
                     && a.TotalAllowance >= long.Parse(r.MaxAmountRequired)
                     && a.MaxPerRequestAllowance >= long.Parse(r.MaxAmountRequired))
                 || IgnoreAllowances)
+                .Where(x => x.Network == this.Network)
                 .ToList();
 
             var selectedRequirement = allowedRequirements.FirstOrDefault();
@@ -39,6 +46,7 @@ namespace x402.Client
                     && a.TotalAllowance >= long.Parse(r.Amount)
                     && a.MaxPerRequestAllowance >= long.Parse(r.Amount))
                 || IgnoreAllowances)
+                .Where(x => x.Network == this.Network)
                 .ToList();
 
             var selectedRequirement = allowedRequirements.FirstOrDefault();

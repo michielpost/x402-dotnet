@@ -29,21 +29,21 @@ if (!ulong.TryParse(networkIdString, out var networkId))
     return;
 }
 
-var wallet = new EVMWallet(privateKey, networkId)
+var wallet = new EVMWallet(privateKey, "base", networkId)
 {
     IgnoreAllowances = true
 };
 var walletProvider = new WalletProvider(wallet);
 var handlerV1 = new PaymentRequiredV1Handler(walletProvider);
 
-walletProvider.PrepareWallet += (_, e) =>
+walletProvider.PrepareWallet += async (_, e) =>
 {
     Console.WriteLine($"402 received for {e.Request.RequestUri}");
 
     //Console.WriteLine($"Payment Required: {JsonSerializer.Serialize(e.PaymentRequiredResponse)}");
 
     // Return true to allow payment to continue, false to stop
-    return true;
+    return await Task.FromResult(true);
 };
 
 walletProvider.PaymentSelected += (_, e) =>
