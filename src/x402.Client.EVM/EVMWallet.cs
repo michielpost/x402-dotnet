@@ -7,24 +7,52 @@ using System.Security.Cryptography;
 
 namespace x402.Client.EVM
 {
+    /// <summary>
+    /// EVM-compatible wallet implementation for x402 payments using EIP-712 and EIP-3009 standards.
+    /// </summary>
     public partial class EVMWallet : BaseWallet
     {
+        /// <summary>
+        /// The blockchain chain ID for this wallet.
+        /// </summary>
         public ulong ChainId { get; }
+        
+        /// <summary>
+        /// The wallet's public address.
+        /// </summary>
         public string OwnerAddress { get; }
 
+        /// <summary>
+        /// Time offset from now when authorization becomes valid. Default: -1 minute.
+        /// </summary>
         public TimeSpan AddValidAfterFromNow { get; set; } = TimeSpan.FromMinutes(-1);
+        
+        /// <summary>
+        /// Time offset from now when authorization expires. Default: 15 minutes.
+        /// </summary>
         public TimeSpan AddValidBeforeFromNow { get; set; } = TimeSpan.FromMinutes(15);
 
+        /// <summary>
+        /// The Nethereum account instance, if using internal signing.
+        /// </summary>
         public Account? Account { get; }
 
-        byte[]? privateKey;
-
+        private readonly byte[]? privateKey;
         private readonly Func<string, Task<string>>? signFunction;
 
+        /// <summary>
+        /// Creates an EVM wallet from a hex-encoded private key.
+        /// </summary>
+        /// <param name="hexPrivateKey">The private key as hex string (with or without 0x prefix).</param>
+        /// <param name="network">The network identifier (e.g., "base-sepolia").</param>
+        /// <param name="chainId">The blockchain chain ID.</param>
         public EVMWallet(string hexPrivateKey, string network, ulong chainId) : base(network)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(hexPrivateKey);
+            ArgumentException.ThrowIfNullOrWhiteSpace(network);
+
             if (hexPrivateKey.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-                hexPrivateKey = hexPrivateKey.Substring(2);
+                hexPrivateKey = hexPrivateKey[2..];
 
             // Convert hex string to byte[]
             privateKey = hexPrivateKey.HexToByteArray();
@@ -34,9 +62,17 @@ namespace x402.Client.EVM
             OwnerAddress = Account.Address;
         }
 
+        /// <summary>
+        /// Creates an EVM wallet from a private key byte array.
+        /// </summary>
+        /// <param name="privateKey">The private key as byte array.</param>
+        /// <param name="network">The network identifier (e.g., "base-sepolia").</param>
+        /// <param name="chainId">The blockchain chain ID.</param>
         public EVMWallet(byte[] privateKey, string network, ulong chainId) : base(network)
         {
-            // Convert hex string to byte[]
+            ArgumentNullException.ThrowIfNull(privateKey);
+            ArgumentException.ThrowIfNullOrWhiteSpace(network);
+
             this.privateKey = privateKey;
 
             Account = new Nethereum.Web3.Accounts.Account(privateKey);
@@ -44,48 +80,88 @@ namespace x402.Client.EVM
             OwnerAddress = Account.Address;
         }
 
+        /// <summary>
+        /// Creates an EVM wallet with an external signing function.
+        /// </summary>
+        /// <param name="signFunction">Custom signing function that takes EIP-712 JSON and returns a signature.</param>
+        /// <param name="ownerAddress">The wallet's public address.</param>
+        /// <param name="network">The network identifier (e.g., "base-sepolia").</param>
+        /// <param name="chainId">The blockchain chain ID.</param>
         public EVMWallet(Func<string, Task<string>> signFunction, string ownerAddress, string network, ulong chainId) : base(network)
         {
+            ArgumentNullException.ThrowIfNull(signFunction);
+            ArgumentException.ThrowIfNullOrWhiteSpace(ownerAddress);
+            ArgumentException.ThrowIfNullOrWhiteSpace(network);
+
             this.signFunction = signFunction;
             ChainId = chainId;
             OwnerAddress = ownerAddress;
         }
 
+        /// <summary>
+        /// Creates an EVM wallet from a BIP39 mnemonic phrase.
+        /// </summary>
+        /// <param name="mnemonic">The BIP39 mnemonic phrase.</param>
+        /// <param name="password">Optional password for the mnemonic.</param>
+        /// <param name="accountIndex">The HD wallet account index to derive.</param>
+        /// <param name="network">The network identifier (e.g., "base-sepolia").</param>
+        /// <param name="chainId">The blockchain chain ID.</param>
+        /// <returns>A new EVMWallet instance.</returns>
         public static EVMWallet FromMnemonic(string mnemonic, string password, int accountIndex, string network, ulong chainId)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(mnemonic);
+            ArgumentException.ThrowIfNullOrWhiteSpace(network);
+            ArgumentOutOfRangeException.ThrowIfNegative(accountIndex);
+
             var wallet = new Nethereum.HdWallet.Wallet(mnemonic, password);
             var account = wallet.GetAccount(accountIndex);
             return new EVMWallet(account.PrivateKey, network, chainId);
         }
 
+        /// <summary>
+        /// Signs typed data using EIP-712 v4 standard.
+        /// </summary>
+        /// <param name="data">The EIP-712 typed data JSON string.</param>
+        /// <returns>The signature as a hex string.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when data is null.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when no signing method is available.</exception>
         private Task<string> SignAsync(string data)
         {
-            if (data == null) throw new ArgumentNullException(nameof(data));
+            ArgumentNullException.ThrowIfNull(data);
 
             if (signFunction != null)
                 return signFunction(data);
 
-            //Use internal signing
-            //  Sign the typed data (EIP-712 v4)
-            var ecKey = new EthECKey(privateKey, isPrivate: true);
+            if (privateKey == null)
+                throw new InvalidOperationException("No private key or sign function available for signing.");
 
+            // Use internal signing - Sign the typed data (EIP-712 v4)
+            var ecKey = new EthECKey(privateKey, isPrivate: true);
             var eip712Signer = new Eip712TypedDataSigner();
             string signature = eip712Signer.SignTypedDataV4(data, ecKey);
 
             return Task.FromResult(signature);
         }
 
+        /// <summary>
+        /// Generates a cryptographically secure 32-byte random nonce.
+        /// </summary>
+        /// <returns>A 32-byte array containing random data.</returns>
         private static byte[] GenerateBytes32Nonce()
         {
-            // generate 32 random bytes and return 0x-prefixed hex
             var bytes = new byte[32];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(bytes);
-            }
+            RandomNumberGenerator.Fill(bytes);
             return bytes;
         }
 
+        /// <summary>
+        /// Builds EIP-712 typed data structure for EIP-3009 TransferWithAuthorization.
+        /// </summary>
+        /// <param name="tokenName">The token name from the smart contract.</param>
+        /// <param name="tokenVersion">The token version from the smart contract.</param>
+        /// <param name="chainId">The blockchain chain ID.</param>
+        /// <param name="verifyingContract">The token contract address.</param>
+        /// <returns>A TypedData structure ready for signing.</returns>
         private static TypedData<Domain> BuildEip3009TypedData(string tokenName, string tokenVersion, ulong chainId, string verifyingContract)
         {
             return new TypedData<Domain>
@@ -101,7 +177,5 @@ namespace x402.Client.EVM
                 PrimaryType = nameof(TransferWithAuthorization),
             };
         }
-
-
     }
 }
