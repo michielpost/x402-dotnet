@@ -11,10 +11,6 @@ namespace x402.Client.v1
         private readonly IWalletProvider _walletProvider;
         private readonly int _maxRetries;
 
-        public event PaymentRequiredEventHandler? PaymentRequiredReceived;
-        public event EventHandler<PaymentSelectedEventArgs>? PaymentSelected;
-        public event EventHandler<PaymentRetryEventArgs>? PaymentRetrying;
-
         public PaymentRequiredV1Handler(IWalletProvider walletProvider, int maxRetries = 1)
         {
             _walletProvider = walletProvider ?? throw new ArgumentNullException(nameof(walletProvider));
@@ -48,7 +44,7 @@ namespace x402.Client.v1
                     break;
 
                 // Notify subscribers
-                var canContinue = OnPaymentRequiredReceived(new PaymentRequiredEventArgs(request, response, paymentRequiredResponse));
+                var canContinue = _walletProvider.RaiseOnPaymentRequiredReceived(new PaymentRequiredEventArgs(request, response, paymentRequiredResponse));
 
 
                 if (!canContinue || paymentRequiredResponse.Accepts.Count == 0)
@@ -57,7 +53,7 @@ namespace x402.Client.v1
                 var payment = await _walletProvider.Wallet.RequestPaymentAsync(paymentRequiredResponse, cancellationToken);
 
                 // Notify subscribers
-                OnPaymentSelected(new PaymentSelectedEventArgs(request, payment.Requirement, payment.Header, retries + 1));
+                _walletProvider.RaiseOnPaymentSelected(new PaymentSelectedEventArgs(request, payment.Requirement, payment.Header, retries + 1));
 
                 if (payment.Requirement == null || payment.Header == null)
                     break;
@@ -68,37 +64,13 @@ namespace x402.Client.v1
                 response.Dispose();
 
                 retries++;
-                OnPaymentRetrying(new PaymentRetryEventArgs(retryRequest, retries));
+                _walletProvider.RaiseOnPaymentRetrying(new PaymentRetryEventArgs(retryRequest, retries));
 
                 response = await base.SendAsync(retryRequest, cancellationToken);
             }
 
             return response;
         }
-
-        protected virtual bool OnPaymentRequiredReceived(PaymentRequiredEventArgs e)
-        {
-            var canContinue = true;
-            if (PaymentRequiredReceived != null)
-            {
-                // If any subscriber returns false, we should not continue
-                foreach (PaymentRequiredEventHandler handler in PaymentRequiredReceived.GetInvocationList())
-                {
-                    if (!handler(this, e))
-                    {
-                        canContinue = false;
-                        break;
-                    }
-                }
-            }
-            return canContinue;
-        }
-
-        protected virtual void OnPaymentSelected(PaymentSelectedEventArgs e)
-            => PaymentSelected?.Invoke(this, e);
-
-        protected virtual void OnPaymentRetrying(PaymentRetryEventArgs e)
-            => PaymentRetrying?.Invoke(this, e);
 
         private static async Task<PaymentRequiredResponse?> ParsePaymentRequiredResponseAsync(HttpResponseMessage response)
         {

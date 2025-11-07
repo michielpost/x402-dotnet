@@ -18,7 +18,7 @@ namespace x402.Facilitator
                 PaymentRequirements = req
             };
 
-            var url = BuildUrl("/verify", HttpMethod.Post);
+            var url = BuildUrl("verify", HttpMethod.Post);
             using var request = new HttpRequestMessage(HttpMethod.Post, url)
             {
                 Content = JsonContent.Create(body, options: JsonOptions)
@@ -56,7 +56,7 @@ namespace x402.Facilitator
                 PaymentRequirements = req
             };
 
-            var url = BuildUrl("/settle", HttpMethod.Post);
+            var url = BuildUrl("settle", HttpMethod.Post);
             using var request = new HttpRequestMessage(HttpMethod.Post, url)
             {
                 Content = JsonContent.Create(body, options: JsonOptions)
@@ -88,7 +88,7 @@ namespace x402.Facilitator
         public async Task<SupportedResponse> SupportedAsync(CancellationToken cancellationToken = default)
         {
             logger.LogDebug("Requesting supported facilitator kinds");
-            var url = BuildUrl("/supported", HttpMethod.Get);
+            var url = BuildUrl("supported", HttpMethod.Get);
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             PrepareRequest(request);
 
@@ -110,7 +110,7 @@ namespace x402.Facilitator
         {
             logger.LogDebug("Requesting discovery resource list");
 
-            var baseUrl = "/discovery/resources";
+            var baseUrl = "discovery/resources";
             var queryParams = new List<string>();
 
             if (!string.IsNullOrEmpty(type))

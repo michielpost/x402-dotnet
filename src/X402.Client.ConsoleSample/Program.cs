@@ -33,9 +33,10 @@ var wallet = new EVMWallet(privateKey, networkId)
 {
     IgnoreAllowances = true
 };
-var handlerV1 = new PaymentRequiredV1Handler(new WalletProvider(wallet));
+var walletProvider = new WalletProvider(wallet);
+var handlerV1 = new PaymentRequiredV1Handler(walletProvider);
 
-handlerV1.PaymentRequiredReceived += (_, e) =>
+walletProvider.PaymentRequiredReceived += (_, e) =>
 {
     Console.WriteLine($"402 received for {e.Request.RequestUri}");
 
@@ -45,7 +46,7 @@ handlerV1.PaymentRequiredReceived += (_, e) =>
     return true;
 };
 
-handlerV1.PaymentSelected += (_, e) =>
+walletProvider.PaymentSelected += (_, e) =>
 {
     Console.WriteLine();
     Console.WriteLine($"Selected payment requirement: {JsonSerializer.Serialize(e.PaymentRequirements)}");
@@ -55,7 +56,7 @@ handlerV1.PaymentSelected += (_, e) =>
 
 };
 
-handlerV1.PaymentRetrying += (_, e) =>
+walletProvider.PaymentRetrying += (_, e) =>
 {
     Console.WriteLine($"Retrying {e.Request.RequestUri} with payment header, attempt #{e.Attempt}");
 };

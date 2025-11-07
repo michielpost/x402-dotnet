@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
-using System.Text.Json;
 using x402.Core.Models.Facilitator;
 using x402.Core.Models.v2;
 using x402.Core.Models.v2.Facilitator;
@@ -9,41 +8,6 @@ namespace x402.Facilitator
 {
     public partial class HttpFacilitatorClient : IFacilitatorV2Client
     {
-        private readonly HttpClient httpClient;
-        private readonly ILogger<HttpFacilitatorClient> logger;
-        protected static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
-        {
-            WriteIndented = true,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-        };
-
-        /// <summary>
-        /// Creates a new HTTP facilitator client.
-        /// </summary>
-        /// <param name="baseUrl">The base URL of the facilitator service (trailing slash will be removed)</param>
-        public HttpFacilitatorClient(HttpClient httpClient, ILogger<HttpFacilitatorClient> logger)
-        {
-            this.httpClient = httpClient;
-            this.logger = logger;
-        }
-
-        /// <summary>
-        /// Allows derived clients to adjust the URL for a given relative path and HTTP method.
-        /// Default behavior is to return the relative path unchanged (uses HttpClient.BaseAddress).
-        /// </summary>
-        /// <param name="relativePath">A path like "/verify" or "/settle".</param>
-        /// <param name="method">HTTP method for the request.</param>
-        /// <returns>URL or relative path to pass to HttpRequestMessage.</returns>
-        protected virtual string BuildUrl(string relativePath, HttpMethod method) => relativePath;
-
-        /// <summary>
-        /// Allows derived clients to modify the outgoing request (e.g., add headers).
-        /// Default behavior is no-op.
-        /// </summary>
-        /// <param name="request">The request to be sent.</param>
-        protected virtual void PrepareRequest(HttpRequestMessage request) { }
-
-
         public async Task<VerificationResponse> VerifyAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements req, CancellationToken cancellationToken = default)
         {
             logger.LogInformation("Verifying payment payload for resource with scheme {Scheme} and asset {Asset}", req.Scheme, req.Asset);
@@ -54,7 +18,7 @@ namespace x402.Facilitator
                 PaymentRequirements = req
             };
 
-            var url = BuildUrl("/verify", HttpMethod.Post);
+            var url = BuildUrl("verify", HttpMethod.Post);
             using var request = new HttpRequestMessage(HttpMethod.Post, url)
             {
                 Content = JsonContent.Create(body, options: JsonOptions)
@@ -92,7 +56,7 @@ namespace x402.Facilitator
                 PaymentRequirements = req
             };
 
-            var url = BuildUrl("/settle", HttpMethod.Post);
+            var url = BuildUrl("settle", HttpMethod.Post);
             using var request = new HttpRequestMessage(HttpMethod.Post, url)
             {
                 Content = JsonContent.Create(body, options: JsonOptions)
@@ -124,7 +88,7 @@ namespace x402.Facilitator
         public async Task<SupportedResponse> SupportedV2Async(CancellationToken cancellationToken = default)
         {
             logger.LogDebug("Requesting supported facilitator kinds");
-            var url = BuildUrl("/supported", HttpMethod.Get);
+            var url = BuildUrl("supported", HttpMethod.Get);
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             PrepareRequest(request);
 
@@ -146,7 +110,7 @@ namespace x402.Facilitator
         {
             logger.LogDebug("Requesting discovery resource list");
 
-            var baseUrl = "/discovery/resources";
+            var baseUrl = "discovery/resources";
             var queryParams = new List<string>();
 
             if (!string.IsNullOrEmpty(type))

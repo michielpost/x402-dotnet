@@ -30,6 +30,7 @@ namespace x402.IntegrationTests.Facilitator
             var provider = services.BuildServiceProvider();
 
             var apiUrl = "https://facilitator.payai.network";
+            //var apiUrl = "https://www.x402.org/facilitator/";
             //var apiUrl = "https://facilitator.mogami.tech";
             //var apiUrl = "https://facilitator.mcpay.tech";
             //var apiUrl = "https://facilitator.daydreams.systems/";
