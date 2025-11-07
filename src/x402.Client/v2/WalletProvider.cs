@@ -1,4 +1,7 @@
-﻿namespace x402.Client.v2
+﻿using x402.Client.Events;
+using x402.Core.Models.v2;
+
+namespace x402.Client.v2
 {
     public class WalletProvider : IWalletProvider
     {
@@ -7,5 +10,33 @@
         {
             Wallet = wallet;
         }
+
+        public event PrepareWalletventHandler<PaymentRequiredResponse>? PrepareWallet;
+        public event EventHandler<PaymentSelectedEventArgs<PaymentRequirements>>? PaymentSelected;
+        public event EventHandler<HeaderCreatedEventArgs<PaymentPayloadHeader>>? HeaderCreated;
+
+        public virtual bool RaisePrepareWallet(PrepareWalletEventArgs<PaymentRequiredResponse> e)
+        {
+            var canContinue = true;
+            if (PrepareWallet != null)
+            {
+                // If any subscriber returns false, we should not continue
+                foreach (PrepareWalletventHandler<PaymentRequiredResponse> handler in PrepareWallet.GetInvocationList())
+                {
+                    if (!handler(this, e))
+                    {
+                        canContinue = false;
+                        break;
+                    }
+                }
+            }
+            return canContinue;
+        }
+
+        public virtual void RaiseOnPaymentSelected(PaymentSelectedEventArgs<PaymentRequirements> e)
+            => PaymentSelected?.Invoke(this, e);
+
+        public virtual void RaiseOnHeaderCreated(HeaderCreatedEventArgs<PaymentPayloadHeader> e)
+            => HeaderCreated?.Invoke(this, e);
     }
 }

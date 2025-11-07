@@ -33,7 +33,7 @@ namespace x402.Coinbase
 
         protected override string BuildUrl(string relativePath, HttpMethod method)
         {
-            return $"{coinbaseOptions.BaseUrl}{relativePath}";
+            return $"{coinbaseOptions.BaseUrl}/{relativePath}";
         }
 
         protected override void PrepareRequest(System.Net.Http.HttpRequestMessage request)

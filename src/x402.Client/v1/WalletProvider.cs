@@ -1,5 +1,5 @@
 ﻿using x402.Client.Events;
-using x402.Client.v1.Events;
+using x402.Core.Models.v1;
 
 namespace x402.Client.v1
 {
@@ -12,17 +12,17 @@ namespace x402.Client.v1
             Wallet = wallet;
         }
 
-        public event PaymentRequiredEventHandler? PaymentRequiredReceived;
-        public event EventHandler<PaymentSelectedEventArgs>? PaymentSelected;
-        public event EventHandler<PaymentRetryEventArgs>? PaymentRetrying;
+        public event PrepareWalletventHandler<PaymentRequiredResponse>? PrepareWallet;
+        public event EventHandler<PaymentSelectedEventArgs<PaymentRequirements>>? PaymentSelected;
+        public event EventHandler<HeaderCreatedEventArgs<PaymentPayloadHeader>>? HeaderCreated;
 
-        public virtual bool RaiseOnPaymentRequiredReceived(PaymentRequiredEventArgs e)
+        public virtual bool RaisePrepareWallet(PrepareWalletEventArgs<PaymentRequiredResponse> e)
         {
             var canContinue = true;
-            if (PaymentRequiredReceived != null)
+            if (PrepareWallet != null)
             {
                 // If any subscriber returns false, we should not continue
-                foreach (PaymentRequiredEventHandler handler in PaymentRequiredReceived.GetInvocationList())
+                foreach (PrepareWalletventHandler<PaymentRequiredResponse> handler in PrepareWallet.GetInvocationList())
                 {
                     if (!handler(this, e))
                     {
@@ -34,11 +34,11 @@ namespace x402.Client.v1
             return canContinue;
         }
 
-        public virtual void RaiseOnPaymentSelected(PaymentSelectedEventArgs e)
+        public virtual void RaiseOnPaymentSelected(PaymentSelectedEventArgs<PaymentRequirements> e)
             => PaymentSelected?.Invoke(this, e);
 
-        public virtual void RaiseOnPaymentRetrying(PaymentRetryEventArgs e)
-            => PaymentRetrying?.Invoke(this, e);
+        public virtual void RaiseOnHeaderCreated(HeaderCreatedEventArgs<PaymentPayloadHeader> e)
+            => HeaderCreated?.Invoke(this, e);
 
     }
 }

@@ -32,7 +32,8 @@ namespace x402.Client.EVM.Tests
             };
 
             // Act
-            var (selected, header) = await wallet.RequestPaymentAsync(new PaymentRequiredResponse() { Accepts = requirements }, CancellationToken.None);
+            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = requirements }, CancellationToken.None);
+            var header = await wallet.CreateHeaderAsync(selected!, CancellationToken.None);
 
             // Assert
             Assert.That(selected, Is.Not.Null);
@@ -69,7 +70,8 @@ namespace x402.Client.EVM.Tests
             };
 
             // Act
-            var (_, header) = await wallet.RequestPaymentAsync(new PaymentRequiredResponse() { Accepts = requirements }, CancellationToken.None);
+            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = requirements }, CancellationToken.None);
+            var header = await wallet.CreateHeaderAsync(selected!, CancellationToken.None);
 
             // Assert
             Assert.That(header, Is.Not.Null);

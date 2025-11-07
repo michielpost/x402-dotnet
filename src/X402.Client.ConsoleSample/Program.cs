@@ -36,7 +36,7 @@ var wallet = new EVMWallet(privateKey, networkId)
 var walletProvider = new WalletProvider(wallet);
 var handlerV1 = new PaymentRequiredV1Handler(walletProvider);
 
-walletProvider.PaymentRequiredReceived += (_, e) =>
+walletProvider.PrepareWallet += (_, e) =>
 {
     Console.WriteLine($"402 received for {e.Request.RequestUri}");
 
@@ -50,15 +50,12 @@ walletProvider.PaymentSelected += (_, e) =>
 {
     Console.WriteLine();
     Console.WriteLine($"Selected payment requirement: {JsonSerializer.Serialize(e.PaymentRequirements)}");
-    Console.WriteLine();
-    Console.WriteLine($"Responding with payment header: {JsonSerializer.Serialize(e.PaymentHeader)}");
-    Console.WriteLine();
-
 };
 
-walletProvider.PaymentRetrying += (_, e) =>
+walletProvider.HeaderCreated += (_, e) =>
 {
-    Console.WriteLine($"Retrying {e.Request.RequestUri} with payment header, attempt #{e.Attempt}");
+    Console.WriteLine();
+    Console.WriteLine($"Responding with payment header: {JsonSerializer.Serialize(e.PaymentPayloadHeader)}  attempt #{e.Attempt}");
 };
 
 var client = new HttpClient(handlerV1);

@@ -12,6 +12,9 @@ namespace x402.Client.v2
         /// Given a list of payment requirements, returns one that can be fulfilled,
         /// and a corresponding payload header to include in the retry.
         /// </summary>
-        Task<(PaymentRequirements? Requirement, PaymentPayloadHeader? Header)> RequestPaymentAsync(PaymentRequiredResponse paymentRequiredResponse, CancellationToken cancellationToken = default);
+        Task<PaymentRequirements?> SelectPaymentAsync(PaymentRequiredResponse paymentRequiredResponse, CancellationToken cancellationToken = default);
+
+        Task<PaymentPayloadHeader> CreateHeaderAsync(PaymentRequirements requirement, CancellationToken cancellationToken = default);
+
     }
 }

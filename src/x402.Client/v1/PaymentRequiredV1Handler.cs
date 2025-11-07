@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using x402.Client.Events;
-using x402.Client.v1.Events;
 using x402.Core.Models.v1;
 
 namespace x402.Client.v1
@@ -44,27 +43,27 @@ namespace x402.Client.v1
                     break;
 
                 // Notify subscribers
-                var canContinue = _walletProvider.RaiseOnPaymentRequiredReceived(new PaymentRequiredEventArgs(request, response, paymentRequiredResponse));
-
+                var canContinue = _walletProvider.RaisePrepareWallet(new PrepareWalletEventArgs<PaymentRequiredResponse>(request, response, paymentRequiredResponse));
 
                 if (!canContinue || paymentRequiredResponse.Accepts.Count == 0)
                     break;
 
-                var payment = await _walletProvider.Wallet.RequestPaymentAsync(paymentRequiredResponse, cancellationToken);
+                var selectedRequirement = await _walletProvider.Wallet.SelectPaymentAsync(paymentRequiredResponse, cancellationToken);
 
                 // Notify subscribers
-                _walletProvider.RaiseOnPaymentSelected(new PaymentSelectedEventArgs(request, payment.Requirement, payment.Header, retries + 1));
+                _walletProvider.RaiseOnPaymentSelected(new PaymentSelectedEventArgs<PaymentRequirements>(request, selectedRequirement));
 
-                if (payment.Requirement == null || payment.Header == null)
+                if (selectedRequirement == null)
                     break;
 
+                var header = await _walletProvider.Wallet.CreateHeaderAsync(selectedRequirement, cancellationToken);
+                retries++;
+                _walletProvider.RaiseOnHeaderCreated(new HeaderCreatedEventArgs<PaymentPayloadHeader>(header, retries));
+
                 var retryRequest = await CloneHttpRequestAsync(request);
-                retryRequest.AddPaymentHeader(payment.Header, paymentRequiredResponse.X402Version);
+                retryRequest.AddPaymentHeader(header, paymentRequiredResponse.X402Version);
 
                 response.Dispose();
-
-                retries++;
-                _walletProvider.RaiseOnPaymentRetrying(new PaymentRetryEventArgs(retryRequest, retries));
 
                 response = await base.SendAsync(retryRequest, cancellationToken);
             }

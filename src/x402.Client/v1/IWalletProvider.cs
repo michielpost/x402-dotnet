@@ -1,18 +1,21 @@
 ﻿using x402.Client.Events;
-using x402.Client.v1.Events;
+using x402.Core.Models.v1;
 
 namespace x402.Client.v1
 {
     public interface IWalletProvider
     {
         public IX402WalletV1? Wallet { get; set; }
-        
-        event PaymentRequiredEventHandler? PaymentRequiredReceived;
-        event EventHandler<PaymentSelectedEventArgs>? PaymentSelected;
-        event EventHandler<PaymentRetryEventArgs>? PaymentRetrying;
 
-        void RaiseOnPaymentSelected(PaymentSelectedEventArgs e);
-        void RaiseOnPaymentRetrying(PaymentRetryEventArgs e);
-        bool RaiseOnPaymentRequiredReceived(PaymentRequiredEventArgs paymentRequiredEventArgs);
+        bool RaisePrepareWallet(PrepareWalletEventArgs<PaymentRequiredResponse> paymentRequiredEventArgs);
+        event PrepareWalletventHandler<PaymentRequiredResponse>? PrepareWallet;
+
+
+        event EventHandler<PaymentSelectedEventArgs<PaymentRequirements>>? PaymentSelected;
+        void RaiseOnPaymentSelected(PaymentSelectedEventArgs<PaymentRequirements> e);
+
+        void RaiseOnHeaderCreated(HeaderCreatedEventArgs<PaymentPayloadHeader> e);
+        event EventHandler<HeaderCreatedEventArgs<PaymentPayloadHeader>>? HeaderCreated;
+
     }
 }

@@ -1,13 +1,13 @@
 ﻿namespace x402.Client.Events
 {
-    public class PaymentRetryEventArgs : EventArgs
+    public class HeaderCreatedEventArgs<T> : EventArgs where T : class
     {
-        public HttpRequestMessage Request { get; }
+        public T PaymentPayloadHeader { get; }
         public int Attempt { get; }
 
-        public PaymentRetryEventArgs(HttpRequestMessage request, int attempt)
+        public HeaderCreatedEventArgs(T paymentPayloadHeader, int attempt)
         {
-            Request = request;
+            PaymentPayloadHeader = paymentPayloadHeader;
             Attempt = attempt;
         }
     }

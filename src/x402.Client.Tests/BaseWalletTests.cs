@@ -22,10 +22,9 @@ namespace x402.Client.Tests
             var wallet = new TestWallet(new());
             wallet.IgnoreAllowances = false;
 
-            var (selected, header) = await wallet.RequestPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { Req("0xA") } }, CancellationToken.None);
+            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { Req("0xA") } }, CancellationToken.None);
 
             Assert.That(selected, Is.Null);
-            Assert.That(header, Is.Null);
         }
 
         [Test]
@@ -39,7 +38,8 @@ namespace x402.Client.Tests
             var r1 = Req("0xA");
             var r2 = Req("0xB");
 
-            var (selected, header) = await wallet.RequestPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { r1, r2 } }, CancellationToken.None);
+            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { r1, r2 } }, CancellationToken.None);
+            var header = await wallet.CreateHeaderAsync(selected!, CancellationToken.None);
 
             Assert.That(selected, Is.EqualTo(r2));
             Assert.That(header, Is.Not.Null);
@@ -54,7 +54,8 @@ namespace x402.Client.Tests
             wallet.IgnoreAllowances = true;
 
             var r = Req("0xZZ");
-            var (selected, header) = await wallet.RequestPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { r } }, CancellationToken.None);
+            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { r } }, CancellationToken.None);
+            var header = await wallet.CreateHeaderAsync(selected!, CancellationToken.None);
 
             Assert.That(selected, Is.EqualTo(r));
             Assert.That(header, Is.Not.Null);
@@ -73,15 +74,16 @@ namespace x402.Client.Tests
             var rD = Req("0xD", amount: "600"); // exceeds per-request
             var rOk = Req("0xD", amount: "400"); // within per-request
 
-            var (selected1, header1) = await wallet.RequestPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { rC } }, CancellationToken.None);
-            var (selected2, header2) = await wallet.RequestPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { rD } }, CancellationToken.None);
-            var (selected3, header3) = await wallet.RequestPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { rC, rD, rOk } }, CancellationToken.None);
+            var selected1 = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { rC } }, CancellationToken.None);
+
+            var selected2 = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { rD } }, CancellationToken.None);
+
+            var selected3 = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { rC, rD, rOk } }, CancellationToken.None);
+            var header3 = await wallet.CreateHeaderAsync(selected3, CancellationToken.None);
 
             Assert.That(selected1, Is.Null);
-            Assert.That(header1, Is.Null);
 
             Assert.That(selected2, Is.Null);
-            Assert.That(header2, Is.Null);
 
             Assert.That(selected3, Is.EqualTo(rOk));
             Assert.That(header3, Is.Not.Null);

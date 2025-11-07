@@ -67,7 +67,7 @@ namespace x402.Coinbase.Tests
             var httpClient = new HttpClient(handler);
             var options = Options.Create(new CoinbaseOptions
             {
-                BaseUrl = "https://api.example.com/",
+                BaseUrl = "https://api.example.com",
                 ApiKeyId = "test-id",
                 ApiKeySecret = Convert.ToBase64String(new byte[64])
             });

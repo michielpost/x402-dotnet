@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
 using x402.Client.Events;
-using x402.Client.v2.Events;
 using x402.Core.Models.v2;
 
 namespace x402.Client.v2
@@ -12,11 +11,6 @@ namespace x402.Client.v2
         private readonly int _maxRetries;
 
         public const string PaymentRequiredHeader = "PAYMENT-REQUIRED";
-
-        public event PaymentRequiredEventHandler? PaymentRequiredReceived;
-        public event EventHandler<PaymentSelectedEventArgs>? PaymentSelected;
-        public event EventHandler<PaymentRetryEventArgs>? PaymentRetrying;
-
 
         public PaymentRequiredV2Handler(IWalletProvider walletProvider, int maxRetries = 1)
         {
@@ -45,61 +39,41 @@ namespace x402.Client.v2
             while (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired &&
                    retries < _maxRetries)
             {
+                // Get payment required details from response body
                 var paymentRequiredResponse = await ParsePaymentRequiredResponseAsync(response);
                 if (paymentRequiredResponse == null)
                     break;
 
                 // Notify subscribers
-                var canContinue = OnPaymentRequiredReceived(new PaymentRequiredEventArgs(request, response, paymentRequiredResponse));
+                var canContinue = _walletProvider.RaisePrepareWallet(new PrepareWalletEventArgs<PaymentRequiredResponse>(request, response, paymentRequiredResponse));
 
                 if (!canContinue || paymentRequiredResponse.Accepts.Count == 0)
                     break;
 
-                var payment = await _walletProvider.Wallet.RequestPaymentAsync(paymentRequiredResponse, cancellationToken);
+                var selectedRequirement = await _walletProvider.Wallet.SelectPaymentAsync(paymentRequiredResponse, cancellationToken);
 
                 // Notify subscribers
-                OnPaymentSelected(new PaymentSelectedEventArgs(request, payment.Requirement, payment.Header, retries + 1));
+                _walletProvider.RaiseOnPaymentSelected(new PaymentSelectedEventArgs<PaymentRequirements>(request, selectedRequirement));
 
-                if (payment.Requirement == null || payment.Header == null)
+                if (selectedRequirement == null)
                     break;
 
+                var header = await _walletProvider.Wallet.CreateHeaderAsync(selectedRequirement, cancellationToken);
+                retries++;
+                _walletProvider.RaiseOnHeaderCreated(new HeaderCreatedEventArgs<PaymentPayloadHeader>(header, retries));
+
                 var retryRequest = await CloneHttpRequestAsync(request);
-                retryRequest.AddPaymentHeader(payment.Header, paymentRequiredResponse.X402Version);
+                retryRequest.AddPaymentHeader(header, paymentRequiredResponse.X402Version);
 
                 response.Dispose();
 
-                retries++;
-                OnPaymentRetrying(new PaymentRetryEventArgs(retryRequest, retries));
+
 
                 response = await base.SendAsync(retryRequest, cancellationToken);
             }
 
             return response;
         }
-
-        protected virtual bool OnPaymentRequiredReceived(PaymentRequiredEventArgs e)
-        {
-            var canContinue = true;
-            if (PaymentRequiredReceived != null)
-            {
-                // If any subscriber returns false, we should not continue
-                foreach (PaymentRequiredEventHandler handler in PaymentRequiredReceived.GetInvocationList())
-                {
-                    if (!handler(this, e))
-                    {
-                        canContinue = false;
-                        break;
-                    }
-                }
-            }
-            return canContinue;
-        }
-
-        protected virtual void OnPaymentSelected(PaymentSelectedEventArgs e)
-            => PaymentSelected?.Invoke(this, e);
-
-        protected virtual void OnPaymentRetrying(PaymentRetryEventArgs e)
-            => PaymentRetrying?.Invoke(this, e);
 
         private static async Task<PaymentRequiredResponse?> ParsePaymentRequiredResponseAsync(HttpResponseMessage response)
         {
