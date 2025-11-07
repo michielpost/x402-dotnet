@@ -16,6 +16,7 @@ var config = new ConfigurationBuilder()
 // Read values from configuration
 var privateKey = config["EVMWallet:PrivateKey"];
 var networkIdString = config["EVMWallet:NetworkId"];
+var network = config["EVMWallet:Network"];
 
 if (string.IsNullOrWhiteSpace(privateKey) || string.IsNullOrWhiteSpace(networkIdString))
 {
@@ -29,12 +30,12 @@ if (!ulong.TryParse(networkIdString, out var networkId))
     return;
 }
 
-var wallet = new EVMWallet(privateKey, "base", networkId)
+var wallet = new EVMWallet(privateKey, network, networkId)
 {
     IgnoreAllowances = true
 };
 var walletProvider = new WalletProvider(wallet);
-var handlerV1 = new PaymentRequiredV1Handler(walletProvider);
+var handlerV1 = PaymentRequiredV1Handler.Create(walletProvider);
 
 walletProvider.PrepareWallet += async (_, e) =>
 {
