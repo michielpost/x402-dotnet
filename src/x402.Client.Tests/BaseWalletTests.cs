@@ -80,7 +80,7 @@ namespace x402.Client.Tests
 
             var selected3 = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { rC, rD, rOk } }, CancellationToken.None);
             Assert.That(selected3, Is.EqualTo(rOk));
-            
+
             var header3 = await wallet.CreateHeaderAsync(selected3, CancellationToken.None);
 
             Assert.That(selected1, Is.Null);

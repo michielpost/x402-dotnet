@@ -8,6 +8,15 @@
 
         public string Name { get; set; } = string.Empty;
         public string Version { get; set; } = string.Empty;
-        public required bool IsEvm { get; set; }
+        public NetworkType NetworkType { get; set; }
+    }
+
+    public enum NetworkType
+    {
+        Other,
+        /// <summary> Ethereum Virtual Machine </summary>
+        EVM,
+        /// <summary> Solana Virtual Machine </summary>
+        SVM
     }
 }

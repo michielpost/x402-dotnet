@@ -143,7 +143,7 @@ namespace x402.IntegrationTests.Facilitator
                 TestContext.Out.WriteLine($"Supported kind: {kind}");
 
                 var asset = assetInfo.GetAll()
-                    .Where(x => x.IsEvm)
+                    .Where(x => x.NetworkType == Core.Models.NetworkType.EVM)
                     .Where(x => x.Network == kind.Network).FirstOrDefault();
                 if (asset == null)
                 {
