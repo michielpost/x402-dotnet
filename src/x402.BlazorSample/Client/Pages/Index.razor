@@ -236,7 +236,7 @@
 	private void WalletProvider_HeaderCreated(object? sender, HeaderCreatedEventArgs<PaymentPayloadHeader> eventArgs)
 	{
 		WriteResultLine("Payment header created:");
-		WriteResultLine($"Payload: {eventArgs.PaymentPayloadHeader.Payload}");
+		WriteResultLine($"Payload: {eventArgs.PaymentPayloadHeader.ToBase64Header()}");
 	}
 
 	protected async Task<string> ChangeChainTo(ulong chainId)
