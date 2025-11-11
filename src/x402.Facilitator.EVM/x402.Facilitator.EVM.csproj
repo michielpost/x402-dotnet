@@ -1,20 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-	<WarningsAsErrors>nullable</WarningsAsErrors>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<WarningsAsErrors>nullable</WarningsAsErrors>
+	</PropertyGroup>
 
-<ItemGroup>
-	<PackageReference Include="Nethereum.Web3" Version="5.0.0" />
-	<PackageReference Include="Nethereum.Hex" Version="5.0.0" />
-</ItemGroup>
-	
-  <ItemGroup>
-    <ProjectReference Include="..\x402.Facilitator\x402.Facilitator.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Nethereum.Web3" Version="5.0.0" />
+		<PackageReference Include="Nethereum.Hex" Version="5.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\x402.Facilitator\x402.Facilitator.csproj" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<None Include="../../images/x402-icon-blue.png" Pack="true" PackagePath="\" />

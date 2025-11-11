@@ -1,21 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-	<WarningsAsErrors>nullable</WarningsAsErrors>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<WarningsAsErrors>nullable</WarningsAsErrors>
+	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Solana.Programs" Version="8.5.0" />
 		<PackageReference Include="Solana.Wallet" Version="8.5.0" />
 		<PackageReference Include="Solnet.Rpc" Version="6.1.0" />
 	</ItemGroup>
-	
+
 	<ItemGroup>
-    <ProjectReference Include="..\x402.Facilitator\x402.Facilitator.csproj" />
-  </ItemGroup>
+		<ProjectReference Include="..\x402.Facilitator\x402.Facilitator.csproj" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<None Include="../../images/x402-icon-blue.png" Pack="true" PackagePath="\" />

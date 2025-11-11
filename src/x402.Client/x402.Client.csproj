@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFrameworks>net9.0;net10.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<WarningsAsErrors>nullable</WarningsAsErrors>
@@ -27,7 +27,7 @@
 
 
 	<ItemGroup>
-	  <ProjectReference Include="..\x402.Core\x402.Core.csproj" />
+		<ProjectReference Include="..\x402.Core\x402.Core.csproj" />
 	</ItemGroup>
 
 </Project>
