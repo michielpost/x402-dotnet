@@ -1,4 +1,10 @@
 <Solution>
+  <Folder Name="/Beta/">
+    <Project Path="x402.Client.Solana/x402.Client.Solana.csproj" Id="9fab5c3c-5053-4ad6-829e-0e465839985d" />
+    <Project Path="x402.Facilitator.EVM/x402.Facilitator.EVM.csproj" Id="8570a9eb-24ff-4dcc-a200-4727a7786115" />
+    <Project Path="x402.Facilitator.Solana/x402.Facilitator.Solana.csproj" Id="73197c2f-91e7-4846-8591-49a72b81e2e7" />
+    <Project Path="x402.Facilitator/x402.Facilitator.csproj" Id="4fb22d74-359c-439e-931e-94b1278db117" />
+  </Folder>
   <Folder Name="/Samples/" />
   <Folder Name="/Samples/Blazor/">
     <Project Path="x402.BlazorSample/Client/x402.BlazorSample.Client.csproj" Id="a3c3eb12-e15d-4dcd-bbff-b3cb421a7a34" />
@@ -27,12 +33,8 @@
     <Project Path="x402.Tests/x402.Tests.csproj" Id="f4a52ff8-e5f6-4a34-aa2f-f7f38a8ddc82" />
   </Folder>
   <Project Path="x402.Client.EVM/x402.Client.EVM.csproj" Id="efd446b8-3f9a-4b2e-b360-c79b1d390bb4" />
-  <Project Path="x402.Client.Solana/x402.Client.Solana.csproj" Id="9fab5c3c-5053-4ad6-829e-0e465839985d" />
   <Project Path="x402.Client/x402.Client.csproj" Id="8894227d-ca9d-44b7-b822-49f8c76be1d4" />
   <Project Path="x402.Coinbase/x402.Coinbase.csproj" Id="e5c0ff35-3e08-4994-a2f1-b375d6f5a1b5" />
   <Project Path="x402.Core/x402.Core.csproj" Id="4bcd596f-d9fd-4303-96a3-82597c871a22" />
-  <Project Path="x402.Facilitator.EVM/x402.Facilitator.EVM.csproj" Id="8570a9eb-24ff-4dcc-a200-4727a7786115" />
-  <Project Path="x402.Facilitator.Solana/x402.Facilitator.Solana.csproj" Id="73197c2f-91e7-4846-8591-49a72b81e2e7" />
-  <Project Path="x402.Facilitator/x402.Facilitator.csproj" Id="4fb22d74-359c-439e-931e-94b1278db117" />
   <Project Path="x402/x402.csproj" />
 </Solution>
