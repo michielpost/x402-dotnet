@@ -38,6 +38,11 @@
         public string Description { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the website URL associated with the entity.
+        /// </summary>
+        public string Website { get; set; } = string.Empty;
+
+        /// <summary>
         /// The MIME type of the resource.
         /// </summary>
         public string MimeType { get; set; } = string.Empty;

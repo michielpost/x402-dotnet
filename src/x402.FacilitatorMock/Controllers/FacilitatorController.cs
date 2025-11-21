@@ -65,4 +65,25 @@ public class FacilitatorController : ControllerBase
         };
     }
 
+
+    [HttpGet]
+    [Route("supported-v2")]
+    public SupportedV2Response SupportedV2()
+    {
+        return new SupportedV2Response
+        {
+            Kinds = new Dictionary<string, List<FacilitatorKind>>
+            {
+                 { "1", new() { new FacilitatorKind("USDC", "mainnet", 1) } },
+                 { "2", new() { new FacilitatorKind("USDC", "mainnet", 2) } }
+            },
+            Extensions = new List<string> { "ext1", "ext2" },
+            Signers = new Dictionary<string, List<string>>
+            {
+                { "eip155:*", new() { "0x209693Bc6afc0C5329bA36FaF03C514EF312287C" } },
+                { "solana:*", new() { "CKPKJWNdJEqa81x7CkZ14BVPiY6y16Sxs7owznqtWYp5" } }
+            }
+        };
+    }
+
 }
