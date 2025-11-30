@@ -8,8 +8,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Solana.Programs" Version="8.5.0" />
-		<PackageReference Include="Solana.Wallet" Version="8.5.0" />
+		<PackageReference Include="Solana.Programs" Version="8.7.0" />
+		<PackageReference Include="Solana.Wallet" Version="8.7.0" />
 		<PackageReference Include="Solnet.Rpc" Version="6.1.0" />
 	</ItemGroup>
 

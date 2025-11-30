@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using Microsoft.Extensions.Logging.Abstractions;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using x402.Client.Tests.Wallet;
@@ -95,7 +96,7 @@ namespace x402.Client.Tests
                 new HttpResponseMessage(HttpStatusCode.OK)
             });
 
-            var handler = new PaymentRequiredV1Handler(new WalletProvider(wallet), maxRetries: 2)
+            var handler = new PaymentRequiredV1Handler(new WalletProvider(wallet), new NullLogger<PaymentRequiredV1Handler>(), maxRetries: 2)
             {
                 InnerHandler = inner
             };
@@ -120,7 +121,7 @@ namespace x402.Client.Tests
 
             var inner = new QueueMessageHandler(new[] { Build402() });
 
-            var handler = new PaymentRequiredV1Handler(new WalletProvider(wallet), maxRetries: 3)
+            var handler = new PaymentRequiredV1Handler(new WalletProvider(wallet), new NullLogger<PaymentRequiredV1Handler>(), maxRetries: 3)
             {
                 InnerHandler = inner
             };
@@ -149,7 +150,7 @@ namespace x402.Client.Tests
                 new HttpResponseMessage(HttpStatusCode.OK)
             });
 
-            var handler = new PaymentRequiredV1Handler(new WalletProvider(wallet), maxRetries: 1)
+            var handler = new PaymentRequiredV1Handler(new WalletProvider(wallet), new NullLogger<PaymentRequiredV1Handler>(), maxRetries: 1)
             {
                 InnerHandler = inner
             };
@@ -177,7 +178,7 @@ namespace x402.Client.Tests
                 new HttpResponseMessage(HttpStatusCode.OK)
             });
 
-            var handler = new PaymentRequiredV1Handler(new WalletProvider(wallet), maxRetries: 2)
+            var handler = new PaymentRequiredV1Handler(new WalletProvider(wallet), new NullLogger<PaymentRequiredV1Handler>(), maxRetries: 2)
             {
                 InnerHandler = inner
             };
@@ -215,7 +216,7 @@ namespace x402.Client.Tests
                 new HttpResponseMessage(HttpStatusCode.OK)
             });
 
-            var handler = new PaymentRequiredV1Handler(new WalletProvider(wallet), maxRetries: 2)
+            var handler = new PaymentRequiredV1Handler(new WalletProvider(wallet), new NullLogger<PaymentRequiredV1Handler>(), maxRetries: 2)
             {
                 InnerHandler = inner
             };
@@ -265,7 +266,7 @@ namespace x402.Client.Tests
                 new HttpResponseMessage(HttpStatusCode.OK)
             });
 
-            var handler = new PaymentRequiredV1Handler(new WalletProvider(wallet), maxRetries: 2)
+            var handler = new PaymentRequiredV1Handler(new WalletProvider(wallet), new NullLogger<PaymentRequiredV1Handler>(), maxRetries: 2)
             {
                 InnerHandler = inner
             };
