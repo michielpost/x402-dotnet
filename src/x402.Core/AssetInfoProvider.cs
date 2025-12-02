@@ -54,20 +54,20 @@ namespace x402.Core
             },
             new AssetInfo
             {
-                Network = "solana-mainnet-beta",
-                ContractAddress = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
-                Name = "USDC",
-                Version = "1",
-                NetworkType = NetworkType.SVM
-            },
-            new AssetInfo
-            {
                 Network = "solana",
                 ContractAddress = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
                 Name = "USDC",
                 Version = "1",
                NetworkType = NetworkType.SVM
             },
+            //new AssetInfo
+            //{
+            //    Network = "solana-mainnet-beta",
+            //    ContractAddress = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+            //    Name = "USDC",
+            //    Version = "1",
+            //    NetworkType = NetworkType.SVM
+            //},
             new AssetInfo
             {
                 ChainId = 137,
@@ -181,12 +181,12 @@ namespace x402.Core
                 string.Equals(info.ContractAddress, contractAddress, StringComparison.OrdinalIgnoreCase));
         }
 
-        public virtual AssetInfo? GetAssetInfoByNetwork(string network)
+        public virtual List<AssetInfo> GetAssetInfoByNetwork(string network)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(network);
 
-            return AssetInfos.FirstOrDefault(info =>
-                string.Equals(info.Network, network, StringComparison.OrdinalIgnoreCase));
+            return AssetInfos.Where(info =>
+                string.Equals(info.Network, network, StringComparison.OrdinalIgnoreCase)).ToList();
         }
 
         public virtual List<AssetInfo> GetAll()
