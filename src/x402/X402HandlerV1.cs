@@ -506,7 +506,7 @@ public class X402HandlerV1
         return new PaymentRequirements
         {
             Scheme = basic.Scheme,
-            Network = assetInfo?.Network ?? string.Empty,
+            Network = basic.Network ?? assetInfo?.Network ?? string.Empty,
             MaxAmountRequired = basic.Amount,
             Asset = basic.Asset,
             MimeType = resourceInfoBasic?.MimeType ?? string.Empty,

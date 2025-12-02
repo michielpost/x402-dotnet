@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -5,11 +7,12 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Text;
-using System.Text.Json;
+using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 using x402.Core;
 using x402.Core.Enums;
 using x402.Core.Interfaces;
+using x402.Core.Models;
 using x402.Core.Models.Facilitator;
 using x402.Core.Models.v1;
 using x402.Facilitator;
@@ -19,7 +22,28 @@ namespace x402.Tests
     [TestFixture]
     public class X402HandlerV1Tests
     {
+        private Mock<IAssetInfoProvider> _assetInfoProviderMock = null!;
+        private Mock<IHttpContextAccessor> _httpContextAccessorMock = null!;
+        private X402HandlerV1 _handler = null!;
 
+        [OneTimeSetUp]
+        public void TestInitialize()
+        {
+            var _facilitatorMock = new Mock<IFacilitatorV1Client>();
+            _assetInfoProviderMock = new Mock<IAssetInfoProvider>();
+            _httpContextAccessorMock = new Mock<IHttpContextAccessor>();
+
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Scheme = "https";
+            httpContext.Request.Host = new HostString("localhost");
+            _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContext);
+
+            _handler = new X402HandlerV1(
+                new NullLogger<X402HandlerV1>(),
+                _facilitatorMock.Object,
+                _assetInfoProviderMock.Object,
+                _httpContextAccessorMock.Object);
+        }
         private static IHost BuildHost(IFacilitatorV1Client facilitator,
             string path,
             PaymentRequirements requirements,
@@ -355,7 +379,69 @@ namespace x402.Tests
 
             Assert.That(resp.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.PaymentRequired));
         }
+
+        [Test]
+        public async Task HandleX402Async_UsesNetworkFromPaymentRequirementsBasic_WhenProvided()
+        {
+            // Arrange
+            var paymentRequiredInfo = new PaymentRequiredInfo
+            {
+                Accepts =
+                [
+                    new PaymentRequirementsBasic
+                    {
+                        Scheme = PaymentScheme.Exact,
+                        Asset = "test-asset",
+                        Amount = "100",
+                        PayTo = "test-payto",
+                        Network = "provided-network"
+                    }
+                ],
+                Resource = new ResourceInfoBasic { Description = "test resource", MimeType = "text/plain" }
+            };
+
+            _assetInfoProviderMock.Setup(x => x.GetAssetInfo(It.IsAny<string>()))
+                            .Returns(new AssetInfo { Network = "asset-network", ContractAddress = "test-asset", Name = "Test Asset", Version = "1.0" });
+
+            // Act
+            var result = await _handler.HandleX402Async(paymentRequiredInfo);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.PaymentRequirements.Count, Is.EqualTo(1));
+            Assert.That(result.PaymentRequirements[0].Network, Is.EqualTo("provided-network"));
+        }
+
+        [Test]
+        public async Task HandleX402Async_UsesNetworkFromAssetInfo_WhenNotProvidedInBasic()
+        {
+            // Arrange
+            var paymentRequiredInfo = new PaymentRequiredInfo
+            {
+                Accepts =
+                 [
+                    new PaymentRequirementsBasic
+                    {
+                        Scheme = PaymentScheme.Exact,
+                        Asset = "test-asset",
+                        Amount = "100",
+                        PayTo = "test-payto",
+                        Network = null // Not provided
+                    }
+                              ],
+                Resource = new ResourceInfoBasic { Description = "test resource", MimeType = "text/plain" }
+            };
+
+            _assetInfoProviderMock.Setup(x => x.GetAssetInfo("test-asset"))
+                            .Returns(new AssetInfo { Network = "asset-network", ContractAddress = "test-asset", Name = "Test Asset", Version = "1.0" });
+
+            // Act
+            var result = await _handler.HandleX402Async(paymentRequiredInfo);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.PaymentRequirements.Count, Is.EqualTo(1));
+            Assert.That(result.PaymentRequirements[0].Network, Is.EqualTo("asset-network"));
+        }
     }
 }
-
-

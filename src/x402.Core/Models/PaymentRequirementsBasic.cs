@@ -50,6 +50,13 @@ namespace x402.Core.Models
         public required string PayTo { get; set; }
 
         /// <summary>
+        /// Optional Network name
+        /// If not filled, the AssetInfoProvider will be queried for the default network for the asset.
+        /// </summary>
+        public string? Network { get; set; }
+
+
+        /// <summary>
         /// The maximum timeout in seconds.
         /// </summary>
         public int MaxTimeoutSeconds { get; set; } = 60;
