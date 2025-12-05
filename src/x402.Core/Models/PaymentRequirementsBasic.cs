@@ -22,6 +22,11 @@ namespace x402.Core.Models
         /// The MIME type of the resource.
         /// </summary>
         public string MimeType { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Optional: URL to the resource. If null, it will be auto filled with the request URL.
+        /// </summary>
+        public string? Resource { get; set; }
     }
 
     /// <summary>

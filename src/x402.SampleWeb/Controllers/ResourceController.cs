@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System;
 using x402.Attributes;
 using x402.Core.Enums;
 using x402.Core.Models;
@@ -76,6 +77,9 @@ namespace x402.SampleWeb.Controllers
                     Resource = new ResourceInfoBasic
                     {
                         Description = "This resource is protected dynamically",
+
+                        // Overwrite so that it does not contain the query string
+                        Resource = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}{HttpContext.Request.Path}".ToLowerInvariant()
                     },
                     Accepts = new List<PaymentRequirementsBasic>
                     {
@@ -93,6 +97,26 @@ namespace x402.SampleWeb.Controllers
                 {
                     Console.WriteLine("Settlement completed: " + response?.Success + ex?.Message);
                     return Task.CompletedTask;
+                },
+                onSetOutputSchema: (context, reqs, schema) =>
+                {
+                    schema.Input ??= new();
+
+                    //Manually set the input schema
+                    schema.Input.BodyFields = new Dictionary<string, object>
+                    {
+                        {
+                            nameof(amount),
+                            new FieldDefenition
+                            {
+                                Required = true,
+                                Description = "Amount to send",
+                                Type = "string"
+                            }
+                        }
+                    };
+
+                    return schema;
                 });
 
             if (!x402Result.CanContinueRequest)
@@ -119,6 +143,12 @@ namespace x402.SampleWeb.Controllers
                         new PaymentRequirementsBasic
                         {
                             Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                            Amount = "1000",
+                            PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
+                        },
+                        new PaymentRequirementsBasic
+                        {
+                            Asset = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
                             Amount = "1000",
                             PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
                         },

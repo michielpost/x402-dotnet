@@ -86,7 +86,7 @@ public class X402HandlerV2
                 {
                     Discoverable = discoverable,
                     Type = "http",
-                    Method = context.Request.Method
+                    Method = context.Request.Method,
                 }
             };
 

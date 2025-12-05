@@ -27,8 +27,8 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Nethereum.HdWallet" Version="5.0.0" />
-		<PackageReference Include="Nethereum.Hex" Version="5.0.0" />
+		<PackageReference Include="Nethereum.ABI" Version="5.0.0" />
+		<PackageReference Include="Nethereum.Accounts" Version="5.0.0" />
 	</ItemGroup>
 
 

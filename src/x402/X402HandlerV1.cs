@@ -68,7 +68,8 @@ public class X402HandlerV1
 
         foreach (var paymentRequirementsItem in paymentRequirements)
         {
-            paymentRequirementsItem.Resource = fullUrl;
+            if(string.IsNullOrEmpty(paymentRequirementsItem.Resource))
+                paymentRequirementsItem.Resource = fullUrl;
 
             var outputSchema = new OutputSchema
             {
@@ -513,6 +514,7 @@ public class X402HandlerV1
             PayTo = basic.PayTo,
             MaxTimeoutSeconds = basic.MaxTimeoutSeconds,
             Description = resourceInfoBasic?.Description ?? string.Empty,
+            Resource = resourceInfoBasic?.Resource ?? string.Empty,
             Extra = new PaymentRequirementsExtra
             {
                 Name = assetInfo?.Name ?? string.Empty,

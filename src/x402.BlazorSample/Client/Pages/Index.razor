@@ -122,7 +122,7 @@
 		Result = "";
 		Tx = null;
 
-		var request = new HttpRequestMessage(HttpMethod.Get, "https://localhost:7176/resource/protected");
+		var request = new HttpRequestMessage(HttpMethod.Get, "resource/protected");
 
 		var httpClient = HttpClientFactory.CreateClient("x402");
 		var response = await httpClient.SendAsync(request);

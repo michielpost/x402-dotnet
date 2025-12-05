@@ -99,26 +99,6 @@ namespace x402.Client.EVM
         }
 
         /// <summary>
-        /// Creates an EVM wallet from a BIP39 mnemonic phrase.
-        /// </summary>
-        /// <param name="mnemonic">The BIP39 mnemonic phrase.</param>
-        /// <param name="password">Optional password for the mnemonic.</param>
-        /// <param name="accountIndex">The HD wallet account index to derive.</param>
-        /// <param name="network">The network identifier (e.g., "base-sepolia").</param>
-        /// <param name="chainId">The blockchain chain ID.</param>
-        /// <returns>A new EVMWallet instance.</returns>
-        public static EVMWallet FromMnemonic(string mnemonic, string password, int accountIndex, string network, ulong chainId)
-        {
-            ArgumentException.ThrowIfNullOrWhiteSpace(mnemonic);
-            ArgumentException.ThrowIfNullOrWhiteSpace(network);
-            ArgumentOutOfRangeException.ThrowIfNegative(accountIndex);
-
-            var wallet = new Nethereum.HdWallet.Wallet(mnemonic, password);
-            var account = wallet.GetAccount(accountIndex);
-            return new EVMWallet(account.PrivateKey, network, chainId);
-        }
-
-        /// <summary>
         /// Signs typed data using EIP-712 v4 standard.
         /// </summary>
         /// <param name="data">The EIP-712 typed data JSON string.</param>
