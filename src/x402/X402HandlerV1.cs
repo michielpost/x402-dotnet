@@ -388,21 +388,12 @@ public class X402HandlerV1
 
     private async Task<X402ProcessingResult> ValidatePayload(List<PaymentRequirements> paymentRequirements, PaymentPayloadHeader payload, string fullUrl)
     {
-        if (!string.IsNullOrEmpty(payload.Payload.Resource) && !string.Equals(payload.Payload.Resource, fullUrl, StringComparison.InvariantCultureIgnoreCase))
-        {
-            logger.LogWarning("Resource mismatch: payload {PayloadResource} vs request {RequestPath}", payload.Payload.Resource, fullUrl);
-            return X402ProcessingResult.CreateError(
-                paymentRequirements,
-                $"Resource mismatch: payload {payload.Payload.Resource} vs request {fullUrl}",
-                StatusCodes.Status402PaymentRequired,
-                fullUrl: fullUrl);
-        }
-
         var selectedRequirement = paymentRequirements.FirstOrDefault(pr =>
-            pr.Scheme == payload.Scheme &&
-            pr.Network == payload.Network &&
-            pr.PayTo == payload.Payload.Authorization.To &&
-            pr.MaxAmountRequired == payload.Payload.Authorization.Value);
+            pr.Scheme == payload.Scheme
+            &&  pr.Network == payload.Network
+            &&  pr.PayTo == payload.Payload.Authorization.To
+            &&  (string.Equals(pr.Resource, payload.Payload.Resource, StringComparison.InvariantCultureIgnoreCase) || string.IsNullOrEmpty(payload.Payload.Resource))
+            &&  pr.MaxAmountRequired == payload.Payload.Authorization.Value);
 
         if (selectedRequirement == null)
         {

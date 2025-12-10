@@ -56,6 +56,9 @@ namespace x402.BlazorSample.Server.Controllers
                     Resource = new ResourceInfoBasic
                     {
                         Description = "This resource is protected dynamically",
+
+                        // Overwrite so that it does not contain the query string
+                        Resource = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}{HttpContext.Request.Path}/test".ToLowerInvariant()
                     },
                     Accepts = new List<PaymentRequirementsBasic>
                     {
