@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using x402.Coinbase.Models;
-using x402.Core.Models.v1;
+using x402.Core.Models.v2;
 
 
 namespace x402.Coinbase.IntegrationTests

@@ -44,8 +44,7 @@ namespace x402.Tests
 
             var services = new ServiceCollection()
                 .AddLogging(b => b.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug))
-                .AddSingleton<IFacilitatorV1Client, FakeFacilitatorClient>()
-                .AddSingleton<X402HandlerV1>()
+                .AddSingleton<IFacilitatorV2Client, FakeFacilitatorClient>()
                 .AddSingleton<X402HandlerV2>()
                 .AddSingleton<IAssetInfoProvider, AssetInfoProvider>()
                 .AddHttpContextAccessor()
@@ -86,8 +85,7 @@ namespace x402.Tests
 
             var services = new ServiceCollection()
                 .AddLogging(b => b.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug))
-                .AddSingleton<IFacilitatorV1Client>(fake)
-                .AddSingleton<X402HandlerV1>()
+                .AddSingleton<IFacilitatorV2Client>(fake)
                 .AddSingleton<X402HandlerV2>()
                 .AddSingleton<IAssetInfoProvider, AssetInfoProvider>()
                 .AddHttpContextAccessor()

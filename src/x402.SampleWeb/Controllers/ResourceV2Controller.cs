@@ -2,7 +2,7 @@
 using x402.Attributes;
 using x402.Core.Enums;
 using x402.Core.Models;
-using x402.Core.Models.v1;
+using x402.Core.Models.v2;
 using x402.SampleWeb.Models;
 
 namespace x402.SampleWeb.Controllers

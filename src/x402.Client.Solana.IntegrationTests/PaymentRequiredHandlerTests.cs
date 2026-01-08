@@ -1,5 +1,5 @@
 ﻿using System.Net.Http.Json;
-using x402.Client.v1;
+using x402.Client.v2;
 using x402.Client.v2;
 using x402.Core.Models.v2;
 
@@ -21,9 +21,7 @@ namespace x402.Client.Solana.IntegrationTests
             var wallet = SolanaWallet.FromMnemonic(TestMnemonic, "", 0, "solana-devnet");
             wallet.IgnoreAllowances = true;
 
-            // Handle both V1 and V2 payment required responses
-            var handlerV1 = PaymentRequiredV1Handler.Create(new x402.Client.v1.WalletProvider(wallet));
-            var handlerV2 = PaymentRequiredV2Handler.Create(new x402.Client.v2.WalletProvider(wallet), handlerV1);
+            var handlerV2 = PaymentRequiredV2Handler.Create(new x402.Client.v2.WalletProvider(wallet));
 
             var client = new HttpClient(handlerV2);
 
@@ -80,7 +78,7 @@ namespace x402.Client.Solana.IntegrationTests
             var wallet = SolanaWallet.FromMnemonic(TestMnemonic, "", 0, "solana-devnet");
             wallet.IgnoreAllowances = true;
 
-            var handler = PaymentRequiredV1Handler.Create(new x402.Client.v1.WalletProvider(wallet));
+            var handler = PaymentRequiredV2Handler.Create(new x402.Client.v2.WalletProvider(wallet));
 
             var client = new HttpClient(handler);
 

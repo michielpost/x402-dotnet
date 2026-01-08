@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using x402.Core.Models.v1;
-using x402.Core.Models.v1.Facilitator;
+using x402.Core.Models.v2;
+using x402.Core.Models.v2.Facilitator;
 
 namespace x402.FacilitatorWeb.Controllers
 {

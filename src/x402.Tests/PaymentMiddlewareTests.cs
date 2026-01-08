@@ -19,7 +19,7 @@ namespace x402.Tests
     public class PaymentMiddlewareTests
     {
 
-        private static IHost BuildHost(PaymentMiddlewareOptions options, IFacilitatorV1Client facilitatorClientV1, IFacilitatorV2Client facilitatorClientV2)
+        private static IHost BuildHost(PaymentMiddlewareOptions options, IFacilitatorV2Client facilitatorClientV2)
         {
             return new HostBuilder()
                 .ConfigureLogging(b => b.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug))
@@ -28,9 +28,7 @@ namespace x402.Tests
                     builder.UseTestServer();
                     builder.ConfigureServices(s =>
                     {
-                        s.AddSingleton<IFacilitatorV1Client>(facilitatorClientV1);
                         s.AddSingleton<IFacilitatorV2Client>(facilitatorClientV2);
-                        s.AddSingleton<X402HandlerV1>();
                         s.AddSingleton<X402HandlerV2>();
                         s.AddSingleton<IAssetInfoProvider, AssetInfoProvider>();
                         s.AddHttpContextAccessor();

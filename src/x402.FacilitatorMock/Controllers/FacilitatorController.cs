@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using x402.Core.Models.Facilitator;
-using x402.Core.Models.v1.Facilitator;
+using x402.Core.Models.v2.Facilitator;
 
 namespace x402.FacilitatorMock.Controllers;
 

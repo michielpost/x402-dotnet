@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using x402.Client.EVM;
 using x402.Core;
 using x402.Core.Enums;
-using x402.Core.Models.v1;
+using x402.Core.Models.v2;
 using x402.Facilitator;
 
 namespace x402.IntegrationTests.Facilitator

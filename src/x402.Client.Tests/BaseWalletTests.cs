@@ -1,6 +1,6 @@
 using x402.Client.Tests.Wallet;
 using x402.Core.Enums;
-using x402.Core.Models.v1;
+using x402.Core.Models.v2;
 
 namespace x402.Client.Tests
 {

@@ -12,7 +12,6 @@ namespace x402
         private readonly RequestDelegate _next;
         private readonly ILogger<PaymentMiddleware> logger;
         private readonly PaymentMiddlewareOptions paymentMiddlewareOptions;
-        private readonly X402HandlerV1 x402HandlerV1;
         private readonly X402HandlerV2 x402HandlerV2;
 
         /// <summary>
@@ -23,14 +22,12 @@ namespace x402
         /// <exception cref="ArgumentNullException"></exception>
         public PaymentMiddleware(RequestDelegate next,
             ILogger<PaymentMiddleware> logger,
-            X402HandlerV1 x402HandlerV1,
             X402HandlerV2 x402HandlerV2,
             PaymentMiddlewareOptions paymentMiddlewareOptions)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
             this.logger = logger;
             this.paymentMiddlewareOptions = paymentMiddlewareOptions;
-            this.x402HandlerV1 = x402HandlerV1;
             this.x402HandlerV2 = x402HandlerV2;
         }
 
@@ -56,16 +53,7 @@ namespace x402
 
             logger.LogInformation("Enforcing x402 payment for path {Path}", resourceFullUrl);
 
-            if (paymentConfig.Version == 1)
-            {
-                var x402Result = await x402HandlerV1.HandleX402Async(paymentConfig.PaymentRequirements, settlementMode: paymentMiddlewareOptions.SettlementMode);
-                if (!x402Result.CanContinueRequest)
-                {
-                    logger.LogWarning("Payment not satisfied for path {Path}; responding with 402/500 already handled", resourceFullUrl);
-                    return;
-                }
-            }
-            else if (paymentConfig.Version == 2)
+            if (paymentConfig.Version == 2)
             {
                 var x402Result = await x402HandlerV2.HandleX402Async(paymentConfig.PaymentRequirements, settlementMode: paymentMiddlewareOptions.SettlementMode);
                 if (!x402Result.CanContinueRequest)

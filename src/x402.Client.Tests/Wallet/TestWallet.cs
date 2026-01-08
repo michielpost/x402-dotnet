@@ -11,30 +11,6 @@ namespace x402.Client.Tests.Wallet
             AssetAllowances = assetAllowances;
         }
 
-        public override Task<Core.Models.v1.PaymentPayloadHeader> CreateHeaderAsync(Core.Models.v1.PaymentRequirements requirement, CancellationToken cancellationToken)
-        {
-            var header = new Core.Models.v1.PaymentPayloadHeader()
-            {
-                Network = requirement.Network,
-                Scheme = requirement.Scheme,
-                X402Version = 1,
-                Payload = new Core.Models.v1.Payload
-                {
-                    Resource = requirement.Resource,
-                    Signature = "",
-                    Authorization = new Core.Models.v1.Authorization
-                    {
-                        Value = "1",
-                        From = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
-                        To = requirement.PayTo,
-
-                    }
-                },
-            };
-
-            return Task.FromResult(header);
-        }
-
         public override Task<Core.Models.v2.PaymentPayloadHeader> CreateHeaderAsync(Core.Models.v2.PaymentRequirements requirement, CancellationToken cancellationToken = default)
         {
             var header = new Core.Models.v2.PaymentPayloadHeader()

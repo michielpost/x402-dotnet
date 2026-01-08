@@ -1,5 +1,5 @@
 ﻿using x402.Core.Models.Facilitator;
-using x402.Core.Models.v1;
+using x402.Core.Models.v2;
 
 namespace x402.Facilitator
 {
