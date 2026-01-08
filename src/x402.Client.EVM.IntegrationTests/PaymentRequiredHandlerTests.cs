@@ -51,7 +51,7 @@ namespace x402.Client.EVM.IntegrationTests
             PaymentPayloadHeader header = await wallet.CreateHeaderAsync(new PaymentRequirements
             {
                 Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-                MaxAmountRequired = "10000",
+                Amount = "10000",
                 Network = "base-sepolia",
                 PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
                 Extra = new PaymentRequirementsExtra

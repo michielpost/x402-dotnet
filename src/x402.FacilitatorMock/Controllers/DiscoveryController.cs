@@ -34,7 +34,7 @@ namespace x402.FacilitatorMock.Controllers
                         new PaymentRequirements
                         {
                         Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-                        MaxAmountRequired = "1000",
+                        Amount = "1000",
                         Network = "base-sepolia",
                         PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37"
                         }

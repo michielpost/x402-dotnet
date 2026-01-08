@@ -19,6 +19,13 @@ namespace x402.Coinbase.Tests
             Payload = new Payload()
             {
                 Authorization = new()
+            },
+            Accepted = new PaymentRequirements()
+            {
+                Amount = "1",
+                Asset = "USDC",
+                Network = "base-sepolia",
+                PayTo = "0x"
             }
         };
         private sealed class FakeHandler : HttpMessageHandler
@@ -34,12 +41,9 @@ namespace x402.Coinbase.Tests
         private static PaymentRequirements CreateReqs(string resource = "/r") => new PaymentRequirements
         {
             Asset = "USDC",
-            Description = "test",
-            MaxAmountRequired = "1",
-            MimeType = "application/json",
+            Amount = "1",
             Network = "base-sepolia",
             PayTo = "0x0000000000000000000000000000000000000001",
-            Resource = resource,
             Scheme = PaymentScheme.Exact,
             MaxTimeoutSeconds = 30
         };

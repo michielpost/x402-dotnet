@@ -61,13 +61,9 @@ namespace x402.IntegrationTests.Facilitator
             var requirements = new PaymentRequirements
             {
                 Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-                MaxAmountRequired = "10000",
+                Amount = "10000",
                 PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
-                Resource = "https://localhost/api",
                 Network = "base-sepolia",
-                MimeType = "application/json",
-                Description = "test payment",
-                OutputSchema = null
             };
 
             var result = await client.VerifyAsync(payload, requirements);
@@ -84,12 +80,9 @@ namespace x402.IntegrationTests.Facilitator
             var requirements = new PaymentRequirements
             {
                 Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-                MaxAmountRequired = "1",
+                Amount = "1",
                 PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
-                Resource = "https://localhost/api",
                 Network = "base-sepolia",
-                MimeType = "application/json",
-                Description = "Test payment"
             };
 
             var result = await client.SettleAsync(payload, requirements);
@@ -160,13 +153,10 @@ namespace x402.IntegrationTests.Facilitator
                 PaymentRequirements requirements = new PaymentRequirements()
                 {
                     Asset = asset.ContractAddress,
-                    MaxAmountRequired = "1000",
+                    Amount = "1000",
                     Network = kind.Network,
                     Scheme = PaymentScheme.Exact,
                     PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
-                    Resource = "https://localhost/api",
-                    Description = "Full test payment",
-                    MimeType = "application/json",
                     Extra = new PaymentRequirementsExtra
                     {
                         Name = asset.Name,

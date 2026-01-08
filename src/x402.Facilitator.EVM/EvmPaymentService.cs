@@ -58,7 +58,7 @@ namespace x402.Facilitator.EVM
 
                 // Verify amount
                 var authValue = BigInteger.Parse(auth.Value);
-                var requiredValue = BigInteger.Parse(requirements.MaxAmountRequired);
+                var requiredValue = BigInteger.Parse(requirements.Amount);
                 if (authValue < requiredValue)
                     throw new ArgumentException(FacilitatorErrorCodes.InvalidExactEvmPayloadAuthorizationValue);
 

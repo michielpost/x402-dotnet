@@ -11,10 +11,9 @@ namespace x402.Client.EVM.Tests
             {
                 Scheme = PaymentScheme.Exact,
                 Network = "base-sepolia",
-                MaxAmountRequired = "1000",
+                Amount = "1000",
                 Asset = "0x0000000000000000000000000000000000000000",
                 PayTo = "0x1111111111111111111111111111111111111111",
-                Resource = "/resource/protected"
             };
         }
 
@@ -32,7 +31,7 @@ namespace x402.Client.EVM.Tests
             };
 
             // Act
-            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = requirements }, CancellationToken.None);
+            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Resource = new ResourceInfo { Url = "https://localhost/test" }, Accepts = requirements }, CancellationToken.None);
             var header = await wallet.CreateHeaderAsync(selected!, CancellationToken.None);
 
             // Assert
@@ -44,7 +43,6 @@ namespace x402.Client.EVM.Tests
             Assert.That(header.X402Version, Is.EqualTo(1));
 
             Assert.That(header.Payload, Is.Not.Null);
-            Assert.That(header.Payload.Resource, Is.EqualTo(requirement.Resource));
             Assert.That(string.IsNullOrWhiteSpace(header.Payload.Signature), Is.False);
 
             var auth = header.Payload.Authorization;
@@ -70,7 +68,7 @@ namespace x402.Client.EVM.Tests
             };
 
             // Act
-            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = requirements }, CancellationToken.None);
+            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Resource = new ResourceInfo { Url = "https://localhost/test" }, Accepts = requirements }, CancellationToken.None);
             var header = await wallet.CreateHeaderAsync(selected!, CancellationToken.None);
 
             // Assert

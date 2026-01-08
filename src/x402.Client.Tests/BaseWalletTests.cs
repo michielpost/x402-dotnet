@@ -10,10 +10,9 @@ namespace x402.Client.Tests
         {
             Scheme = PaymentScheme.Exact,
             Network = "base-sepolia",
-            MaxAmountRequired = amount,
+            Amount = amount,
             Asset = asset,
             PayTo = "0x1111111111111111111111111111111111111111",
-            Resource = "/resource/protected"
         };
 
         [Test]
@@ -22,7 +21,7 @@ namespace x402.Client.Tests
             var wallet = new TestWallet(new());
             wallet.IgnoreAllowances = false;
 
-            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { Req("0xA") } }, CancellationToken.None);
+            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Resource = new ResourceInfo { Url = "https://localhost/test" }, Accepts = new() { Req("0xA") } }, CancellationToken.None);
 
             Assert.That(selected, Is.Null);
         }
@@ -38,7 +37,7 @@ namespace x402.Client.Tests
             var r1 = Req("0xA");
             var r2 = Req("0xB");
 
-            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { r1, r2 } }, CancellationToken.None);
+            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Resource = new ResourceInfo { Url = "https://localhost/test" }, Accepts = new() { r1, r2 } }, CancellationToken.None);
             var header = await wallet.CreateHeaderAsync(selected!, CancellationToken.None);
 
             Assert.That(selected, Is.EqualTo(r2));
@@ -54,7 +53,7 @@ namespace x402.Client.Tests
             wallet.IgnoreAllowances = true;
 
             var r = Req("0xZZ");
-            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { r } }, CancellationToken.None);
+            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Resource = new ResourceInfo { Url = "https://localhost/test" }, Accepts = new() { r } }, CancellationToken.None);
             var header = await wallet.CreateHeaderAsync(selected!, CancellationToken.None);
 
             Assert.That(selected, Is.EqualTo(r));
@@ -74,11 +73,11 @@ namespace x402.Client.Tests
             var rD = Req("0xD", amount: "600"); // exceeds per-request
             var rOk = Req("0xD", amount: "400"); // within per-request
 
-            var selected1 = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { rC } }, CancellationToken.None);
+            var selected1 = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Resource = new ResourceInfo { Url = "https://localhost/test" }, Accepts = new() { rC } }, CancellationToken.None);
 
-            var selected2 = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { rD } }, CancellationToken.None);
+            var selected2 = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Resource = new ResourceInfo { Url = "https://localhost/test" }, Accepts = new() { rD } }, CancellationToken.None);
 
-            var selected3 = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = new() { rC, rD, rOk } }, CancellationToken.None);
+            var selected3 = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Resource = new ResourceInfo { Url = "https://localhost/test" }, Accepts = new() { rC, rD, rOk } }, CancellationToken.None);
             Assert.That(selected3, Is.EqualTo(rOk));
 
             var header3 = await wallet.CreateHeaderAsync(selected3, CancellationToken.None);

@@ -194,7 +194,7 @@ namespace x402.Tests
         {
             var facilitator = new FakeFacilitatorClient
             {
-                VerifyV2AsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = false, InvalidReason = "bad" })
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = false, InvalidReason = "bad" })
             };
             var reqs = CreateRequirements("/r");
             using var host = BuildHost(facilitator, "/r", reqs);
@@ -212,8 +212,8 @@ namespace x402.Tests
         {
             var facilitator = new FakeFacilitatorClient
             {
-                VerifyV2AsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
-                SettleV2AsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xdead", Network = req.Network })
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xdead", Network = req.Network })
             };
             var reqs = CreateRequirements("/ok");
             using var host = BuildHost(facilitator, "/ok", reqs, SettlementMode.Optimistic);
@@ -233,8 +233,8 @@ namespace x402.Tests
         {
             var facilitator = new FakeFacilitatorClient
             {
-                VerifyV2AsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
-                SettleV2AsyncImpl = (_, _) => Task.FromResult(new SettlementResponse { Success = false, ErrorReason = "settle failed" })
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, _) => Task.FromResult(new SettlementResponse { Success = false, ErrorReason = "settle failed" })
             };
             var reqs = CreateRequirements("/fail");
             using var host = BuildHost(facilitator, "/fail", reqs, SettlementMode.Optimistic);
@@ -253,8 +253,8 @@ namespace x402.Tests
         {
             var facilitator = new FakeFacilitatorClient
             {
-                VerifyV2AsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
-                SettleV2AsyncImpl = (_, _) => Task.FromResult(new SettlementResponse { Success = false, ErrorReason = "not enough" })
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, _) => Task.FromResult(new SettlementResponse { Success = false, ErrorReason = "not enough" })
             };
             var reqs = CreateRequirements("/pess-fail");
             using var host = BuildHost(facilitator, "/pess-fail", reqs, SettlementMode.Pessimistic);
@@ -273,8 +273,8 @@ namespace x402.Tests
             bool callbackCalled = false;
             var facilitator = new FakeFacilitatorClient
             {
-                VerifyV2AsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
-                SettleV2AsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xbeef", Network = req.Network })
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xbeef", Network = req.Network })
             };
             var reqs = CreateRequirements("/pess-ok");
             using var host = BuildHost(
@@ -299,8 +299,8 @@ namespace x402.Tests
         {
             var facilitator = new FakeFacilitatorClient
             {
-                VerifyV2AsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
-                SettleV2AsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xdead", Network = req.Network })
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xdead", Network = req.Network })
             };
             var reqs = CreateRequirements("/v2-signature");
             using var host = BuildHost(facilitator, "/v2-signature", reqs, SettlementMode.Optimistic, onSettlement: null, onStartingMarker: null);
@@ -355,7 +355,7 @@ namespace x402.Tests
         {
             var facilitator = new FakeFacilitatorClient
             {
-                VerifyV2AsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = false, InvalidReason = "bad signature" })
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = false, InvalidReason = "bad signature" })
             };
             var reqs = CreateRequirements("/v2-bad");
             using var host = BuildHost(facilitator, "/v2-bad", reqs, SettlementMode.Optimistic, onSettlement: null, onStartingMarker: null);
@@ -375,8 +375,8 @@ namespace x402.Tests
         {
             var facilitator = new FakeFacilitatorClient
             {
-                VerifyV2AsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
-                SettleV2AsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xdead", Network = req.Network })
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xdead", Network = req.Network })
             };
             var reqs = CreateRequirements("/v2-ok");
             using var host = BuildHost(facilitator, "/v2-ok", reqs, SettlementMode.Optimistic, onSettlement: null, onStartingMarker: null);
@@ -399,8 +399,8 @@ namespace x402.Tests
             bool callbackCalled = false;
             var facilitator = new FakeFacilitatorClient
             {
-                VerifyV2AsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
-                SettleV2AsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xbeef", Network = req.Network })
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xbeef", Network = req.Network })
             };
             var reqs = CreateRequirements("/v2-pess");
             using var host = BuildHost(
@@ -426,8 +426,8 @@ namespace x402.Tests
         {
             var facilitator = new FakeFacilitatorClient
             {
-                VerifyV2AsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
-                SettleV2AsyncImpl = (_, _) => Task.FromResult(new SettlementResponse { Success = false, ErrorReason = "insufficient funds" })
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, _) => Task.FromResult(new SettlementResponse { Success = false, ErrorReason = "insufficient funds" })
             };
             var reqs = CreateRequirements("/v2-pess-fail");
             using var host = BuildHost(facilitator, "/v2-pess-fail", reqs, SettlementMode.Pessimistic, onSettlement: null, onStartingMarker: null);
@@ -447,8 +447,8 @@ namespace x402.Tests
         {
             var facilitator = new FakeFacilitatorClient
             {
-                VerifyV2AsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
-                SettleV2AsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xdead", Network = req.Network })
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xdead", Network = req.Network })
             };
             var reqs = CreateRequirements("/v2-priority");
             using var host = BuildHost(facilitator, "/v2-priority", reqs, SettlementMode.Optimistic, onSettlement: null, onStartingMarker: null);
@@ -472,8 +472,8 @@ namespace x402.Tests
 
             var facilitator = new FakeFacilitatorClient
             {
-                VerifyV2AsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
-                SettleV2AsyncImpl = (_, req) =>
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, req) =>
                 {
                     settledPayTo = req.PayTo;
                     settledAmount = req.Amount;
@@ -509,8 +509,8 @@ namespace x402.Tests
         {
             var facilitator = new FakeFacilitatorClient
             {
-                VerifyV2AsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
-                SettleV2AsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0x123", Network = req.Network })
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0x123", Network = req.Network })
             };
 
             // Create multiple payment requirements
@@ -538,8 +538,8 @@ namespace x402.Tests
         {
             var facilitator = new FakeFacilitatorClient
             {
-                VerifyV2AsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
-                SettleV2AsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0x123", Network = req.Network })
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0x123", Network = req.Network })
             };
 
             // Create multiple payment requirements

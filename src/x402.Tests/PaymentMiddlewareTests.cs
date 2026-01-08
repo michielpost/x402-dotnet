@@ -71,7 +71,7 @@ namespace x402.Tests
                 PaymentRequirements = new Dictionary<string, PaymentRequirementsConfig>()
             };
 
-            using var host = BuildHost(options, new FakeFacilitatorClient(), new FakeFacilitatorClient());
+            using var host = BuildHost(options, new FakeFacilitatorClient());
             var client = host.GetTestClient();
             var resp = await client.GetAsync("/free");
             Assert.That(resp.IsSuccessStatusCode, Is.True);
@@ -109,7 +109,7 @@ namespace x402.Tests
                 }
             };
 
-            using var host = BuildHost(options, new FakeFacilitatorClient(), new FakeFacilitatorClient());
+            using var host = BuildHost(options, new FakeFacilitatorClient());
             var client = host.GetTestClient();
             var resp = await client.GetAsync("/pay");
             Assert.That(resp.StatusCode, Is.EqualTo((System.Net.HttpStatusCode)StatusCodes.Status402PaymentRequired));
@@ -152,7 +152,7 @@ namespace x402.Tests
                 },
             };
 
-            using var host = BuildHost(options, fake, fake);
+            using var host = BuildHost(options, fake);
             var client = host.GetTestClient();
             var request = new HttpRequestMessage(HttpMethod.Get, "/payok");
             request.Headers.Add("X-PAYMENT", CreateHeaderB64("http://localhost/payok", "100000"));

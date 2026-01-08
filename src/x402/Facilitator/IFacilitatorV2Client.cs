@@ -34,10 +34,10 @@ namespace x402.Facilitator
         /// </summary>
         /// <param name="cancellationToken">Optional cancellation token to cancel the operation.</param>
         /// <returns></returns>
-        Task<SupportedResponse> SupportedV2Async(CancellationToken cancellationToken = default);
+        Task<SupportedResponse> SupportedAsync(CancellationToken cancellationToken = default);
 
 
-        Task<DiscoveryResponse> DiscoveryV2Async(string? type = null, int? limit = null, int? offset = null, CancellationToken cancellationToken = default);
+        Task<DiscoveryResponse> DiscoveryAsync(string? type = null, int? limit = null, int? offset = null, CancellationToken cancellationToken = default);
 
 
     }

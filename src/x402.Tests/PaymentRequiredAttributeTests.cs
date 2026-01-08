@@ -79,6 +79,7 @@ namespace x402.Tests
             bool nextCalled = false;
             var fake = new FakeFacilitatorClient
             {
+                 
                 VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
                 SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xdead", Network = req.Network })
             };
