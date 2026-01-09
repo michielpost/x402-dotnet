@@ -85,7 +85,7 @@ namespace x402.Facilitator
 
         }
 
-        public async Task<SupportedResponse> SupportedV2Async(CancellationToken cancellationToken = default)
+        public async Task<SupportedResponse> SupportedAsync(CancellationToken cancellationToken = default)
         {
             logger.LogDebug("Requesting supported facilitator kinds");
             var url = BuildUrl("supported", HttpMethod.Get);
@@ -106,7 +106,7 @@ namespace x402.Facilitator
             return result ?? new();
         }
 
-        public async Task<DiscoveryResponse> DiscoveryV2Async(string? type = null, int? limit = null, int? offset = null, CancellationToken cancellationToken = default)
+        public async Task<DiscoveryResponse> DiscoveryAsync(string? type = null, int? limit = null, int? offset = null, CancellationToken cancellationToken = default)
         {
             logger.LogDebug("Requesting discovery resource list");
 

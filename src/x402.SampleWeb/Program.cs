@@ -65,7 +65,7 @@ var paymentOptions = new PaymentMiddlewareOptions
     {
         {  "/resource/middleware", new PaymentRequirementsConfig
             {
-                Version = 1,
+                Version = 2,
                 PaymentRequirements = new PaymentRequiredInfo
                 {
                     Resource = new ResourceInfoBasic

@@ -1,5 +1,5 @@
 using x402.Core.Enums;
-using x402.Core.Models.v1;
+using x402.Core.Models.v2;
 
 namespace x402.Client.EVM.Tests
 {
@@ -10,11 +10,10 @@ namespace x402.Client.EVM.Tests
             return new PaymentRequirements
             {
                 Scheme = PaymentScheme.Exact,
-                Network = "base-sepolia",
-                MaxAmountRequired = "1000",
+                Network = "eip155:84532",
+                Amount = "1000",
                 Asset = "0x0000000000000000000000000000000000000000",
                 PayTo = "0x1111111111111111111111111111111111111111",
-                Resource = "/resource/protected"
             };
         }
 
@@ -26,25 +25,24 @@ namespace x402.Client.EVM.Tests
             var requirements = new List<PaymentRequirements> { requirement };
 
             // Fixed private key (32 bytes hex) for deterministic address; signature will still vary due to nonce/time
-            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "base-sepolia", 84532UL) //base-sepolia chain ID
+            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "eip155:84532", 84532UL) //base-sepolia chain ID
             {
                 IgnoreAllowances = true
             };
 
             // Act
-            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = requirements }, CancellationToken.None);
+            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Resource = new ResourceInfo { Url = "https://localhost/test" }, Accepts = requirements }, CancellationToken.None);
             var header = await wallet.CreateHeaderAsync(selected!, CancellationToken.None);
 
             // Assert
             Assert.That(selected, Is.Not.Null);
             Assert.That(header, Is.Not.Null);
 
-            Assert.That(header!.Network, Is.EqualTo(requirement.Network));
-            Assert.That(header.Scheme, Is.EqualTo(requirement.Scheme));
-            Assert.That(header.X402Version, Is.EqualTo(1));
+            Assert.That(header!.Accepted.Network, Is.EqualTo(requirement.Network));
+            Assert.That(header.Accepted.Scheme, Is.EqualTo(requirement.Scheme));
+            Assert.That(header.X402Version, Is.EqualTo(2));
 
             Assert.That(header.Payload, Is.Not.Null);
-            Assert.That(header.Payload.Resource, Is.EqualTo(requirement.Resource));
             Assert.That(string.IsNullOrWhiteSpace(header.Payload.Signature), Is.False);
 
             var auth = header.Payload.Authorization;
@@ -64,13 +62,13 @@ namespace x402.Client.EVM.Tests
         {
             // Arrange
             var requirements = new List<PaymentRequirements> { BuildRequirement() };
-            var wallet = new EVMWallet("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "base-sepolia", 84532UL) //base-sepolia chain ID
+            var wallet = new EVMWallet("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "eip155:84532", 84532UL) //base-sepolia chain ID
             {
                 IgnoreAllowances = true
             };
 
             // Act
-            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Accepts = requirements }, CancellationToken.None);
+            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() { Resource = new ResourceInfo { Url = "https://localhost/test" }, Accepts = requirements }, CancellationToken.None);
             var header = await wallet.CreateHeaderAsync(selected!, CancellationToken.None);
 
             // Assert

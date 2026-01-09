@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using x402.Core.Enums;
 using x402.Core.Models;
-using x402.Core.Models.v1;
+using x402.Core.Models.v2;
 using x402.SampleWeb.Models;
 
 namespace x402.SampleWeb.Controllers
@@ -10,9 +10,9 @@ namespace x402.SampleWeb.Controllers
     [Route("[controller]")]
     public class MainnetResourceController : ControllerBase
     {
-        private readonly X402HandlerV1 x402Handler;
+        private readonly X402HandlerV2 x402Handler;
 
-        public MainnetResourceController(X402HandlerV1 x402Handler)
+        public MainnetResourceController(X402HandlerV2 x402Handler)
         {
             this.x402Handler = x402Handler;
         }

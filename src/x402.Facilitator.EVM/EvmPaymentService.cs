@@ -6,7 +6,7 @@ using Nethereum.Web3;
 using Newtonsoft.Json;
 using System.Numerics;
 using x402.Core.Models.Facilitator;
-using x402.Core.Models.v1;
+using x402.Core.Models.v2;
 
 namespace x402.Facilitator.EVM
 {
@@ -23,10 +23,10 @@ namespace x402.Facilitator.EVM
 
         private void VerifySchemesAndNetworks(PaymentPayloadHeader payload, PaymentRequirements requirements)
         {
-            if (payload.Scheme != Core.Enums.PaymentScheme.Exact || requirements.Scheme != Core.Enums.PaymentScheme.Exact)
+            if (payload.Accepted.Scheme != Core.Enums.PaymentScheme.Exact || requirements.Scheme != Core.Enums.PaymentScheme.Exact)
                 throw new ArgumentException(FacilitatorErrorCodes.UnsupportedScheme);
 
-            if (payload.Network != requirements.Network)
+            if (payload.Accepted.Network != requirements.Network)
                 throw new ArgumentException(FacilitatorErrorCodes.InvalidNetwork);
 
             // Validate it's an EVM network
@@ -58,7 +58,7 @@ namespace x402.Facilitator.EVM
 
                 // Verify amount
                 var authValue = BigInteger.Parse(auth.Value);
-                var requiredValue = BigInteger.Parse(requirements.MaxAmountRequired);
+                var requiredValue = BigInteger.Parse(requirements.Amount);
                 if (authValue < requiredValue)
                     throw new ArgumentException(FacilitatorErrorCodes.InvalidExactEvmPayloadAuthorizationValue);
 
@@ -110,7 +110,7 @@ namespace x402.Facilitator.EVM
                 {
                     Success = false,
                     ErrorReason = verifyResponse.InvalidReason,
-                    Network = payload.Network,
+                    Network = payload.Accepted.Network,
                     Transaction = "",
                     Payer = verifyResponse.Payer
                 };
@@ -172,7 +172,7 @@ namespace x402.Facilitator.EVM
                     {
                         Success = false,
                         ErrorReason = FacilitatorErrorCodes.InvalidTransactionState,
-                        Network = payload.Network,
+                        Network = payload.Accepted.Network,
                         Transaction = txHash,
                         Payer = payer
                     };
@@ -184,7 +184,7 @@ namespace x402.Facilitator.EVM
                     {
                         Success = false,
                         ErrorReason = FacilitatorErrorCodes.InvalidTransactionState,
-                        Network = payload.Network,
+                        Network = payload.Accepted.Network,
                         Transaction = txHash,
                         Payer = payer
                     };
@@ -194,7 +194,7 @@ namespace x402.Facilitator.EVM
                 {
                     Success = true,
                     ErrorReason = null,
-                    Network = payload.Network,
+                    Network = payload.Accepted.Network,
                     Transaction = txHash,
                     Payer = payer
                 };
@@ -206,7 +206,7 @@ namespace x402.Facilitator.EVM
                 {
                     Success = false,
                     ErrorReason = FacilitatorErrorCodes.UnexpectedSettleError,
-                    Network = payload.Network,
+                    Network = payload.Accepted.Network,
                     Transaction = "",
                     Payer = verifyResponse.Payer
                 };
@@ -256,6 +256,12 @@ namespace x402.Facilitator.EVM
 
         private ulong GetChainIdFromNetwork(string network)
         {
+            if (network.Contains("eip155:", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var value = network[(network.IndexOf("eip155:", StringComparison.InvariantCultureIgnoreCase) + "eip155:".Length)..];
+                return ulong.Parse(value);
+            }
+
             // Map network names to chain IDs
             return network.ToLowerInvariant() switch
             {

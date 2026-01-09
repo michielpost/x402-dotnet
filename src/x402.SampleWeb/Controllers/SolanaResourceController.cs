@@ -10,9 +10,9 @@ namespace x402.SampleWeb.Controllers
     [Route("[controller]")]
     public class SolanaResourceController : ControllerBase
     {
-        private readonly X402HandlerV1 x402Handler;
+        private readonly X402HandlerV2 x402Handler;
 
-        public SolanaResourceController(X402HandlerV1 x402Handler)
+        public SolanaResourceController(X402HandlerV2 x402Handler)
         {
             this.x402Handler = x402Handler;
         }
@@ -25,7 +25,7 @@ namespace x402.SampleWeb.Controllers
         public ActionResult<SampleResult> Protected()
         {
             // Optional: Retrieve the X402 result from HttpContext
-            var x402Result = HttpContext.GetX402ResultV1();
+            var x402Result = HttpContext.GetX402ResultV2();
             if (x402Result == null)
             {
                 // Handle unexpected case (should not happen since we just called HandleX402Async)

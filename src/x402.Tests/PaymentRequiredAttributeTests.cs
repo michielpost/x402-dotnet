@@ -10,6 +10,7 @@ using x402.Core;
 using x402.Core.Enums;
 using x402.Core.Interfaces;
 using x402.Core.Models.Facilitator;
+using x402.Core.Models.v2;
 using x402.Facilitator;
 
 namespace x402.Tests
@@ -44,8 +45,7 @@ namespace x402.Tests
 
             var services = new ServiceCollection()
                 .AddLogging(b => b.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug))
-                .AddSingleton<IFacilitatorV1Client, FakeFacilitatorClient>()
-                .AddSingleton<X402HandlerV1>()
+                .AddSingleton<IFacilitatorV2Client, FakeFacilitatorClient>()
                 .AddSingleton<X402HandlerV2>()
                 .AddSingleton<IAssetInfoProvider, AssetInfoProvider>()
                 .AddHttpContextAccessor()
@@ -80,14 +80,14 @@ namespace x402.Tests
             bool nextCalled = false;
             var fake = new FakeFacilitatorClient
             {
+
                 VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
                 SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xdead", Network = req.Network })
             };
 
             var services = new ServiceCollection()
                 .AddLogging(b => b.AddDebug().AddConsole().SetMinimumLevel(LogLevel.Debug))
-                .AddSingleton<IFacilitatorV1Client>(fake)
-                .AddSingleton<X402HandlerV1>()
+                .AddSingleton<IFacilitatorV2Client>(fake)
                 .AddSingleton<X402HandlerV2>()
                 .AddSingleton<IAssetInfoProvider, AssetInfoProvider>()
                 .AddHttpContextAccessor()
@@ -95,12 +95,18 @@ namespace x402.Tests
 
             var context = CreateActionExecutingContext(services, "/ok");
 
-            // Add a valid X-PAYMENT header with resource match
+            // Add a valid PAYMENT header with resource match
             var headerJson = System.Text.Json.JsonSerializer.Serialize(new
             {
-                x402Version = 1,
-                scheme = "exact",
-                network = "base-sepolia",
+                x402Version = 2,
+                accepted = new PaymentRequirements
+                {
+                    Amount = "1",
+                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                    Network = "eip155:84532",
+                    PayTo = "0x0000000000000000000000000000000000000001",
+                    Scheme = PaymentScheme.Exact,
+                },
                 payload = new Dictionary<string, object?>
                 {
                     { "authorization", new Dictionary<string, object?> {
@@ -114,7 +120,7 @@ namespace x402.Tests
                 }
             }, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
             var headerB64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(headerJson));
-            context.HttpContext.Request.Headers["X-PAYMENT"] = headerB64;
+            context.HttpContext.Request.Headers[X402HandlerV2.PaymentHeaderV2] = headerB64;
 
             var attr = new PaymentRequiredAttribute(
                 maxAmountRequired: "1",

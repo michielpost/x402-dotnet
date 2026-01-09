@@ -48,11 +48,15 @@ namespace x402.Attributes
         /// <summary>
         /// Creates a payment required attribute with the specified price.
         /// </summary>
-        /// <param name="price">Payment amount in atomic units as string.</param>
+        /// <param name="maxAmountRequired"></param>
+        /// <param name="asset"></param>
+        /// <param name="payTo"></param>
+        /// <param name="version"></param>
+        /// <param name="scheme"></param>
         public PaymentRequiredAttribute(string maxAmountRequired,
             string asset,
             string payTo,
-            int version = 1,
+            int version = 2,
             PaymentScheme scheme = PaymentScheme.Exact)
         {
             MaxAmountRequired = maxAmountRequired;
@@ -80,39 +84,7 @@ namespace x402.Attributes
 
 
 
-            if (Version == 1)
-            {
-                var paymentRequirements = new List<x402.Core.Models.v1.PaymentRequirements>
-                {
-                    new ()
-                    {
-                        Asset = this.Asset,
-                        Description = this.Description,
-                        MaxAmountRequired = this.MaxAmountRequired.ToString(),
-                        MimeType = this.MimeType,
-                        Network = assetInfo?.Network ?? string.Empty,
-                        PayTo = this.PayTo,
-                        Resource = fullUrl,
-                        Scheme = this.Scheme,
-                        MaxTimeoutSeconds = 60,
-                        Extra = new x402.Core.Models.v1.PaymentRequirementsExtra
-                        {
-                            Name = assetInfo?.Name ?? string.Empty,
-                            Version = assetInfo?.Version ?? string.Empty
-                        }
-                    }
-                };
-                logger.LogInformation("Built payment requirements for path {Path}", fullUrl);
-
-                var x402Handler = context.HttpContext.RequestServices.GetRequiredService<X402HandlerV1>();
-                var x402Result = await x402Handler.HandleX402Async(paymentRequirements, Discoverable, settlementMode: SettlementMode).ConfigureAwait(false);
-                if (!x402Result.CanContinueRequest)
-                {
-                    logger.LogWarning("Payment not satisfied for path {Path}; stopping execution", fullUrl);
-                    return;
-                }
-            }
-            else if (Version == 2)
+            if (Version == 2)
             {
                 var paymentRequirements = new List<x402.Core.Models.v2.PaymentRequirements>
                 {

@@ -16,7 +16,7 @@ namespace x402.Client.EVM
         /// The blockchain chain ID for this wallet.
         /// </summary>
         public ulong ChainId { get; }
-        
+
         /// <summary>
         /// The wallet's public address.
         /// </summary>
@@ -26,7 +26,7 @@ namespace x402.Client.EVM
         /// Time offset from now when authorization becomes valid. Default: -1 minute.
         /// </summary>
         public TimeSpan AddValidAfterFromNow { get; set; } = TimeSpan.FromMinutes(-1);
-        
+
         /// <summary>
         /// Time offset from now when authorization expires. Default: 15 minutes.
         /// </summary>
@@ -44,7 +44,7 @@ namespace x402.Client.EVM
         /// Creates an EVM wallet from a hex-encoded private key.
         /// </summary>
         /// <param name="hexPrivateKey">The private key as hex string (with or without 0x prefix).</param>
-        /// <param name="network">The network identifier (e.g., "base-sepolia").</param>
+        /// <param name="network">The network identifier (e.g., "eip155:84532").</param>
         /// <param name="chainId">The blockchain chain ID.</param>
         public EVMWallet(string hexPrivateKey, string network, ulong chainId) : base(network)
         {
@@ -66,7 +66,7 @@ namespace x402.Client.EVM
         /// Creates an EVM wallet from a private key byte array.
         /// </summary>
         /// <param name="privateKey">The private key as byte array.</param>
-        /// <param name="network">The network identifier (e.g., "base-sepolia").</param>
+        /// <param name="network">The network identifier (e.g., "eip155:84532").</param>
         /// <param name="chainId">The blockchain chain ID.</param>
         public EVMWallet(byte[] privateKey, string network, ulong chainId) : base(network)
         {
@@ -85,7 +85,7 @@ namespace x402.Client.EVM
         /// </summary>
         /// <param name="signFunction">Custom signing function that takes EIP-712 JSON and returns a signature.</param>
         /// <param name="ownerAddress">The wallet's public address.</param>
-        /// <param name="network">The network identifier (e.g., "base-sepolia").</param>
+        /// <param name="network">The network identifier (e.g., "eip155:84532").</param>
         /// <param name="chainId">The blockchain chain ID.</param>
         public EVMWallet(Func<string, Task<string>> signFunction, string ownerAddress, string network, ulong chainId) : base(network)
         {

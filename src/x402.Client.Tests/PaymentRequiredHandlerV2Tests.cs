@@ -34,7 +34,7 @@ namespace x402.Client.Tests
             return new PaymentRequirements
             {
                 Scheme = PaymentScheme.Exact,
-                Network = "base-sepolia",
+                Network = "eip155:84532",
                 Amount = "1000",
                 Asset = asset,
                 PayTo = "0x1111111111111111111111111111111111111111",
@@ -251,8 +251,6 @@ namespace x402.Client.Tests
             Assert.That(retryRequest.Headers.TryGetValues(x402.Client.v2.HttpRequestMessageExtensions.PaymentHeaderV2, out var values), Is.True);
             Assert.That(values!.Single(), Is.Not.Empty);
 
-            // Should NOT have version 1 header
-            Assert.That(retryRequest.Headers.Contains(x402.Client.v1.HttpRequestMessageExtensions.PaymentHeaderV1), Is.False);
         }
 
 

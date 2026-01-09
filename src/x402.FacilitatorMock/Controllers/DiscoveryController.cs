@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using x402.Core.Models.v1;
-using x402.Core.Models.v1.Facilitator;
+using x402.Core.Models.v2.Facilitator;
 
 namespace x402.FacilitatorMock.Controllers
 {
@@ -29,14 +28,14 @@ namespace x402.FacilitatorMock.Controllers
                     LastUpdated = DateTimeOffset.UtcNow,
                     Resource = "/resource/middleware",
                     Type = "http",
-                    Accepts = new List<PaymentRequirements>
+                    Accepts = new List<DiscoveryPaymentRequirements>
                     {
-                        new PaymentRequirements
+                        new DiscoveryPaymentRequirements
                         {
-                        Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-                        MaxAmountRequired = "1000",
-                        Network = "base-sepolia",
-                        PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37"
+                            Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                            Amount = "1000",
+                            Network = "eip155:84532",
+                            PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37"
                         }
                     }
                 }

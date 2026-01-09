@@ -4,7 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using x402.Core.Enums;
 using x402.Core.Models.Facilitator;
-using x402.Core.Models.v1;
+using x402.Core.Models.v2;
 using x402.Facilitator;
 
 namespace x402.Tests
@@ -14,10 +14,17 @@ namespace x402.Tests
     {
         private readonly PaymentPayloadHeader emptyPayloadHeader = new PaymentPayloadHeader()
         {
-            X402Version = 1,
+            X402Version = 2,
             Payload = new Payload()
             {
                 Authorization = new()
+            },
+            Accepted = new PaymentRequirements()
+            {
+                Amount = "1",
+                Asset = "USDC",
+                Network = "eip155:84532",
+                PayTo = "0x"
             }
         };
 
@@ -42,12 +49,9 @@ namespace x402.Tests
         private static PaymentRequirements CreateReqs(string resource = "/r") => new PaymentRequirements
         {
             Asset = "USDC",
-            Description = "test",
-            MaxAmountRequired = "1",
-            MimeType = "application/json",
-            Network = "base-sepolia",
+            Amount = "1",
+            Network = "eip155:84532",
             PayTo = "0x0000000000000000000000000000000000000001",
-            Resource = resource,
             Scheme = PaymentScheme.Exact,
             MaxTimeoutSeconds = 30
         };
@@ -84,7 +88,7 @@ namespace x402.Tests
         [Test]
         public async Task SettleAsync_Success_DeserializesResponse()
         {
-            var expected = new SettlementResponse { Success = true, Transaction = "0xabc", Network = "base-sepolia" };
+            var expected = new SettlementResponse { Success = true, Transaction = "0xabc", Network = "eip155:84532" };
             var client = CreateClient(req =>
             {
                 Assert.That(req.RequestUri!.ToString(), Does.Contain("/settle"));

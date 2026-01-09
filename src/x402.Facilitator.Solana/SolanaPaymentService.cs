@@ -4,7 +4,7 @@ using Solnet.Rpc.Types;
 using Solnet.Wallet;
 using x402.Core.Enums;
 using x402.Core.Models.Facilitator;
-using x402.Core.Models.v1;
+using x402.Core.Models.v2;
 
 namespace x402.Facilitator.Solana;
 
@@ -24,10 +24,10 @@ public class SolanaPaymentService : IPaymentService
 
     private void VerifySchemesAndNetworks(PaymentPayloadHeader payload, PaymentRequirements requirements)
     {
-        if (payload.Scheme != PaymentScheme.Exact || requirements.Scheme != PaymentScheme.Exact)
+        if (payload.Accepted.Scheme != PaymentScheme.Exact || requirements.Scheme != PaymentScheme.Exact)
             throw new ArgumentException(FacilitatorErrorCodes.UnsupportedScheme);
 
-        if (payload.Network != requirements.Network)
+        if (payload.Accepted.Network != requirements.Network)
             throw new ArgumentException(FacilitatorErrorCodes.InvalidNetwork);
 
         if (requirements.Network is not ("solana" or "solana-devnet" or "solana-testnet" or "solana-mainnet-beta"))
@@ -105,7 +105,7 @@ public class SolanaPaymentService : IPaymentService
             {
                 Success = false,
                 ErrorReason = verifyResponse.InvalidReason,
-                Network = payload.Network,
+                Network = payload.Accepted.Network,
                 Transaction = "",
                 Payer = verifyResponse.Payer
             };
@@ -144,7 +144,7 @@ public class SolanaPaymentService : IPaymentService
             {
                 Success = true,
                 ErrorReason = null,
-                Network = payload.Network,
+                Network = payload.Accepted.Network,
                 Transaction = result.Result,
                 Payer = payer
             };
@@ -156,7 +156,7 @@ public class SolanaPaymentService : IPaymentService
             {
                 Success = false,
                 ErrorReason = errorReason,
-                Network = payload.Network,
+                Network = payload.Accepted.Network,
                 Transaction = result.Result ?? "",
                 Payer = payer
             };

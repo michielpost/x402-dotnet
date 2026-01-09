@@ -32,8 +32,8 @@ namespace x402.Client.Solana.Tests
             wallet.IgnoreAllowances = true;
 
             // Act
-            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() 
-            { 
+            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse()
+            {
                 Accepts = requirements,
                 Resource = new x402.Core.Models.v2.ResourceInfo
                 {
@@ -48,7 +48,7 @@ namespace x402.Client.Solana.Tests
 
             Assert.That(header!.Accepted.Network, Is.EqualTo(requirement.Network));
             Assert.That(header.Accepted.Scheme, Is.EqualTo(requirement.Scheme));
-            Assert.That(header.X402Version, Is.EqualTo(1));
+            Assert.That(header.X402Version, Is.EqualTo(2));
 
             Assert.That(header.Payload, Is.Not.Null);
             Assert.That(string.IsNullOrWhiteSpace(header.Payload.Signature), Is.False);
@@ -61,11 +61,11 @@ namespace x402.Client.Solana.Tests
             Assert.That(auth.From, Is.Not.Null);
             Assert.That(auth.From!.Length, Is.GreaterThanOrEqualTo(32));
             Assert.That(auth.From.Length, Is.LessThanOrEqualTo(44));
-            
+
             // Nonce should be base64 encoded (32 bytes = 44 characters in base64)
             Assert.That(auth.Nonce, Is.Not.Null);
             Assert.That(auth.Nonce!.Length, Is.GreaterThan(0));
-            
+
             Assert.That(ulong.Parse(auth.ValidBefore), Is.GreaterThan(long.Parse(auth.ValidAfter)));
         }
 
@@ -78,8 +78,8 @@ namespace x402.Client.Solana.Tests
             wallet.IgnoreAllowances = true;
 
             // Act
-            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse() 
-            { 
+            var selected = await wallet.SelectPaymentAsync(new PaymentRequiredResponse()
+            {
                 Accepts = requirements,
                 Resource = new x402.Core.Models.v2.ResourceInfo
                 {
@@ -92,11 +92,11 @@ namespace x402.Client.Solana.Tests
             Assert.That(header, Is.Not.Null);
             var sig = header!.Payload.Signature;
             Assert.That(string.IsNullOrWhiteSpace(sig), Is.False);
-            
+
             // Solana signatures are base64-encoded (Ed25519 signatures are 64 bytes)
             // Base64 encoding of 64 bytes results in 88 characters (without padding) or with padding
             Assert.That(sig.Length, Is.GreaterThan(0));
-            
+
             // Verify it's valid base64
             Assert.DoesNotThrow(() => Convert.FromBase64String(sig));
         }
@@ -107,7 +107,7 @@ namespace x402.Client.Solana.Tests
             // Arrange
             var requirement = BuildRequirement();
             requirement.Network = "solana-mainnet";
-            
+
             var wallet = SolanaWallet.FromMnemonic(TestMnemonic, "", 0, "solana-mainnet");
             wallet.IgnoreAllowances = true;
 
@@ -125,7 +125,7 @@ namespace x402.Client.Solana.Tests
             // Arrange
             var requirement = BuildRequirement();
             requirement.Amount = "50000";
-            
+
             var wallet = SolanaWallet.FromMnemonic(TestMnemonic, "", 0, "solana-devnet");
             wallet.IgnoreAllowances = true;
 

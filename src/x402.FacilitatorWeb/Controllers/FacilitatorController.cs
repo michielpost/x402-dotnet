@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using x402.Core.Models.Facilitator;
-using x402.Core.Models.v1.Facilitator;
+using x402.Core.Models.v2.Facilitator;
 using x402.Facilitator;
 
 namespace x402.FacilitatorWeb.Controllers;
@@ -29,16 +29,16 @@ public class FacilitatorController : ControllerBase
     [Route("verify")]
     public async Task<VerificationResponse> Verify([FromBody] FacilitatorRequest req)
     {
-        if (req.X402Version != 1)
+        if (req.X402Version != 2)
             return VerificationError(FacilitatorErrorCodes.InvalidX402Version);
 
         try
         {
-            var paymentService = _paymentServiceFactory.GetPaymentServiceByNetwork(req.PaymentPayload.Network);
+            var paymentService = _paymentServiceFactory.GetPaymentServiceByNetwork(req.PaymentPayload.Accepted.Network);
 
             if (paymentService == null)
             {
-                return VerificationError($"Unsupported network: {req.PaymentPayload.Network}");
+                return VerificationError($"Unsupported network: {req.PaymentPayload.Accepted.Network}");
             }
 
             var response = await paymentService.VerifyPayment(
@@ -60,15 +60,15 @@ public class FacilitatorController : ControllerBase
     {
         try
         {
-            var paymentService = _paymentServiceFactory.GetPaymentServiceByNetwork(req.PaymentPayload.Network);
+            var paymentService = _paymentServiceFactory.GetPaymentServiceByNetwork(req.PaymentPayload.Accepted.Network);
 
             if (paymentService == null)
             {
                 return new SettlementResponse
                 {
                     Success = false,
-                    ErrorReason = $"Unsupported network: {req.PaymentPayload.Network}",
-                    Network = req.PaymentPayload.Network,
+                    ErrorReason = $"Unsupported network: {req.PaymentPayload.Accepted.Network}",
+                    Network = req.PaymentPayload.Accepted.Network,
                     Transaction = ""
                 };
             }
@@ -86,7 +86,7 @@ public class FacilitatorController : ControllerBase
             {
                 Success = false,
                 ErrorReason = $"Error: {ex.Message}",
-                Network = req.PaymentPayload.Network,
+                Network = req.PaymentPayload.Accepted.Network,
                 Transaction = ""
             };
         }

@@ -70,7 +70,7 @@ namespace x402.Client.Solana
 
             var header = new PaymentPayloadHeader()
             {
-                X402Version = 1,
+                X402Version = 2,
                 Accepted = requirement,
                 Payload = new Payload
                 {

@@ -7,7 +7,6 @@ namespace x402.Client.v2
         public const string PaymentHeaderV2 = "PAYMENT-SIGNATURE";
         public static void AddPaymentHeader(this HttpRequestMessage request, PaymentPayloadHeader header)
         {
-            // Use the appropriate header based on X402 version
             request.Headers.Add(PaymentHeaderV2, header.ToBase64Header());
         }
     }

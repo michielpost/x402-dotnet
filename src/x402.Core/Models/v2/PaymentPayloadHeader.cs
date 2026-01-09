@@ -4,7 +4,7 @@ using System.Text.Json;
 namespace x402.Core.Models.v2
 {
     /// <summary>
-    /// Payload extracted from the X-PAYMENT header.
+    /// Payload extracted from the PAYMENT header.
     /// </summary>
     public class PaymentPayloadHeader
     {
@@ -29,7 +29,7 @@ namespace x402.Core.Models.v2
         /// <summary>
         /// Parses the payment payload from the base64-encoded header.
         /// </summary>
-        /// <param name="header">The X-PAYMENT header value.</param>
+        /// <param name="header">The PAYMENT header value.</param>
         /// <returns>The parsed PaymentPayload.</returns>
         /// <exception cref="ArgumentException">If the header is malformed.</exception>
         public static PaymentPayloadHeader FromHeader(string header)
@@ -49,7 +49,7 @@ namespace x402.Core.Models.v2
             }
             catch (Exception ex)
             {
-                throw new ArgumentException("Malformed X-PAYMENT header", ex);
+                throw new ArgumentException("Malformed PAYMENT header", ex);
             }
         }
 

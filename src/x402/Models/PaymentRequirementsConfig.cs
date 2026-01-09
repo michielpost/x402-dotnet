@@ -21,7 +21,7 @@ namespace x402.Models
         /// <summary>
         /// x402 version
         /// </summary>
-        public int Version { get; set; } = 1;
+        public int Version { get; set; } = 2;
 
     }
 }

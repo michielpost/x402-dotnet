@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using x402.Client.EVM;
 using x402.Core;
 using x402.Core.Enums;
-using x402.Core.Models.v1;
+using x402.Core.Models.v2;
 using x402.Facilitator;
 
 namespace x402.IntegrationTests.Facilitator
@@ -29,11 +29,11 @@ namespace x402.IntegrationTests.Facilitator
 
             var provider = services.BuildServiceProvider();
 
-            var apiUrl = "https://facilitator.payai.network";
+            //var apiUrl = "https://facilitator.payai.network";
             //var apiUrl = "https://www.x402.org/facilitator/";
             //var apiUrl = "https://facilitator.mogami.tech";
             //var apiUrl = "https://facilitator.mcpay.tech";
-            //var apiUrl = "https://facilitator.daydreams.systems/";
+            var apiUrl = "https://facilitator.daydreams.systems/";
 
             var httpClient = new HttpClient
             {
@@ -56,18 +56,14 @@ namespace x402.IntegrationTests.Facilitator
         [Test]
         public async Task VerifyAsync_ShouldReturnVerificationResponse()
         {
-            var paymentHeader = "eyJ4NDAyVmVyc2lvbiI6MSwic2NoZW1lIjoiZXhhY3QiLCJuZXR3b3JrIjoiYmFzZS1zZXBvbGlhIiwicGF5bG9hZCI6eyJzaWduYXR1cmUiOiIweGViZGZlZGI4NTE5ZmVjMDg1NDk3NDU3OTI3NmRmNjA2NTc0OTUwYTNhOTg1MGRhNzhlYTFmMDNmNDgwZGY3MjM1ODllZjMwNTRmYzg1YTQ5YjM2ZGJlMmY3YTM5ODA3ZjM4NzJhYWU4NTExNzgzNDMxOWY1NzZmNzc1Yjc2ZTcwMWMiLCJhdXRob3JpemF0aW9uIjp7ImZyb20iOiIweDdEOTU1MTRhRWQ5ZjEzQWE4OUM4ZTVFZDljMjlEMDhFOEU5QmZBMzciLCJ0byI6IjB4MjA5NjkzQmM2YWZjMEM1MzI4YkEzNkZhRjAzQzUxNEVGMzEyMjg3QyIsInZhbHVlIjoiMTAwMDAiLCJ2YWxpZEFmdGVyIjoiMTc1OTQwNDQ2NSIsInZhbGlkQmVmb3JlIjoiMTc1OTQwNTM2NSIsIm5vbmNlIjoiMHhjODE2YjU0ZGViZjJmOTlhMmRlMDRiZTFlNmYxYjJkNjBjNTZlNGU4ZDZjYThiMzI1ZmMzZTcyYmJmM2FiZDY1In19fQ==";
+            var paymentHeader = "eyJ4NDAyVmVyc2lvbiI6MiwicGF5bG9hZCI6eyJzaWduYXR1cmUiOiIweDE5NDQ2ZDAxNDM2MTkxZTgyZjZiNjE4NmQ1NjdhNjdjYWM2MmZiN2VkMGQxMGUzNzE3YzhmYzU4YmI0ZDFkZmQzNDgxMTFhMTc1MDQ2ODFhOTA1OTcwZmRkY2IyMzIwMWQ0MTQwOGEzZDJmY2JhZTI5MzNhNWU5MTAzOTQwOTgzMWMiLCJhdXRob3JpemF0aW9uIjp7ImZyb20iOiIweDJBZjg5Y0NjYTgyNDY2NTM1Nzk2Mzk1MzIzMWI5QTJEM0I5RDU0MjEiLCJ0byI6IjB4MjA5NjkzQmM2YWZjMEM1MzI4YkEzNkZhRjAzQzUxNEVGMzEyMjg3QyIsInZhbHVlIjoiMTAwMDAiLCJ2YWxpZEFmdGVyIjoiMTc2Nzk2OTk1MSIsInZhbGlkQmVmb3JlIjoiMTc2Nzk3MDkxMSIsIm5vbmNlIjoiMHg3ZmI2N2YwNDRlNDhkM2U5MzYxOGRhNzg1MDE1NWQyNjZjNGI1OGZiZjljNGZiYWQwNGRkZTM3ZWQ2MGM4NDQwIn19LCJhY2NlcHRlZCI6eyJzY2hlbWUiOiJleGFjdCIsIm5ldHdvcmsiOiJlaXAxNTU6ODQ1MzIiLCJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiMHgwMzZDYkQ1Mzg0MmM1NDI2NjM0ZTc5Mjk1NDFlQzIzMThmM2RDRjdlIiwicGF5VG8iOiIweDIwOTY5M0JjNmFmYzBDNTMyOGJBMzZGYUYwM0M1MTRFRjMxMjI4N0MiLCJtYXhUaW1lb3V0U2Vjb25kcyI6MzAwLCJleHRyYSI6eyJuYW1lIjoiVVNEQyIsInZlcnNpb24iOiIyIn19fQ==";
             var payload = PaymentPayloadHeader.FromHeader(paymentHeader);
             var requirements = new PaymentRequirements
             {
                 Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-                MaxAmountRequired = "10000",
+                Amount = "10000",
                 PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
-                Resource = "https://localhost/api",
-                Network = "base-sepolia",
-                MimeType = "application/json",
-                Description = "test payment",
-                OutputSchema = null
+                Network = "eip155:84532",
             };
 
             var result = await client.VerifyAsync(payload, requirements);
@@ -79,17 +75,14 @@ namespace x402.IntegrationTests.Facilitator
         [Test]
         public async Task SettleAsync_ShouldReturnSettlementResponse()
         {
-            var paymentHeader = "eyJ4NDAyVmVyc2lvbiI6MSwic2NoZW1lIjoiZXhhY3QiLCJuZXR3b3JrIjoiYmFzZS1zZXBvbGlhIiwicGF5bG9hZCI6eyJzaWduYXR1cmUiOiIweGViZGZlZGI4NTE5ZmVjMDg1NDk3NDU3OTI3NmRmNjA2NTc0OTUwYTNhOTg1MGRhNzhlYTFmMDNmNDgwZGY3MjM1ODllZjMwNTRmYzg1YTQ5YjM2ZGJlMmY3YTM5ODA3ZjM4NzJhYWU4NTExNzgzNDMxOWY1NzZmNzc1Yjc2ZTcwMWMiLCJhdXRob3JpemF0aW9uIjp7ImZyb20iOiIweDdEOTU1MTRhRWQ5ZjEzQWE4OUM4ZTVFZDljMjlEMDhFOEU5QmZBMzciLCJ0byI6IjB4MjA5NjkzQmM2YWZjMEM1MzI4YkEzNkZhRjAzQzUxNEVGMzEyMjg3QyIsInZhbHVlIjoiMTAwMDAiLCJ2YWxpZEFmdGVyIjoiMTc1OTQwNDQ2NSIsInZhbGlkQmVmb3JlIjoiMTc1OTQwNTM2NSIsIm5vbmNlIjoiMHhjODE2YjU0ZGViZjJmOTlhMmRlMDRiZTFlNmYxYjJkNjBjNTZlNGU4ZDZjYThiMzI1ZmMzZTcyYmJmM2FiZDY1In19fQ==";
+            var paymentHeader = "eyJ4NDAyVmVyc2lvbiI6MiwicGF5bG9hZCI6eyJzaWduYXR1cmUiOiIweDE5NDQ2ZDAxNDM2MTkxZTgyZjZiNjE4NmQ1NjdhNjdjYWM2MmZiN2VkMGQxMGUzNzE3YzhmYzU4YmI0ZDFkZmQzNDgxMTFhMTc1MDQ2ODFhOTA1OTcwZmRkY2IyMzIwMWQ0MTQwOGEzZDJmY2JhZTI5MzNhNWU5MTAzOTQwOTgzMWMiLCJhdXRob3JpemF0aW9uIjp7ImZyb20iOiIweDJBZjg5Y0NjYTgyNDY2NTM1Nzk2Mzk1MzIzMWI5QTJEM0I5RDU0MjEiLCJ0byI6IjB4MjA5NjkzQmM2YWZjMEM1MzI4YkEzNkZhRjAzQzUxNEVGMzEyMjg3QyIsInZhbHVlIjoiMTAwMDAiLCJ2YWxpZEFmdGVyIjoiMTc2Nzk2OTk1MSIsInZhbGlkQmVmb3JlIjoiMTc2Nzk3MDkxMSIsIm5vbmNlIjoiMHg3ZmI2N2YwNDRlNDhkM2U5MzYxOGRhNzg1MDE1NWQyNjZjNGI1OGZiZjljNGZiYWQwNGRkZTM3ZWQ2MGM4NDQwIn19LCJhY2NlcHRlZCI6eyJzY2hlbWUiOiJleGFjdCIsIm5ldHdvcmsiOiJlaXAxNTU6ODQ1MzIiLCJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiMHgwMzZDYkQ1Mzg0MmM1NDI2NjM0ZTc5Mjk1NDFlQzIzMThmM2RDRjdlIiwicGF5VG8iOiIweDIwOTY5M0JjNmFmYzBDNTMyOGJBMzZGYUYwM0M1MTRFRjMxMjI4N0MiLCJtYXhUaW1lb3V0U2Vjb25kcyI6MzAwLCJleHRyYSI6eyJuYW1lIjoiVVNEQyIsInZlcnNpb24iOiIyIn19fQ==";
             var payload = PaymentPayloadHeader.FromHeader(paymentHeader);
             var requirements = new PaymentRequirements
             {
                 Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-                MaxAmountRequired = "1",
+                Amount = "1",
                 PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
-                Resource = "https://localhost/api",
-                Network = "base-sepolia",
-                MimeType = "application/json",
-                Description = "Test payment"
+                Network = "eip155:84532",
             };
 
             var result = await client.SettleAsync(payload, requirements);
@@ -122,9 +115,9 @@ namespace x402.IntegrationTests.Facilitator
             //var apiUrl = "https://facilitator.payai.network";
             //var apiUrl = "https://facilitator.mogami.tech";
             //var apiUrl = "https://facilitator.mcpay.tech";
-            //var apiUrl = "https://facilitator.daydreams.systems/";
+            var apiUrl = "https://facilitator.daydreams.systems/";
             //var apiUrl = "https://open.x402.host";
-            var apiUrl = "https://facilitator.dirtroad.dev";
+            //var apiUrl = "https://facilitator.dirtroad.dev";
 
             var httpClient = new HttpClient
             {
@@ -160,13 +153,10 @@ namespace x402.IntegrationTests.Facilitator
                 PaymentRequirements requirements = new PaymentRequirements()
                 {
                     Asset = asset.ContractAddress,
-                    MaxAmountRequired = "1000",
+                    Amount = "1000",
                     Network = kind.Network,
                     Scheme = PaymentScheme.Exact,
                     PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
-                    Resource = "https://localhost/api",
-                    Description = "Full test payment",
-                    MimeType = "application/json",
                     Extra = new PaymentRequirementsExtra
                     {
                         Name = asset.Name,

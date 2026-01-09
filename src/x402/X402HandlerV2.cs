@@ -209,7 +209,7 @@ public class X402HandlerV2
             return X402ProcessingResult.CreateError(
                 paymentRequirements,
                 resourceInfo,
-                "Malformed X-PAYMENT header",
+                "Malformed PAYMENT header",
                 StatusCodes.Status402PaymentRequired,
                 fullUrl: fullUrl);
         }

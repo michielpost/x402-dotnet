@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System.Text.Json;
 using x402.Client.EVM;
-using x402.Client.v1;
+using x402.Client.v2;
 
 Console.WriteLine("Welcome to the x402 client sample app");
 
@@ -35,7 +35,7 @@ var wallet = new EVMWallet(privateKey, network, networkId)
     IgnoreAllowances = true
 };
 var walletProvider = new WalletProvider(wallet);
-var handlerV1 = PaymentRequiredV1Handler.Create(walletProvider);
+var handlerV1 = PaymentRequiredV2Handler.Create(walletProvider);
 
 walletProvider.PrepareWallet += async (_, e) =>
 {

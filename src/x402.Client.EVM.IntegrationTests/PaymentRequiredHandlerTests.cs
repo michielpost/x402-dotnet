@@ -1,7 +1,6 @@
 ﻿using System.Net.Http.Json;
-using x402.Client.v1;
 using x402.Client.v2;
-using x402.Core.Models.v1;
+using x402.Core.Models.v2;
 
 namespace x402.Client.EVM.IntegrationTests
 {
@@ -15,14 +14,13 @@ namespace x402.Client.EVM.IntegrationTests
         [Test]
         public async Task TestWithAllowance()
         {
-            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "base-sepolia", 84532UL) //base-sepolia chain ID
+            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "eip155:84532", 84532UL) //base-sepolia chain ID
             {
                 IgnoreAllowances = true
             };
 
-            //Handle both V1 and V2 payment required responses
-            var handlerV1 = PaymentRequiredV1Handler.Create(new v1.WalletProvider(wallet));
-            var handlerV2 = PaymentRequiredV2Handler.Create(new v2.WalletProvider(wallet), handlerV1);
+            //Handle V2 payment required responses
+            var handlerV2 = PaymentRequiredV2Handler.Create(new v2.WalletProvider(wallet));
 
             var client = new HttpClient(handlerV2);
 
@@ -44,7 +42,7 @@ namespace x402.Client.EVM.IntegrationTests
         [Test]
         public async Task TestWithoutHandler()
         {
-            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "base-sepolia", 84532UL) //base-sepolia chain ID
+            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "eip155:84532", 84532UL) //base-sepolia chain ID
             {
                 IgnoreAllowances = true
             };
@@ -52,9 +50,10 @@ namespace x402.Client.EVM.IntegrationTests
             PaymentPayloadHeader header = await wallet.CreateHeaderAsync(new PaymentRequirements
             {
                 Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-                MaxAmountRequired = "10000",
-                Network = "base-sepolia",
+                Amount = "10000",
+                Network = "eip155:84532",
                 PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+                MaxTimeoutSeconds = 300,
                 Extra = new PaymentRequirementsExtra
                 {
                     Name = "USDC",
@@ -78,11 +77,11 @@ namespace x402.Client.EVM.IntegrationTests
         [Test]
         public async Task TestPost()
         {
-            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "base-sepolia", 84532UL) //base-sepolia chain ID
+            var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "eip155:84532", 84532UL) //base-sepolia chain ID
             {
                 IgnoreAllowances = true
             };
-            var handler = PaymentRequiredV1Handler.Create(new v1.WalletProvider(wallet));
+            var handler = PaymentRequiredV2Handler.Create(new v2.WalletProvider(wallet));
 
             var client = new HttpClient(handler);
 
