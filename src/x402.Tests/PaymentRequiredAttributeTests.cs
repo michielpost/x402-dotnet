@@ -10,6 +10,7 @@ using x402.Core;
 using x402.Core.Enums;
 using x402.Core.Interfaces;
 using x402.Core.Models.Facilitator;
+using x402.Core.Models.v2;
 using x402.Facilitator;
 
 namespace x402.Tests
@@ -79,7 +80,7 @@ namespace x402.Tests
             bool nextCalled = false;
             var fake = new FakeFacilitatorClient
             {
-                 
+
                 VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
                 SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xdead", Network = req.Network })
             };
@@ -98,8 +99,14 @@ namespace x402.Tests
             var headerJson = System.Text.Json.JsonSerializer.Serialize(new
             {
                 x402Version = 2,
-                scheme = "exact",
-                network = "base-sepolia",
+                accepted = new PaymentRequirements
+                {
+                    Amount = "1",
+                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                    Network = "base-sepolia",
+                    PayTo = "0x0000000000000000000000000000000000000001",
+                    Scheme = PaymentScheme.Exact,
+                },
                 payload = new Dictionary<string, object?>
                 {
                     { "authorization", new Dictionary<string, object?> {

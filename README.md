@@ -53,7 +53,7 @@ public SampleResult Protected()
 ```
 Directly in an API Controller (for more control)
 ```cs
-public ResourceController(X402HandlerV1 x402Handler)
+public ResourceController(X402HandlerV2 x402Handler)
 {
     this.x402Handler = x402Handler;
 }
@@ -151,7 +151,7 @@ var wallet = new EVMWallet("0x0123454242abcdef0123456789abcdef0123456789abcdef01
     IgnoreAllowances = true
 };
 
-var handler = new PaymentRequiredV1Handler(new WalletProvider(wallet));
+var handler = new PaymentRequiredV2Handler(new WalletProvider(wallet));
 
 var client = new HttpClient(handler);
 var response = await client.GetAsync("https://www.x402.org/protected");
