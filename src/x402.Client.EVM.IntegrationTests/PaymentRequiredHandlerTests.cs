@@ -53,6 +53,7 @@ namespace x402.Client.EVM.IntegrationTests
                 Amount = "10000",
                 Network = "eip155:84532",
                 PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+                MaxTimeoutSeconds = 300,
                 Extra = new PaymentRequirementsExtra
                 {
                     Name = "USDC",
