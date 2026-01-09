@@ -6,7 +6,7 @@ namespace x402
     public static class PaymentMiddlewareExtensions
     {
         /// <summary>
-        /// Creates a payment middleware that enforces X-402 payments on configured paths or endpoints.
+        /// Creates a payment middleware that enforces x402 payments on configured paths or endpoints.
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="paymentMiddlewareOptions"></param>

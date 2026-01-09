@@ -454,9 +454,8 @@ namespace x402.Tests
             using var host = BuildHost(facilitator, "/v2-priority", reqs, SettlementMode.Optimistic, onSettlement: null, onStartingMarker: null);
             var client = host.GetTestClient();
             var request = new HttpRequestMessage(HttpMethod.Get, "/v2-priority");
-            // Send both headers - PAYMENT-SIGNATURE should be preferred
-            request.Headers.Add("PAYMENT-SIGNATURE", CreateHeaderB64(reqs, resource: "/v2-priority", from: "0xabc"));
-            request.Headers.Add("X-PAYMENT", CreateHeaderB64(reqs, resource: "/v2-priority", from: "0xdef"));
+            // Send header
+            request.Headers.Add(X402HandlerV2.PaymentHeaderV2, CreateHeaderB64(reqs, resource: "/v2-priority", from: "0xabc"));
 
             var resp = await client.SendAsync(request);
 

@@ -15,7 +15,7 @@ namespace x402
         private readonly X402HandlerV2 x402HandlerV2;
 
         /// <summary>
-        /// Creates a payment middleware that enforces X-402 payments on configured paths or endpoints.
+        /// Creates a payment middleware that enforces x402 payments on configured paths or endpoints.
         /// </summary>
         /// <param name="next"></param>
         /// <param name="paymentMiddlewareOptions">Configuration options</param>
@@ -64,7 +64,7 @@ namespace x402
             }
             else
             {
-                throw new Exception($"Unsupported X-402 version {paymentConfig.Version} for path {resourceFullUrl}");
+                throw new Exception($"Unsupported x402 version {paymentConfig.Version} for path {resourceFullUrl}");
             }
 
             //Payment verified, continue to next middleware

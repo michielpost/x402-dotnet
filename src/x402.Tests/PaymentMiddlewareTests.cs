@@ -155,10 +155,10 @@ namespace x402.Tests
             using var host = BuildHost(options, fake);
             var client = host.GetTestClient();
             var request = new HttpRequestMessage(HttpMethod.Get, "/payok");
-            request.Headers.Add("X-PAYMENT", CreateHeaderB64("http://localhost/payok", "100000"));
+            request.Headers.Add(X402HandlerV2.PaymentHeaderV2, CreateHeaderB64("http://localhost/payok", "100000"));
             var resp = await client.SendAsync(request);
             Assert.That(resp.IsSuccessStatusCode, Is.True);
-            Assert.That(resp.Headers.Contains("X-PAYMENT-RESPONSE"), Is.True);
+            Assert.That(resp.Headers.Contains(X402HandlerV2.PaymentResponseHeaderV2), Is.True);
         }
     }
 }

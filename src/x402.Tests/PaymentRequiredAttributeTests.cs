@@ -94,7 +94,7 @@ namespace x402.Tests
 
             var context = CreateActionExecutingContext(services, "/ok");
 
-            // Add a valid X-PAYMENT header with resource match
+            // Add a valid PAYMENT header with resource match
             var headerJson = System.Text.Json.JsonSerializer.Serialize(new
             {
                 x402Version = 2,
@@ -113,7 +113,7 @@ namespace x402.Tests
                 }
             }, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
             var headerB64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(headerJson));
-            context.HttpContext.Request.Headers["X-PAYMENT"] = headerB64;
+            context.HttpContext.Request.Headers[X402HandlerV2.PaymentHeaderV2] = headerB64;
 
             var attr = new PaymentRequiredAttribute(
                 maxAmountRequired: "1",

@@ -14,7 +14,7 @@ namespace x402.Facilitator
         /// <summary>
         /// Verifies a payment header against the requirements.
         /// </summary>
-        /// <param name="paymentPayload">The X-PAYMENT / PAYMENT-SIGNATURE header value transformed into a payload.</param>
+        /// <param name="paymentPayload">The PAYMENT-SIGNATURE header value transformed into a payload.</param>
         /// <param name="requirements">The payment requirements.</param>
         /// <param name="cancellationToken">Optional cancellation token to cancel the operation.</param>
         /// <returns>Verification response.</returns>
@@ -23,7 +23,7 @@ namespace x402.Facilitator
         /// <summary>
         /// Settles a verified payment.
         /// </summary>
-        /// <param name="paymentPayload">The X-PAYMENT / PAYMENT-SIGNATURE header value transformed into a payload.</param>
+        /// <param name="paymentPayload">The PAYMENT-SIGNATURE header value transformed into a payload.</param>
         /// <param name="requirements">The payment requirements.</param>
         /// <param name="cancellationToken">Optional cancellation token to cancel the operation.</param>
         /// <returns>Settlement response.</returns>
