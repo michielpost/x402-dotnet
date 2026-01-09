@@ -38,8 +38,8 @@ namespace x402.Client.EVM.Tests
             Assert.That(selected, Is.Not.Null);
             Assert.That(header, Is.Not.Null);
 
-            Assert.That(header!.Network, Is.EqualTo(requirement.Network));
-            Assert.That(header.Scheme, Is.EqualTo(requirement.Scheme));
+            Assert.That(header!.Accepted.Network, Is.EqualTo(requirement.Network));
+            Assert.That(header.Accepted.Scheme, Is.EqualTo(requirement.Scheme));
             Assert.That(header.X402Version, Is.EqualTo(1));
 
             Assert.That(header.Payload, Is.Not.Null);

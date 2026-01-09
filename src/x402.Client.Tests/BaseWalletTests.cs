@@ -42,7 +42,7 @@ namespace x402.Client.Tests
 
             Assert.That(selected, Is.EqualTo(r2));
             Assert.That(header, Is.Not.Null);
-            Assert.That(header!.Network, Is.EqualTo(r2.Network));
+            Assert.That(header!.Accepted.Network, Is.EqualTo(r2.Network));
             Assert.That(header.Payload.Authorization.To, Is.EqualTo(r2.PayTo));
         }
 

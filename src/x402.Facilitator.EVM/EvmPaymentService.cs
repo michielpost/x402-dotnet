@@ -23,10 +23,10 @@ namespace x402.Facilitator.EVM
 
         private void VerifySchemesAndNetworks(PaymentPayloadHeader payload, PaymentRequirements requirements)
         {
-            if (payload.Scheme != Core.Enums.PaymentScheme.Exact || requirements.Scheme != Core.Enums.PaymentScheme.Exact)
+            if (payload.Accepted.Scheme != Core.Enums.PaymentScheme.Exact || requirements.Scheme != Core.Enums.PaymentScheme.Exact)
                 throw new ArgumentException(FacilitatorErrorCodes.UnsupportedScheme);
 
-            if (payload.Network != requirements.Network)
+            if (payload.Accepted.Network != requirements.Network)
                 throw new ArgumentException(FacilitatorErrorCodes.InvalidNetwork);
 
             // Validate it's an EVM network
@@ -110,7 +110,7 @@ namespace x402.Facilitator.EVM
                 {
                     Success = false,
                     ErrorReason = verifyResponse.InvalidReason,
-                    Network = payload.Network,
+                    Network = payload.Accepted.Network,
                     Transaction = "",
                     Payer = verifyResponse.Payer
                 };
@@ -172,7 +172,7 @@ namespace x402.Facilitator.EVM
                     {
                         Success = false,
                         ErrorReason = FacilitatorErrorCodes.InvalidTransactionState,
-                        Network = payload.Network,
+                        Network = payload.Accepted.Network,
                         Transaction = txHash,
                         Payer = payer
                     };
@@ -184,7 +184,7 @@ namespace x402.Facilitator.EVM
                     {
                         Success = false,
                         ErrorReason = FacilitatorErrorCodes.InvalidTransactionState,
-                        Network = payload.Network,
+                        Network = payload.Accepted.Network,
                         Transaction = txHash,
                         Payer = payer
                     };
@@ -194,7 +194,7 @@ namespace x402.Facilitator.EVM
                 {
                     Success = true,
                     ErrorReason = null,
-                    Network = payload.Network,
+                    Network = payload.Accepted.Network,
                     Transaction = txHash,
                     Payer = payer
                 };
@@ -206,7 +206,7 @@ namespace x402.Facilitator.EVM
                 {
                     Success = false,
                     ErrorReason = FacilitatorErrorCodes.UnexpectedSettleError,
-                    Network = payload.Network,
+                    Network = payload.Accepted.Network,
                     Transaction = "",
                     Payer = verifyResponse.Payer
                 };

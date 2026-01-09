@@ -34,11 +34,11 @@ public class FacilitatorController : ControllerBase
 
         try
         {
-            var paymentService = _paymentServiceFactory.GetPaymentServiceByNetwork(req.PaymentPayload.Network);
+            var paymentService = _paymentServiceFactory.GetPaymentServiceByNetwork(req.PaymentPayload.Accepted.Network);
 
             if (paymentService == null)
             {
-                return VerificationError($"Unsupported network: {req.PaymentPayload.Network}");
+                return VerificationError($"Unsupported network: {req.PaymentPayload.Accepted.Network}");
             }
 
             var response = await paymentService.VerifyPayment(
@@ -60,15 +60,15 @@ public class FacilitatorController : ControllerBase
     {
         try
         {
-            var paymentService = _paymentServiceFactory.GetPaymentServiceByNetwork(req.PaymentPayload.Network);
+            var paymentService = _paymentServiceFactory.GetPaymentServiceByNetwork(req.PaymentPayload.Accepted.Network);
 
             if (paymentService == null)
             {
                 return new SettlementResponse
                 {
                     Success = false,
-                    ErrorReason = $"Unsupported network: {req.PaymentPayload.Network}",
-                    Network = req.PaymentPayload.Network,
+                    ErrorReason = $"Unsupported network: {req.PaymentPayload.Accepted.Network}",
+                    Network = req.PaymentPayload.Accepted.Network,
                     Transaction = ""
                 };
             }
@@ -86,7 +86,7 @@ public class FacilitatorController : ControllerBase
             {
                 Success = false,
                 ErrorReason = $"Error: {ex.Message}",
-                Network = req.PaymentPayload.Network,
+                Network = req.PaymentPayload.Accepted.Network,
                 Transaction = ""
             };
         }
