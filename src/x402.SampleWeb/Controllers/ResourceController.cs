@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System;
 using x402.Attributes;
 using x402.Core.Enums;
 using x402.Core.Models;

@@ -16,7 +16,7 @@ namespace x402.Client.EVM
         /// The blockchain chain ID for this wallet.
         /// </summary>
         public ulong ChainId { get; }
-        
+
         /// <summary>
         /// The wallet's public address.
         /// </summary>
@@ -26,7 +26,7 @@ namespace x402.Client.EVM
         /// Time offset from now when authorization becomes valid. Default: -1 minute.
         /// </summary>
         public TimeSpan AddValidAfterFromNow { get; set; } = TimeSpan.FromMinutes(-1);
-        
+
         /// <summary>
         /// Time offset from now when authorization expires. Default: 15 minutes.
         /// </summary>

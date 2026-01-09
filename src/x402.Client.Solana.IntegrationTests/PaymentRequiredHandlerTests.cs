@@ -1,6 +1,5 @@
 ﻿using System.Net.Http.Json;
 using x402.Client.v2;
-using x402.Client.v2;
 using x402.Core.Models.v2;
 
 namespace x402.Client.Solana.IntegrationTests
@@ -30,7 +29,7 @@ namespace x402.Client.Solana.IntegrationTests
             // Uncomment the appropriate endpoint for testing
             //var response = await client.GetAsync("https://solana-x402-endpoint.example.com/protected");
             //var response = await client.GetAsync("https://localhost:7154/solana/protected");
-            
+
             // For now, using a mock endpoint
             var response = await client.GetAsync("https://httpbin.org/status/200");
 

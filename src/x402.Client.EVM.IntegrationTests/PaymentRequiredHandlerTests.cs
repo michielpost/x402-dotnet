@@ -1,6 +1,5 @@
 ﻿using System.Net.Http.Json;
 using x402.Client.v2;
-using x402.Client.v2;
 using x402.Core.Models.v2;
 
 namespace x402.Client.EVM.IntegrationTests
