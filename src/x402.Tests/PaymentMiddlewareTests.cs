@@ -166,7 +166,7 @@ namespace x402.Tests
                 Amount = "100000",
                 Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                 PayTo = "0x",
-                Network = "base-sepolia",
+                Network = "eip155:84532",
             };
 
             using var host = BuildHost(options, fake);

@@ -6,7 +6,7 @@ namespace x402.Client.Tests.Wallet
     {
         public int Version { get; set; } = 2;
 
-        public TestWallet(List<AssetAllowance> assetAllowances) : base("base-sepolia")
+        public TestWallet(List<AssetAllowance> assetAllowances) : base("eip155:84532")
         {
             AssetAllowances = assetAllowances;
         }

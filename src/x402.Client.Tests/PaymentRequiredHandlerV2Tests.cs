@@ -34,7 +34,7 @@ namespace x402.Client.Tests
             return new PaymentRequirements
             {
                 Scheme = PaymentScheme.Exact,
-                Network = "base-sepolia",
+                Network = "eip155:84532",
                 Amount = "1000",
                 Asset = asset,
                 PayTo = "0x1111111111111111111111111111111111111111",

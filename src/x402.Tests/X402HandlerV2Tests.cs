@@ -114,7 +114,7 @@ namespace x402.Tests
             return new PaymentRequirements
             {
                 Scheme = PaymentScheme.Exact,
-                Network = "base-sepolia",
+                Network = "eip155:84532",
                 Amount = "1",
                 Asset = "USDC",
                 PayTo = "0x0000000000000000000000000000000000000001",
@@ -126,14 +126,14 @@ namespace x402.Tests
             return new PaymentRequirements
             {
                 Scheme = PaymentScheme.Exact,
-                Network = "base-sepolia",
+                Network = "eip155:84532",
                 Amount = amount,
                 Asset = "USDC",
                 PayTo = payTo,
             };
         }
 
-        private static string CreateHeaderJson(PaymentRequirements accepted, string? resource = null, string? from = null, string? network = "base-sepolia", string to = "0x0000000000000000000000000000000000000001", string value = "1")
+        private static string CreateHeaderJson(PaymentRequirements accepted, string? resource = null, string? from = null, string? network = "eip155:84532", string to = "0x0000000000000000000000000000000000000001", string value = "1")
         {
             var payload = new
             {
@@ -154,7 +154,7 @@ namespace x402.Tests
             return JsonSerializer.Serialize(payload, new JsonSerializerOptions(JsonSerializerDefaults.Web));
         }
 
-        private static string CreateHeaderB64(PaymentRequirements accepted, string? resource = null, string? from = null, string? network = "base-sepolia", string to = "0x0000000000000000000000000000000000000001", string value = "1")
+        private static string CreateHeaderB64(PaymentRequirements accepted, string? resource = null, string? from = null, string? network = "eip155:84532", string to = "0x0000000000000000000000000000000000000001", string value = "1")
         {
             string json = CreateHeaderJson(accepted, resource, from, network, to, value);
             return Convert.ToBase64String(Encoding.UTF8.GetBytes(json));

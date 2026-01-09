@@ -256,6 +256,12 @@ namespace x402.Facilitator.EVM
 
         private ulong GetChainIdFromNetwork(string network)
         {
+            if (network.Contains("eip155:", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var value = network[(network.IndexOf("eip155:", StringComparison.InvariantCultureIgnoreCase) + "eip155:".Length)..];
+                return ulong.Parse(value);
+            }
+
             // Map network names to chain IDs
             return network.ToLowerInvariant() switch
             {

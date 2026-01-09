@@ -15,7 +15,7 @@ namespace x402.Core.Models.v2
         public PaymentScheme Scheme { get; set; }
 
         /// <summary>
-        /// The network identifier (e.g., "base-sepolia").
+        /// The network identifier (e.g., "eip155:84532").
         /// </summary>
         public required string Network { get; set; }
 

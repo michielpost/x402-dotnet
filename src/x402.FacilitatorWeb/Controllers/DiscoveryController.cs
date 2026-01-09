@@ -35,7 +35,7 @@ namespace x402.FacilitatorWeb.Controllers
                         {
                         Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                         Amount = "1000",
-                        Network = "base-sepolia",
+                        Network = "eip155:84532",
                         PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37"
                         }
                     }

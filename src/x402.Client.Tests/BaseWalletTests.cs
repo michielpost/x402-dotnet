@@ -9,7 +9,7 @@ namespace x402.Client.Tests
         private static PaymentRequirements Req(string asset, string amount = "1000") => new PaymentRequirements
         {
             Scheme = PaymentScheme.Exact,
-            Network = "base-sepolia",
+            Network = "eip155:84532",
             Amount = amount,
             Asset = asset,
             PayTo = "0x1111111111111111111111111111111111111111",

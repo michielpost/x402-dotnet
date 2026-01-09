@@ -56,8 +56,8 @@ builder.Services.AddSingleton<PaymentServiceFactory>(sp =>
     factory.Register(solanaDevnetKind, () => sp.GetRequiredService<SolanaPaymentService>());
 
     // Register EVM networks
-    var baseSepoliaKind = new FacilitatorKind("exact", "base-sepolia", 1);
-    var baseKind = new FacilitatorKind("exact", "base", 1);
+    var baseSepoliaKind = new FacilitatorKind("exact", "eip155:84532", 1);
+    var baseKind = new FacilitatorKind("exact", "eip155:8453", 1);
     var avalancheFujiKind = new FacilitatorKind("exact", "avalanche-fuji", 1);
     var avalancheKind = new FacilitatorKind("exact", "avalanche", 1);
     var polygonKind = new FacilitatorKind("exact", "polygon", 1);

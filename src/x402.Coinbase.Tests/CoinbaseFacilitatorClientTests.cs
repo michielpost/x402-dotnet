@@ -24,7 +24,7 @@ namespace x402.Coinbase.Tests
             {
                 Amount = "1",
                 Asset = "USDC",
-                Network = "base-sepolia",
+                Network = "eip155:84532",
                 PayTo = "0x"
             }
         };
@@ -42,7 +42,7 @@ namespace x402.Coinbase.Tests
         {
             Asset = "USDC",
             Amount = "1",
-            Network = "base-sepolia",
+            Network = "eip155:84532",
             PayTo = "0x0000000000000000000000000000000000000001",
             Scheme = PaymentScheme.Exact,
             MaxTimeoutSeconds = 30

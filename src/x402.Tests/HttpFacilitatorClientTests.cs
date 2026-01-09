@@ -23,7 +23,7 @@ namespace x402.Tests
             {
                 Amount = "1",
                 Asset = "USDC",
-                Network = "base-sepolia",
+                Network = "eip155:84532",
                 PayTo = "0x"
             }
         };
@@ -50,7 +50,7 @@ namespace x402.Tests
         {
             Asset = "USDC",
             Amount = "1",
-            Network = "base-sepolia",
+            Network = "eip155:84532",
             PayTo = "0x0000000000000000000000000000000000000001",
             Scheme = PaymentScheme.Exact,
             MaxTimeoutSeconds = 30
@@ -88,7 +88,7 @@ namespace x402.Tests
         [Test]
         public async Task SettleAsync_Success_DeserializesResponse()
         {
-            var expected = new SettlementResponse { Success = true, Transaction = "0xabc", Network = "base-sepolia" };
+            var expected = new SettlementResponse { Success = true, Transaction = "0xabc", Network = "eip155:84532" };
             var client = CreateClient(req =>
             {
                 Assert.That(req.RequestUri!.ToString(), Does.Contain("/settle"));

@@ -63,7 +63,7 @@ namespace x402.IntegrationTests.Facilitator
                 Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                 Amount = "10000",
                 PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
-                Network = "base-sepolia",
+                Network = "eip155:84532",
             };
 
             var result = await client.VerifyAsync(payload, requirements);
@@ -82,7 +82,7 @@ namespace x402.IntegrationTests.Facilitator
                 Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
                 Amount = "1",
                 PayTo = "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
-                Network = "base-sepolia",
+                Network = "eip155:84532",
             };
 
             var result = await client.SettleAsync(payload, requirements);

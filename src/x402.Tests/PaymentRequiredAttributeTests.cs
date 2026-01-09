@@ -103,7 +103,7 @@ namespace x402.Tests
                 {
                     Amount = "1",
                     Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-                    Network = "base-sepolia",
+                    Network = "eip155:84532",
                     PayTo = "0x0000000000000000000000000000000000000001",
                     Scheme = PaymentScheme.Exact,
                 },
