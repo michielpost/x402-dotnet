@@ -68,14 +68,14 @@ public class FacilitatorController : ControllerBase
 
     [HttpGet]
     [Route("supported-v2")]
-    public SupportedV2Response SupportedV2()
+    public SupportedResponse SupportedV2()
     {
-        return new SupportedV2Response
+        return new SupportedResponse
         {
-            Kinds = new Dictionary<string, List<FacilitatorKind>>
+            Kinds = new List<FacilitatorKind>
             {
-                 { "1", new() { new FacilitatorKind("USDC", "mainnet", 1) } },
-                 { "2", new() { new FacilitatorKind("USDC", "mainnet", 2) } }
+                 { new FacilitatorKind("USDC", "mainnet", 1) },
+                 { new FacilitatorKind("USDC", "mainnet", 2) }
             },
             Extensions = new List<string> { "ext1", "ext2" },
             Signers = new Dictionary<string, List<string>>

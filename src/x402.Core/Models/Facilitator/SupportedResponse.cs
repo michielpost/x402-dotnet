@@ -7,5 +7,9 @@
     {
         public List<FacilitatorKind> Kinds { get; set; } = new();
         public List<string>? Extensions { get; set; }
+
+        public Dictionary<string, List<string>>? Signers { get; set; }
+
     }
+
 }
