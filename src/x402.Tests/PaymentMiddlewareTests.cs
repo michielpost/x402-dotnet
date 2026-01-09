@@ -45,7 +45,7 @@ namespace x402.Tests
         {
             var headerJson = System.Text.Json.JsonSerializer.Serialize(new
             {
-                x402Version = 1,
+                x402Version = 2,
                 scheme = "exact",
                 network = "base-sepolia",
                 payload = new Dictionary<string, object?>
@@ -147,7 +147,7 @@ namespace x402.Tests
                                 }
                             },
                         },
-                        Version = 1
+                        Version = 2
                     },
                 },
             };

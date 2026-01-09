@@ -48,11 +48,15 @@ namespace x402.Attributes
         /// <summary>
         /// Creates a payment required attribute with the specified price.
         /// </summary>
-        /// <param name="price">Payment amount in atomic units as string.</param>
+        /// <param name="maxAmountRequired"></param>
+        /// <param name="asset"></param>
+        /// <param name="payTo"></param>
+        /// <param name="version"></param>
+        /// <param name="scheme"></param>
         public PaymentRequiredAttribute(string maxAmountRequired,
             string asset,
             string payTo,
-            int version = 1,
+            int version = 2,
             PaymentScheme scheme = PaymentScheme.Exact)
         {
             MaxAmountRequired = maxAmountRequired;

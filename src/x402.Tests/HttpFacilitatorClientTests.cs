@@ -14,7 +14,7 @@ namespace x402.Tests
     {
         private readonly PaymentPayloadHeader emptyPayloadHeader = new PaymentPayloadHeader()
         {
-            X402Version = 1,
+            X402Version = 2,
             Payload = new Payload()
             {
                 Authorization = new()

@@ -4,7 +4,7 @@ namespace x402.Client.Tests.Wallet
 {
     public class TestWallet : BaseWallet
     {
-        public int Version { get; set; } = 1;
+        public int Version { get; set; } = 2;
 
         public TestWallet(List<AssetAllowance> assetAllowances) : base("base-sepolia")
         {

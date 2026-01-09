@@ -19,7 +19,7 @@ public class FacilitatorController : ControllerBase
     [Route("verify")]
     public VerificationResponse Verify([FromBody] FacilitatorRequest req)
     {
-        if (req.X402Version != 1)
+        if (req.X402Version != 2)
             return VerificationError(FacilitatorErrorCodes.InvalidX402Version);
 
         var payer = req.PaymentPayload.ExtractPayerFromPayload();

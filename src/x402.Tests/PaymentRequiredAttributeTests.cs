@@ -97,7 +97,7 @@ namespace x402.Tests
             // Add a valid X-PAYMENT header with resource match
             var headerJson = System.Text.Json.JsonSerializer.Serialize(new
             {
-                x402Version = 1,
+                x402Version = 2,
                 scheme = "exact",
                 network = "base-sepolia",
                 payload = new Dictionary<string, object?>

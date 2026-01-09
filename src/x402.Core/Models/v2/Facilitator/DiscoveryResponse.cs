@@ -4,7 +4,7 @@ namespace x402.Core.Models.v2.Facilitator
 {
     public class DiscoveryResponse
     {
-        public int X402Version { get; set; } = 1;
+        public int X402Version { get; set; } = 2;
         public List<DiscoveryItem> Items { get; set; } = new();
         public Pagination Pagination { get; set; } = new();
     }
@@ -14,7 +14,7 @@ namespace x402.Core.Models.v2.Facilitator
     {
         public string Resource { get; set; } = string.Empty;
         public string Type { get; set; } = "http";
-        public int X402Version { get; set; } = 1;
+        public int X402Version { get; set; } = 2;
         public List<PaymentRequirements> Accepts { get; set; } = new();
         public required DateTimeOffset LastUpdated { get; set; }
         public object? Metadata { get; set; }
