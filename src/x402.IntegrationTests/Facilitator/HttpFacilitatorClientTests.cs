@@ -29,11 +29,11 @@ namespace x402.IntegrationTests.Facilitator
 
             var provider = services.BuildServiceProvider();
 
-            //var apiUrl = "https://facilitator.payai.network";
+            var apiUrl = "https://facilitator.payai.network";
             //var apiUrl = "https://www.x402.org/facilitator/";
             //var apiUrl = "https://facilitator.mogami.tech";
             //var apiUrl = "https://facilitator.mcpay.tech";
-            var apiUrl = "https://facilitator.daydreams.systems/";
+            //var apiUrl = "https://facilitator.daydreams.systems/";
 
             var httpClient = new HttpClient
             {
@@ -112,10 +112,10 @@ namespace x402.IntegrationTests.Facilitator
         [Test]
         public async Task FullTest()
         {
-            //var apiUrl = "https://facilitator.payai.network";
+            var apiUrl = "https://facilitator.payai.network";
             //var apiUrl = "https://facilitator.mogami.tech";
             //var apiUrl = "https://facilitator.mcpay.tech";
-            var apiUrl = "https://facilitator.daydreams.systems/";
+            //var apiUrl = "https://facilitator.daydreams.systems/";
             //var apiUrl = "https://open.x402.host";
             //var apiUrl = "https://facilitator.dirtroad.dev";
 
