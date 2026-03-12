@@ -149,9 +149,10 @@ public class X402HandlerV2
             {
                 return X402ProcessingResult.CreateError(
                     paymentRequirements,
-                resourceInfo,
+                    resourceInfo,
                     validationResult.Error ?? "Validation failed",
                     StatusCodes.Status402PaymentRequired,
+                    paymentPayload: payload,
                     fullUrl: fullUrl);
             }
 
@@ -163,10 +164,11 @@ public class X402HandlerV2
                 logger.LogInformation("Verification invalid for path {Path}: {Reason}", fullUrl, vr.InvalidReason);
                 return X402ProcessingResult.CreateError(
                     paymentRequirements,
-                resourceInfo,
+                    resourceInfo,
                     vr.InvalidReason ?? "Verification failed",
                     StatusCodes.Status402PaymentRequired,
                     vr,
+                    paymentPayload: payload,
                     fullUrl: fullUrl);
             }
 
@@ -417,16 +419,43 @@ public class X402HandlerV2
 
         if (selectedRequirement == null)
         {
-            logger.LogWarning("No matching payment requirements found for payload: Scheme={PayloadScheme}, Network={PayloadNetwork}, PayTo={AuthorizationTo}, Amount={AuthorizationValue}",
+            logger.LogWarning("No matching payment requirements found for payload: " +
+                "Scheme={PayloadScheme}, " +
+                "Network={PayloadNetwork}, " +
+                "Amount={Amount}, " +
+                "Asset={Asset}, " +
+                "PayTo={PayTo}, " +
+                "AuthorizationTo={AuthorizationTo}, " +
+                "AuthorizationValue={AuthorizationValue}",
                 payload.Accepted.Scheme,
                 payload.Accepted.Network,
+                payload.Accepted.Amount,
+                payload.Accepted.Asset,
+                payload.Accepted.PayTo,
                 payload.Payload.Authorization.To,
                 payload.Payload.Authorization.Value);
+
+            foreach (var pr in paymentRequirements)
+            {
+                logger.LogDebug("Available payment requirement: " +
+                    "Scheme={Scheme}, " +
+                    "Network={Network}, " +
+                    "Amount={Amount}, " +
+                    "Asset={Asset}, " +
+                    "PayTo={PayTo}",
+                    pr.Scheme,
+                    pr.Network,
+                    pr.Amount,
+                    pr.Asset,
+                    pr.PayTo);
+            }
+
             return X402ProcessingResult.CreateError(
                 paymentRequirements,
                 resourceInfo,
                 "No matching payment requirements found for the provided payload",
                 StatusCodes.Status402PaymentRequired,
+                paymentPayload: payload,
                 fullUrl: fullUrl);
 
         }
@@ -441,6 +470,7 @@ public class X402HandlerV2
                 resourceInfo,
                 $"Authorization expired: validBefore {authorization.ValidBefore} is in the past",
                 StatusCodes.Status402PaymentRequired,
+                paymentPayload: payload,
                 fullUrl: fullUrl);
         }
 
@@ -453,6 +483,7 @@ public class X402HandlerV2
                 resourceInfo,
                 $"Authorization not yet valid: validAfter {authorization.ValidAfter} is in the future",
                 StatusCodes.Status402PaymentRequired,
+                paymentPayload: payload,
                 fullUrl: fullUrl);
         }
 
