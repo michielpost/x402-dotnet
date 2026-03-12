@@ -410,11 +410,11 @@ public class X402HandlerV2
     {
         var selectedRequirement = paymentRequirements.FirstOrDefault(pr =>
             pr.Scheme == payload.Accepted.Scheme &&
-            pr.Network == payload.Accepted.Network &&
+            pr.Network.Equals(payload.Accepted.Network, StringComparison.InvariantCultureIgnoreCase) &&
             pr.Amount == payload.Accepted.Amount &&
             pr.Asset == payload.Accepted.Asset &&
-            pr.PayTo == payload.Accepted.PayTo &&
-            pr.PayTo == payload.Payload.Authorization.To &&
+            pr.PayTo.Equals(payload.Accepted.PayTo, StringComparison.InvariantCultureIgnoreCase) &&
+            pr.PayTo.Equals(payload.Payload.Authorization.To, StringComparison.InvariantCultureIgnoreCase) &&
             pr.Amount == payload.Payload.Authorization.Value);
 
         if (selectedRequirement == null)
