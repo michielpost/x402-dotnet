@@ -16,7 +16,8 @@ Install the `x402` packages from NuGet:
 - Add an x402-compatible paywall to any URL  
 - Easily use an attribute to handle payments for your API methods  
 - Add URLs that require payment using the middleware  
-- Support advanced scenarios by calling the `X402Handler` in your API controller  
+- Support advanced scenarios by calling the `X402Handler` in your API controller
+- Use endpoint filters to protect ASP.NET Core Minimal API endpoints  
 - Handle payment settlement using any remote facilitator  
 - Optionally use the Coinbase facilitator (with API key)
 - Extensible AssetInfoProvider that fills in network and coin data based on the asset address
@@ -129,6 +130,82 @@ app.UsePaymentMiddleware(paymentOptions);
 
 ```
 
+### Minimal APIs
+
+You can also use `RequireX402Payment` endpoint filters to protect Minimal API routes:
+
+```cs
+using x402.Core.Enums;
+using x402.Core.Models;
+using x402.EndpointFilters;
+
+// Free endpoint (no payment required)
+app.MapGet("/api/free", () => "Free Resource");
+
+// Protected with basic parameters
+app.MapGet("/api/protected", () => new { Message = "Success!" })
+    .RequireX402Payment(
+        amount: "1000",
+        asset: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+        payTo: "0xYourAddressHere",
+        description: "Protected Minimal API endpoint");
+
+// Protected with PaymentRequiredInfo and output schema customization
+app.MapPost("/api/send-msg", (SampleRequest req) =>
+    new SampleResult { Title = $"Msg: {req.Value}" })
+    .RequireX402Payment(
+        new PaymentRequiredInfo
+        {
+            Resource = new ResourceInfoBasic { Description = "Send a message" },
+            Accepts = new List<PaymentRequirementsBasic>
+            {
+                new()
+                {
+                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                    Amount = "1000",
+                    PayTo = "0xYourAddressHere",
+                }
+            },
+            Discoverable = true
+        },
+        SettlementMode.Pessimistic,
+        onSetOutputSchema: (context, reqs, schema) =>
+        {
+            schema.Input ??= new();
+            schema.Input.BodyFields = new Dictionary<string, object>
+            {
+                {
+                    nameof(SampleRequest.Value),
+                    new FieldDefenition
+                    {
+                        Required = true,
+                        Description = "Message to send",
+                        Type = "string"
+                    }
+                }
+            };
+
+            return schema;
+        });
+
+// Retrieve the x402 result inside the endpoint
+app.MapGet("/api/dynamic", (HttpContext context) =>
+{
+    var x402Result = context.GetX402ResultV2();
+    return new { Message = "Success!", Payer = x402Result?.VerificationResponse?.Payer };
+})
+.RequireX402Payment(
+    new PaymentRequiredInfo
+    {
+        Resource = new ResourceInfoBasic { Description = "Dynamic endpoint" },
+        Accepts = new List<PaymentRequirementsBasic>
+        {
+            new() { Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e", Amount = "1000", PayTo = "0xYourAddressHere" }
+        },
+        Discoverable = true
+    });
+```
+
 ## Coinbase Facilitator
 To use the Coinbase Facilitator, install [x402.Coinbase](https://nuget.org/packages/x402.Coinbase)
 
@@ -172,7 +249,9 @@ Explore the `x402.FacilitatorWeb` project for a dotnet based facilitator for EVM
 Follow these steps to test a x402 payment on the sample website hosted on Azure:
 - Get some `USDC` tokens on the `base-sepolia` network from the [Coinbase Faucet](https://faucet.circle.com/)
 - Use the x402 Debug Tool: https://proxy402.com/fetch
-- Enter an API endpoint from the [test website](https://x402-dotnet.azurewebsites.net/), for example: `https://x402-dotnet.azurewebsites.net/resource/middleware`
+- Enter an API endpoint from the [test website](https://x402-dotnet.azurewebsites.net/), for example:
+  - `https://x402-dotnet.azurewebsites.net/resource/middleware` (controller + middleware)
+  - `https://x402-dotnet.azurewebsites.net/api/minimal/protected` (Minimal API)
 - Connect your wallet
 - Click Pay
 - Payment will complete and show the result: `Protected by middleware`
