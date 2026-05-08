@@ -102,4 +102,60 @@ public static class X402PaymentEndpointFilterBuilderExtensions
         builder.AddEndpointFilter(new X402PaymentEndpointFilter(paymentRequiredInfo, settlementMode));
         return builder;
     }
+
+    /// <summary>
+    /// Requires x402 payment on this endpoint using a factory that builds <see cref="PaymentRequiredInfo"/> from the <see cref="HttpContext"/>.
+    /// </summary>
+    public static TBuilder RequireX402Payment<TBuilder>(
+        this TBuilder builder,
+        Func<HttpContext, PaymentRequiredInfo> paymentRequiredInfoFactory,
+        SettlementMode settlementMode = SettlementMode.Pessimistic)
+        where TBuilder : IEndpointConventionBuilder
+    {
+        builder.AddEndpointFilter(new X402PaymentEndpointFilter(paymentRequiredInfoFactory, settlementMode));
+        return builder;
+    }
+
+    /// <summary>
+    /// Requires x402 payment on this endpoint using a factory with output schema customization.
+    /// </summary>
+    public static TBuilder RequireX402Payment<TBuilder>(
+        this TBuilder builder,
+        Func<HttpContext, PaymentRequiredInfo> paymentRequiredInfoFactory,
+        SettlementMode settlementMode,
+        Func<HttpContext, PaymentRequirements, OutputSchema, OutputSchema> onSetOutputSchema)
+        where TBuilder : IEndpointConventionBuilder
+    {
+        builder.AddEndpointFilter(new X402PaymentEndpointFilter(paymentRequiredInfoFactory, settlementMode, onSetOutputSchema: onSetOutputSchema));
+        return builder;
+    }
+
+    /// <summary>
+    /// Requires x402 payment on this endpoint using a factory with settlement callback.
+    /// </summary>
+    public static TBuilder RequireX402Payment<TBuilder>(
+        this TBuilder builder,
+        Func<HttpContext, PaymentRequiredInfo> paymentRequiredInfoFactory,
+        SettlementMode settlementMode,
+        Func<HttpContext, SettlementResponse?, Exception?, Task> onSettlement)
+        where TBuilder : IEndpointConventionBuilder
+    {
+        builder.AddEndpointFilter(new X402PaymentEndpointFilter(paymentRequiredInfoFactory, settlementMode, onSettlement));
+        return builder;
+    }
+
+    /// <summary>
+    /// Requires x402 payment on this endpoint using a factory with full customization.
+    /// </summary>
+    public static TBuilder RequireX402Payment<TBuilder>(
+        this TBuilder builder,
+        Func<HttpContext, PaymentRequiredInfo> paymentRequiredInfoFactory,
+        SettlementMode settlementMode,
+        Func<HttpContext, SettlementResponse?, Exception?, Task> onSettlement,
+        Func<HttpContext, PaymentRequirements, OutputSchema, OutputSchema> onSetOutputSchema)
+        where TBuilder : IEndpointConventionBuilder
+    {
+        builder.AddEndpointFilter(new X402PaymentEndpointFilter(paymentRequiredInfoFactory, settlementMode, onSettlement, onSetOutputSchema));
+        return builder;
+    }
 }

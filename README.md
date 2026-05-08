@@ -188,21 +188,38 @@ app.MapPost("/api/send-msg", (SampleRequest req) =>
             return schema;
         });
 
-// Retrieve the x402 result inside the endpoint
-app.MapGet("/api/dynamic", (HttpContext context) =>
+// Dynamic amount based on the incoming request
+app.MapGet("/api/dynamic", (HttpContext context, string amount) =>
 {
     var x402Result = context.GetX402ResultV2();
-    return new { Message = "Success!", Payer = x402Result?.VerificationResponse?.Payer };
+    return new { Message = "Success!", Amount = amount, Payer = x402Result?.VerificationResponse?.Payer };
 })
 .RequireX402Payment(
-    new PaymentRequiredInfo
+    context =>
     {
-        Resource = new ResourceInfoBasic { Description = "Dynamic endpoint" },
-        Accepts = new List<PaymentRequirementsBasic>
+        var amount = context.Request.Query["amount"].FirstOrDefault() ?? "1000";
+        return new PaymentRequiredInfo
         {
-            new() { Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e", Amount = "1000", PayTo = "0xYourAddressHere" }
-        },
-        Discoverable = true
+            Resource = new ResourceInfoBasic { Description = "Dynamic endpoint" },
+            Accepts = new List<PaymentRequirementsBasic>
+            {
+                new() { Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e", Amount = amount, PayTo = "0xYourAddressHere" }
+            },
+            Discoverable = true
+        };
+    },
+    SettlementMode.Pessimistic,
+    onSetOutputSchema: (context, reqs, schema) =>
+    {
+        schema.Input ??= new();
+        schema.Input.QueryParams = new Dictionary<string, object>
+        {
+            {
+                "amount",
+                new FieldDefenition { Required = true, Description = "Amount to send", Type = "string" }
+            }
+        };
+        return schema;
     });
 ```
 

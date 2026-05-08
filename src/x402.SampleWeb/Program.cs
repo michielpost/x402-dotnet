@@ -185,22 +185,26 @@ app.MapGet("/api/minimal/dynamic", (HttpContext context, string amount) =>
     return new SampleResult { Title = $"Success! Dynamic protected for {amount}, paid by: {payer}. Tx: {txInfo}" };
 })
 .RequireX402Payment(
-    new PaymentRequiredInfo
+    context =>
     {
-        Resource = new ResourceInfoBasic
+        var amount = context.Request.Query["amount"].FirstOrDefault() ?? "1000";
+        return new PaymentRequiredInfo
         {
-            Description = "Dynamic payment Minimal API",
-        },
-        Accepts = new List<PaymentRequirementsBasic>
-        {
-            new()
+            Resource = new ResourceInfoBasic
             {
-                Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-                Amount = "1000",
-                PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
-            }
-        },
-        Discoverable = true
+                Description = "Dynamic payment Minimal API",
+            },
+            Accepts = new List<PaymentRequirementsBasic>
+            {
+                new()
+                {
+                    Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+                    Amount = amount,
+                    PayTo = "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37",
+                }
+            },
+            Discoverable = true
+        };
     },
     SettlementMode.Pessimistic,
     onSetOutputSchema: (context, reqs, schema) =>

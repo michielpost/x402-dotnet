@@ -13,7 +13,8 @@ namespace x402.EndpointFilters;
 /// </summary>
 public class X402PaymentEndpointFilter : IEndpointFilter
 {
-    private readonly PaymentRequiredInfo paymentRequiredInfo;
+    private readonly PaymentRequiredInfo? paymentRequiredInfo;
+    private readonly Func<HttpContext, PaymentRequiredInfo>? paymentRequiredInfoFactory;
     private readonly SettlementMode settlementMode;
     private readonly Func<HttpContext, PaymentRequirements, OutputSchema, OutputSchema>? onSetOutputSchema;
     private readonly Func<HttpContext, SettlementResponse?, Exception?, Task>? onSettlement;
@@ -33,12 +34,31 @@ public class X402PaymentEndpointFilter : IEndpointFilter
         this.onSetOutputSchema = onSetOutputSchema;
     }
 
+    /// <summary>
+    /// Creates a new instance of the filter using a factory that builds <see cref="PaymentRequiredInfo"/> from the <see cref="HttpContext"/>.
+    /// </summary>
+    public X402PaymentEndpointFilter(
+        Func<HttpContext, PaymentRequiredInfo> paymentRequiredInfoFactory,
+        SettlementMode settlementMode = SettlementMode.Pessimistic,
+        Func<HttpContext, SettlementResponse?, Exception?, Task>? onSettlement = null,
+        Func<HttpContext, PaymentRequirements, OutputSchema, OutputSchema>? onSetOutputSchema = null)
+    {
+        this.paymentRequiredInfoFactory = paymentRequiredInfoFactory;
+        this.settlementMode = settlementMode;
+        this.onSettlement = onSettlement;
+        this.onSetOutputSchema = onSetOutputSchema;
+    }
+
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
         var x402Handler = context.HttpContext.RequestServices.GetRequiredService<X402HandlerV2>();
 
+        var info = paymentRequiredInfoFactory != null
+            ? paymentRequiredInfoFactory(context.HttpContext)
+            : paymentRequiredInfo!;
+
         var x402Result = await x402Handler.HandleX402Async(
-            paymentRequiredInfo,
+            info,
             settlementMode,
             onSettlement,
             onSetOutputSchema);
