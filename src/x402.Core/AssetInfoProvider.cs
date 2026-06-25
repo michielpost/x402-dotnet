@@ -28,6 +28,24 @@ namespace x402.Core
             },
             new AssetInfo
             {
+                ChainId = 50,
+                Network = "eip155:50", //xdc
+                ContractAddress = "0xfA2958CB79b0491CC627c1557F441eF849Ca8eb1", // USDC (native, Circle)
+                Name = "USDC",
+                Version = "2",
+                NetworkType = NetworkType.EVM
+            },
+            new AssetInfo
+            {
+                ChainId = 51,
+                Network = "eip155:51", //xdc-apothem
+                ContractAddress = "0xb5AB69F7bBada22B28e79C8FFAECe55eF1c771D4", // USDC (native, Circle)
+                Name = "USDC",
+                Version = "2",
+                NetworkType = NetworkType.EVM
+            },
+            new AssetInfo
+            {
                 ChainId = 43113,
                 Network = "eip155:43113", //avalanche-fuji
                 ContractAddress = "0x5425890298aed601595a70AB815c96711a31Bc65", // USD Coin
