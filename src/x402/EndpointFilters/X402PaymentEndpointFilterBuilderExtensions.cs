@@ -78,7 +78,10 @@ public static class X402PaymentEndpointFilterBuilderExtensions
         string payTo,
         string description = "",
         SettlementMode settlementMode = SettlementMode.Pessimistic,
-        bool discoverable = true)
+        bool discoverable = true,
+        string? serviceName = null,
+        string[]? tags = null,
+        string? iconUrl = null)
         where TBuilder : IEndpointConventionBuilder
     {
         var paymentRequiredInfo = new PaymentRequiredInfo
@@ -86,6 +89,9 @@ public static class X402PaymentEndpointFilterBuilderExtensions
             Resource = new ResourceInfoBasic
             {
                 Description = description,
+                ServiceName = serviceName,
+                Tags = tags?.ToList(),
+                IconUrl = iconUrl,
             },
             Accepts = new List<PaymentRequirementsBasic>
             {

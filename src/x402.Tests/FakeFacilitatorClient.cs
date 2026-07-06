@@ -46,6 +46,16 @@ namespace x402.Tests
         {
             return Task.FromResult(new Core.Models.v2.Facilitator.DiscoveryResponse { Items = new List<Core.Models.v2.Facilitator.DiscoveryItem>() });
         }
+
+        Task<Core.Models.v2.Facilitator.MerchantDiscoveryResponse> IFacilitatorV2Client.DiscoveryMerchantAsync(string payTo, int? limit, int? offset, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new Core.Models.v2.Facilitator.MerchantDiscoveryResponse { PayTo = payTo });
+        }
+
+        Task<Core.Models.v2.Facilitator.DiscoverySearchResponse> IFacilitatorV2Client.DiscoverySearchAsync(Core.Models.v2.Facilitator.DiscoverySearchRequest searchRequest, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new Core.Models.v2.Facilitator.DiscoverySearchResponse());
+        }
     }
 }
 

@@ -38,6 +38,24 @@ namespace x402.Attributes
         public string Description { get; set; } = string.Empty;
         public string MimeType { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Human-readable name of the service, shown by discovery layers (e.g. the Bazaar).
+        /// Max 32 printable ASCII characters; facilitators silently drop invalid values.
+        /// </summary>
+        public string? ServiceName { get; set; }
+
+        /// <summary>
+        /// Topical tags used for facilitator-side filtering and search.
+        /// Max 5 tags of 32 printable ASCII characters each.
+        /// </summary>
+        public string[]? Tags { get; set; }
+
+        /// <summary>
+        /// Icon shown by discovery layers. Must be an absolute http(s) URL
+        /// (no IP literals or loopback hostnames), max 2048 characters.
+        /// </summary>
+        public string? IconUrl { get; set; }
+
         public SettlementMode SettlementMode { get; set; } = SettlementMode.Pessimistic;
 
         /// <summary>
@@ -109,6 +127,9 @@ namespace x402.Attributes
                     Url = fullUrl,
                     Description = this.Description,
                     MimeType = this.MimeType,
+                    ServiceName = this.ServiceName,
+                    Tags = this.Tags?.ToList(),
+                    IconUrl = this.IconUrl,
                 };
 
                 logger.LogInformation("Built payment requirements for path {Path}", fullUrl);
