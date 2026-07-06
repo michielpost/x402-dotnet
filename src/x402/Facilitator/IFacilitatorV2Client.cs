@@ -25,9 +25,10 @@ namespace x402.Facilitator
         /// </summary>
         /// <param name="paymentPayload">The PAYMENT-SIGNATURE header value transformed into a payload.</param>
         /// <param name="requirements">The payment requirements.</param>
+        /// <param name="settlementAmount">Optional actual amount to settle in atomic units, for schemes ("upto", "batch-settlement") that settle less than the authorized maximum. Null settles the full authorized amount.</param>
         /// <param name="cancellationToken">Optional cancellation token to cancel the operation.</param>
         /// <returns>Settlement response.</returns>
-        Task<SettlementResponse> SettleAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements requirements, CancellationToken cancellationToken = default);
+        Task<SettlementResponse> SettleAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements requirements, string? settlementAmount = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Retrieves the set of payment kinds supported by this facilitator.

@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using System.Numerics;
 using System.Text;
 using System.Text.Json;
+using x402.Channels;
+using x402.Core;
 using x402.Core.Enums;
 using x402.Core.Interfaces;
 using x402.Core.Models;
@@ -32,17 +35,20 @@ public class X402HandlerV2
     private readonly IFacilitatorV2Client facilitator;
     private readonly IAssetInfoProvider assetInfoProvider;
     private readonly IHttpContextAccessor httpContextAccessor;
+    private readonly ChannelManager? channelManager;
 
     public X402HandlerV2(
         ILogger<X402HandlerV2> logger,
         IFacilitatorV2Client facilitator,
         IAssetInfoProvider assetInfoProvider,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        ChannelManager? channelManager = null)
     {
         this.logger = logger;
         this.facilitator = facilitator;
         this.assetInfoProvider = assetInfoProvider;
         this.httpContextAccessor = httpContextAccessor;
+        this.channelManager = channelManager;
     }
 
     public async Task<X402ProcessingResult> HandleX402Async(
@@ -59,7 +65,7 @@ public class X402HandlerV2
             MimeType = paymentRequiredInfo.Resource?.MimeType ?? string.Empty,
         };
 
-        var result = await HandleX402Async(resourceInfo, paymentRequirements, paymentRequiredInfo.Discoverable, settlementMode, onSettlement, onSetOutputSchema);
+        var result = await HandleX402Async(resourceInfo, paymentRequirements, paymentRequiredInfo.Discoverable, settlementMode, onSettlement, onSetOutputSchema, paymentRequiredInfo.Extensions);
         StoreResult(result);
         return result;
     }
@@ -70,7 +76,8 @@ public class X402HandlerV2
         bool discoverable,
         SettlementMode settlementMode = SettlementMode.Pessimistic,
         Func<HttpContext, SettlementResponse?, Exception?, Task>? onSettlement = null,
-        Func<HttpContext, PaymentRequirements, OutputSchema, OutputSchema>? onSetOutputSchema = null)
+        Func<HttpContext, PaymentRequirements, OutputSchema, OutputSchema>? onSetOutputSchema = null,
+        Dictionary<string, ExtensionData>? extensions = null)
     {
         var context = GetHttpContext();
         var fullUrl = $"{context.Request.Scheme}://{context.Request.Host}{context.Request.Path}{context.Request.QueryString}".ToLowerInvariant();
@@ -112,7 +119,7 @@ public class X402HandlerV2
         var processingResult = await ProcessPaymentAsync(paymentRequirements, resourceInfo, header, fullUrl, settlementMode);
 
         // Handle HTTP response based on processing result
-        await HandleHttpResponseAsync(context, processingResult, settlementMode, onSettlement);
+        await HandleHttpResponseAsync(context, processingResult, settlementMode, onSettlement, extensions);
 
         StoreResult(processingResult);
         return processingResult;
@@ -175,7 +182,16 @@ public class X402HandlerV2
             SettlementResponse? preSettledResponse = null;
             Exception? settlementException = null;
 
-            if (settlementMode == SettlementMode.Pessimistic)
+            // Upto and batch-settlement settle only what was actually used, which is known
+            // after the endpoint has run (via settlement overrides). Settlement for those
+            // schemes is always deferred to the response phase.
+            var deferredScheme = validationResult.SelectedPaymentRequirement.Scheme != PaymentScheme.Exact;
+            if (deferredScheme && settlementMode == SettlementMode.Pessimistic)
+            {
+                logger.LogDebug("Deferring settlement for {Scheme} scheme on path {Path}", validationResult.SelectedPaymentRequirement.Scheme, fullUrl);
+            }
+
+            if (settlementMode == SettlementMode.Pessimistic && !deferredScheme)
             {
                 (preSettledResponse, settlementException) = await HandlePessimisticSettlement(payload, validationResult.SelectedPaymentRequirement, fullUrl);
                 if (settlementException != null || preSettledResponse == null || !preSettledResponse.Success)
@@ -203,7 +219,7 @@ public class X402HandlerV2
                 preSettledResponse,
                 payload,
                 fullUrl,
-                settlementMode == SettlementMode.Pessimistic);
+                settlementMode == SettlementMode.Pessimistic && !deferredScheme);
         }
         catch (ArgumentException)
         {
@@ -244,7 +260,8 @@ public class X402HandlerV2
         HttpContext context,
         X402ProcessingResult processingResult,
         SettlementMode settlementMode,
-        Func<HttpContext, SettlementResponse?, Exception?, Task>? onSettlement)
+        Func<HttpContext, SettlementResponse?, Exception?, Task>? onSettlement,
+        Dictionary<string, ExtensionData>? extensions = null)
     {
         if (!processingResult.CanContinueRequest)
         {
@@ -252,7 +269,7 @@ public class X402HandlerV2
             if (!context.Response.HasStarted)
             {
                 if (processingResult.StatusCode == StatusCodes.Status402PaymentRequired)
-                    await Respond402Async(context, processingResult.PaymentRequirements, processingResult.ResourceInfo, processingResult.Error);
+                    await Respond402Async(context, processingResult.PaymentRequirements, processingResult.ResourceInfo, processingResult.Error, extensions);
                 else
                     await Respond500Async(context, processingResult.Error);
             }
@@ -291,14 +308,14 @@ public class X402HandlerV2
 
                 if (sr == null && processingResult.PaymentPayload != null && processingResult.SelectedPaymentRequirement != null)
                 {
-                    sr = await facilitator.SettleAsync(processingResult.PaymentPayload, processingResult.SelectedPaymentRequirement);
+                    sr = await SettleDeferredAsync(context, processingResult);
                     if (sr == null || !sr.Success)
                     {
                         var errorMsg = sr?.ErrorReason ?? FacilitatorErrorCodes.UnexpectedSettleError;
                         logger.LogWarning("Settlement failed for path {Path}: {Reason}", processingResult.FullUrl, errorMsg);
                         if (settlementMode == SettlementMode.Pessimistic && !context.Response.HasStarted)
                         {
-                            await Respond402Async(context, processingResult.PaymentRequirements, processingResult.ResourceInfo, errorMsg);
+                            await Respond402Async(context, processingResult.PaymentRequirements, processingResult.ResourceInfo, errorMsg, extensions);
                         }
                         return;
                     }
@@ -315,7 +332,7 @@ public class X402HandlerV2
                 logger.LogError(ex, "Settlement error for path {Path}", processingResult.FullUrl);
                 if (settlementMode == SettlementMode.Pessimistic && !context.Response.HasStarted)
                 {
-                    await Respond402Async(context, processingResult.PaymentRequirements, processingResult.ResourceInfo, "settlement error: " + ex.Message);
+                    await Respond402Async(context, processingResult.PaymentRequirements, processingResult.ResourceInfo, "settlement error: " + ex.Message, extensions);
                 }
                 return;
             }
@@ -347,6 +364,71 @@ public class X402HandlerV2
             logger.LogError(ex, "Pessimistic settlement error for path {Path}", fullUrl);
             return (null, ex);
         }
+    }
+
+    /// <summary>
+    /// Settles a payment during the response phase, applying settlement overrides for the
+    /// upto and batch-settlement schemes.
+    /// </summary>
+    private async Task<SettlementResponse?> SettleDeferredAsync(HttpContext context, X402ProcessingResult processingResult)
+    {
+        var payload = processingResult.PaymentPayload!;
+        var selected = processingResult.SelectedPaymentRequirement!;
+
+        if (selected.Scheme == PaymentScheme.Exact)
+        {
+            return await facilitator.SettleAsync(payload, selected);
+        }
+
+        // Upto / batch-settlement: settle only what was actually used.
+        var authorizedMax = payload.Payload.Authorization.Value;
+        BigInteger amount;
+        var overrides = context.GetSettlementOverrides();
+        if (overrides != null)
+        {
+            var assetInfo = assetInfoProvider.GetAssetInfo(selected.Asset);
+            amount = SettlementAmountResolver.Resolve(overrides.Amount, authorizedMax, assetInfo?.Decimals);
+            logger.LogInformation("Resolved settlement override \"{Override}\" to {Amount} (authorized max {Max}) for path {Path}",
+                overrides.Amount, amount, authorizedMax, processingResult.FullUrl);
+        }
+        else
+        {
+            amount = BigInteger.Parse(authorizedMax);
+        }
+
+        if (amount == BigInteger.Zero)
+        {
+            // No on-chain transaction occurs and the client is not charged.
+            logger.LogInformation("Settlement amount resolved to 0 for path {Path}; skipping settlement", processingResult.FullUrl);
+            return new SettlementResponse
+            {
+                Success = true,
+                Transaction = null,
+                Payer = payload.ExtractPayerFromPayload(),
+                Network = selected.Network
+            };
+        }
+
+        if (selected.Scheme == PaymentScheme.BatchSettlement && channelManager != null)
+        {
+            // Record an off-chain voucher; the ChannelManager batches claims later.
+            channelManager.RecordVoucher(payload, selected, amount);
+            logger.LogInformation("Recorded batch-settlement voucher of {Amount} for path {Path}", amount, processingResult.FullUrl);
+            return new SettlementResponse
+            {
+                Success = true,
+                Transaction = null,
+                Payer = payload.ExtractPayerFromPayload(),
+                Network = selected.Network
+            };
+        }
+
+        if (selected.Scheme == PaymentScheme.BatchSettlement)
+        {
+            logger.LogWarning("No ChannelManager registered; settling batch-settlement payment per request for path {Path}", processingResult.FullUrl);
+        }
+
+        return await facilitator.SettleAsync(payload, selected, amount.ToString());
     }
 
     private async Task InvokeSettlementCallback(
@@ -415,7 +497,7 @@ public class X402HandlerV2
             pr.Asset == payload.Accepted.Asset &&
             pr.PayTo.Equals(payload.Accepted.PayTo, StringComparison.InvariantCultureIgnoreCase) &&
             pr.PayTo.Equals(payload.Payload.Authorization.To, StringComparison.InvariantCultureIgnoreCase) &&
-            pr.Amount == payload.Payload.Authorization.Value);
+            AuthorizedAmountSatisfies(pr, payload.Payload.Authorization.Value));
 
         if (selectedRequirement == null)
         {
@@ -491,6 +573,24 @@ public class X402HandlerV2
         return X402ProcessingResult.Success(paymentRequirements, resourceInfo, selectedRequirement, null!, fullUrl: fullUrl);
     }
 
+    /// <summary>
+    /// Checks whether the authorized amount in the payload satisfies the requirement's amount rule.
+    /// Exact requires the exact advertised amount; upto and batch-settlement accept any positive
+    /// authorization up to the advertised maximum.
+    /// </summary>
+    private static bool AuthorizedAmountSatisfies(PaymentRequirements pr, string authorizedValue)
+    {
+        if (pr.Scheme == PaymentScheme.Exact)
+        {
+            return pr.Amount == authorizedValue;
+        }
+
+        return BigInteger.TryParse(authorizedValue, out var authorized) &&
+               BigInteger.TryParse(pr.Amount, out var max) &&
+               authorized > BigInteger.Zero &&
+               authorized <= max;
+    }
+
     private string CreatePaymentResponseHeader(SettlementResponse sr, string? payer)
     {
         var settlementHeader = new SettlementResponseHeader(
@@ -504,7 +604,7 @@ public class X402HandlerV2
         return Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonString));
     }
 
-    private Task Respond402Async(HttpContext context, List<PaymentRequirements> paymentRequirements, ResourceInfo resource, string? error)
+    private Task Respond402Async(HttpContext context, List<PaymentRequirements> paymentRequirements, ResourceInfo resource, string? error, Dictionary<string, ExtensionData>? extensions = null)
     {
         if (context.Response.HasStarted)
         {
@@ -517,7 +617,8 @@ public class X402HandlerV2
             X402Version = 2,
             Accepts = paymentRequirements,
             Resource = resource,
-            Error = error
+            Error = error,
+            Extensions = extensions
         };
 
         string json = JsonSerializer.Serialize(prr, jsonOptions);
@@ -563,7 +664,8 @@ public class X402HandlerV2
             Extra = new PaymentRequirementsExtra
             {
                 Name = assetInfo?.Name ?? string.Empty,
-                Version = assetInfo?.Version ?? string.Empty
+                Version = assetInfo?.Version ?? string.Empty,
+                AssetTransferMethod = basic.AssetTransferMethod
             }
         };
     }

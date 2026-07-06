@@ -21,6 +21,8 @@ Install the `x402` packages from NuGet:
 - Handle payment settlement using any remote facilitator  
 - Optionally use the Coinbase facilitator (with API key)
 - Extensible AssetInfoProvider that fills in network and coin data based on the asset address
+- Payment schemes: `exact`, `upto` (usage-based billing with settlement overrides) and `batch-settlement` (payment channels with a `ChannelManager`)
+- Accept any ERC-20 token via Permit2 (`AssetTransferMethod`) with optional gas sponsorship extensions
 
 
 ### x402 enabled HttpClient
@@ -221,6 +223,120 @@ app.MapGet("/api/dynamic", (HttpContext context, string amount) =>
         };
         return schema;
     });
+```
+
+## Payment Schemes: exact, upto and batch-settlement
+
+Three payment schemes control how charges are calculated:
+- **`exact`** (default) — the client pays the exact advertised price.
+- **`upto`** — the client authorizes a maximum amount; the server settles only what was actually used (usage-based billing). EVM networks only.
+- **`batch-settlement`** — requests are recorded as signed off-chain vouchers on a payment channel; a `ChannelManager` periodically batches vouchers into a single on-chain settlement. EVM networks only.
+
+### upto
+
+Set `Scheme = PaymentScheme.Upto` (the configured `Amount` becomes the maximum the client authorizes) and call `SetSettlementOverrides` in your handler to charge the actual usage:
+
+```cs
+app.MapGet("/api/generate", (HttpContext context) =>
+{
+    var actualUsage = 40000; // e.g. based on LLM token count
+
+    // Settle only the actual usage — the client is never charged more than authorized
+    context.SetSettlementOverrides(actualUsage.ToString());
+
+    return new { Result = "Here is your generated text..." };
+})
+.RequireX402Payment(new PaymentRequiredInfo
+{
+    Resource = new ResourceInfoBasic { Description = "AI text generation — billed by token usage" },
+    Accepts = new List<PaymentRequirementsBasic>
+    {
+        new()
+        {
+            Scheme = PaymentScheme.Upto,
+            Amount = "100000", // Maximum the client authorizes (10 cents in 6-decimal USDC)
+            Asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+            PayTo = "0xYourAddressHere",
+        }
+    }
+});
+```
+
+`SetSettlementOverrides` supports three formats:
+- Raw atomic units — `"1000"` settles exactly 1,000 atomic units
+- Percentage of the authorized amount — `"50%"` or `"33.33%"` (up to two decimals, floored)
+- Dollar price — `"$0.05"`, converted to atomic units using the asset's decimals
+
+The resolved amount must be `<=` the authorized maximum. If it resolves to `0`, no on-chain transaction occurs and the client is not charged.
+
+### batch-settlement
+
+Set `Scheme = PaymentScheme.BatchSettlement` and register a `ChannelManager` so requests are recorded as off-chain vouchers instead of settling per request:
+
+```cs
+builder.Services.AddX402().WithHttpFacilitator(facilitatorUrl);
+builder.Services.AddX402ChannelManager();
+
+var app = builder.Build();
+
+// ChannelManager runs in the background: claims vouchers, settles them,
+// and refunds idle channels on the configured intervals.
+var channelManager = app.Services.GetRequiredService<ChannelManager>();
+channelManager.Start(new ChannelManagerOptions
+{
+    ClaimIntervalSecs = 60,
+    SettleIntervalSecs = 120,
+    RefundIntervalSecs = 180,
+    MaxClaimsPerBatch = 100,
+    SelectRefundChannels = (channels, ctx) =>
+        channels.Where(ch => ch.Balance > 0 && ctx.Now - ch.LastRequestTimestamp >= TimeSpan.FromMinutes(3)),
+    OnClaim = r => Console.WriteLine($"Claimed {r.Vouchers} vouchers (tx: {r.Transaction})"),
+    OnSettle = r => Console.WriteLine($"Settled {r.Amount} on {r.ChannelId}"),
+    OnRefund = r => Console.WriteLine($"Refunded channel {r.Channel}"),
+    OnError = e => Console.Error.WriteLine($"Settlement error: {e.Message}"),
+});
+
+app.Lifetime.ApplicationStopping.Register(() => channelManager.StopAsync(flush: true).GetAwaiter().GetResult());
+```
+
+Endpoint handlers can use the same `SetSettlementOverrides` formats as `upto` to bill a fraction of the authorized amount per request.
+
+## Accept Any ERC-20 Token with Permit2 (Optional, EVM)
+
+By default USDC is transferred via EIP-3009 (Transfer With Authorization). To accept any ERC-20 token, set the transfer method to Permit2 and optionally declare a gas sponsorship extension so the facilitator sponsors the buyer's one-time Permit2 approval:
+
+```cs
+using x402.Core.Extensions;
+
+new PaymentRequiredInfo
+{
+    Resource = new ResourceInfoBasic { Description = "Protected" },
+    Accepts = new List<PaymentRequirementsBasic>
+    {
+        new()
+        {
+            Amount = "1000",
+            Asset = "0xYourTokenAddress",
+            PayTo = "0xYourAddressHere",
+            AssetTransferMethod = AssetTransferMethods.Permit2,
+        }
+    },
+    // For tokens implementing EIP-2612 permit() (e.g. USDC):
+    Extensions = new Dictionary<string, ExtensionData>()
+        .With(GasSponsoringExtensions.DeclareEip2612GasSponsoringExtension()),
+    // For generic ERC-20 tokens without EIP-2612, use
+    // GasSponsoringExtensions.DeclareErc20ApprovalGasSponsoringExtension() instead.
+};
+```
+
+Gas sponsorship requires facilitator support. Verify it first via the `/supported` endpoint:
+
+```cs
+var supported = await facilitatorClient.SupportedAsync();
+if (supported.SupportsExtension(X402ExtensionKeys.Eip2612GasSponsoring))
+{
+    // safe to declare the extension on your routes
+}
 ```
 
 ## Coinbase Facilitator
