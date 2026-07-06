@@ -61,8 +61,12 @@ public class X402HandlerV2
 
         ResourceInfo resourceInfo = new ResourceInfo
         {
+            Url = paymentRequiredInfo.Resource?.Resource ?? string.Empty,
             Description = paymentRequiredInfo.Resource?.Description ?? string.Empty,
             MimeType = paymentRequiredInfo.Resource?.MimeType ?? string.Empty,
+            ServiceName = paymentRequiredInfo.Resource?.ServiceName,
+            Tags = paymentRequiredInfo.Resource?.Tags,
+            IconUrl = paymentRequiredInfo.Resource?.IconUrl,
         };
 
         var result = await HandleX402Async(resourceInfo, paymentRequirements, paymentRequiredInfo.Discoverable, settlementMode, onSettlement, onSetOutputSchema, paymentRequiredInfo.Extensions);

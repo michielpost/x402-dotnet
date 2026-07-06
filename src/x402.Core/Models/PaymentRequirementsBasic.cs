@@ -34,6 +34,24 @@ namespace x402.Core.Models
         /// Optional: URL to the resource. If null, it will be auto filled with the request URL.
         /// </summary>
         public string? Resource { get; set; }
+
+        /// <summary>
+        /// Optional: human-readable name of the service, shown by discovery layers (e.g. the Bazaar).
+        /// Max 32 printable ASCII characters; facilitators silently drop invalid values.
+        /// </summary>
+        public string? ServiceName { get; set; }
+
+        /// <summary>
+        /// Optional: topical tags used for facilitator-side filtering and search.
+        /// Max 5 tags of 32 printable ASCII characters each.
+        /// </summary>
+        public List<string>? Tags { get; set; }
+
+        /// <summary>
+        /// Optional: icon shown by discovery layers. Must be an absolute http(s) URL
+        /// (no IP literals or loopback hostnames), max 2048 characters.
+        /// </summary>
+        public string? IconUrl { get; set; }
     }
 
     /// <summary>

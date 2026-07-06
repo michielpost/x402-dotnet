@@ -38,7 +38,11 @@ namespace x402.SampleWeb.Controllers
 
         [HttpGet]
         [Route("protected")]
-        [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", Discoverable = true, Version = 2, SettlementMode = SettlementMode.Pessimistic)]
+        [PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0x7D95514aEd9f13Aa89C8e5Ed9c29D08E8E9BfA37", Discoverable = true, Version = 2, SettlementMode = SettlementMode.Pessimistic,
+            Description = "Sample protected resource.",
+            ServiceName = "x402 SampleWeb",
+            Tags = new[] { "sample", "demo" },
+            IconUrl = "https://raw.githubusercontent.com/michielpost/x402-dotnet/master/images/x402-button-small.png")]
         public ActionResult<SampleResult> Protected()
         {
             // Optional: Retrieve the X402 result from HttpContext

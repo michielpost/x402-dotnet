@@ -111,7 +111,6 @@ namespace x402.Facilitator
         {
             logger.LogDebug("Requesting discovery resource list");
 
-            var baseUrl = "discovery/resources";
             var queryParams = new List<string>();
 
             if (!string.IsNullOrEmpty(type))
@@ -123,11 +122,78 @@ namespace x402.Facilitator
             if (offset.HasValue)
                 queryParams.Add($"offset={offset.Value}");
 
-            var discoveryUrl = queryParams.Count > 0
+            return await GetDiscoveryAsync<DiscoveryResponse>("discovery/resources", queryParams, cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task<MerchantDiscoveryResponse> DiscoveryMerchantAsync(string payTo, int? limit = null, int? offset = null, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(payTo))
+                throw new ArgumentException("payTo is required", nameof(payTo));
+
+            logger.LogDebug("Requesting merchant discovery info for {PayTo}", payTo);
+
+            var queryParams = new List<string>
+            {
+                $"payTo={Uri.EscapeDataString(payTo)}"
+            };
+
+            if (limit.HasValue)
+                queryParams.Add($"limit={limit.Value}");
+
+            if (offset.HasValue)
+                queryParams.Add($"offset={offset.Value}");
+
+            return await GetDiscoveryAsync<MerchantDiscoveryResponse>("discovery/merchant", queryParams, cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task<DiscoverySearchResponse> DiscoverySearchAsync(DiscoverySearchRequest searchRequest, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(searchRequest);
+
+            logger.LogDebug("Searching discovery resources with query {Query}", searchRequest.Query);
+
+            var queryParams = new List<string>();
+
+            if (!string.IsNullOrEmpty(searchRequest.Query))
+                queryParams.Add($"query={Uri.EscapeDataString(searchRequest.Query)}");
+
+            if (!string.IsNullOrEmpty(searchRequest.Network))
+                queryParams.Add($"network={Uri.EscapeDataString(searchRequest.Network)}");
+
+            if (!string.IsNullOrEmpty(searchRequest.Asset))
+                queryParams.Add($"asset={Uri.EscapeDataString(searchRequest.Asset)}");
+
+            if (!string.IsNullOrEmpty(searchRequest.Scheme))
+                queryParams.Add($"scheme={Uri.EscapeDataString(searchRequest.Scheme)}");
+
+            if (!string.IsNullOrEmpty(searchRequest.PayTo))
+                queryParams.Add($"payTo={Uri.EscapeDataString(searchRequest.PayTo)}");
+
+            if (!string.IsNullOrEmpty(searchRequest.UrlSubstring))
+                queryParams.Add($"urlSubstring={Uri.EscapeDataString(searchRequest.UrlSubstring)}");
+
+            if (!string.IsNullOrEmpty(searchRequest.MaxUsdPrice))
+                queryParams.Add($"maxUsdPrice={Uri.EscapeDataString(searchRequest.MaxUsdPrice)}");
+
+            if (searchRequest.Extensions != null)
+            {
+                foreach (var extension in searchRequest.Extensions)
+                    queryParams.Add($"extensions={Uri.EscapeDataString(extension)}");
+            }
+
+            if (searchRequest.Limit.HasValue)
+                queryParams.Add($"limit={searchRequest.Limit.Value}");
+
+            return await GetDiscoveryAsync<DiscoverySearchResponse>("discovery/search", queryParams, cancellationToken).ConfigureAwait(false);
+        }
+
+        private async Task<T> GetDiscoveryAsync<T>(string baseUrl, List<string> queryParams, CancellationToken cancellationToken) where T : new()
+        {
+            var relativeUrl = queryParams.Count > 0
                 ? $"{baseUrl}?{string.Join("&", queryParams)}"
                 : baseUrl;
 
-            var url = BuildUrl(discoveryUrl, HttpMethod.Get);
+            var url = BuildUrl(relativeUrl, HttpMethod.Get);
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             PrepareRequest(request);
 
@@ -136,11 +202,11 @@ namespace x402.Facilitator
             if (!response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                logger.LogWarning("Discover resources request failed with status {StatusCode}: {Content}", (int)response.StatusCode, content);
+                logger.LogWarning("Discovery request to {Url} failed with status {StatusCode}: {Content}", baseUrl, (int)response.StatusCode, content);
                 throw new HttpRequestException($"HTTP {(int)response.StatusCode}: {content}");
             }
 
-            var result = await response.Content.ReadFromJsonAsync<DiscoveryResponse>(JsonOptions, cancellationToken).ConfigureAwait(false);
+            var result = await response.Content.ReadFromJsonAsync<T>(JsonOptions, cancellationToken).ConfigureAwait(false);
 
             return result ?? new();
         }
