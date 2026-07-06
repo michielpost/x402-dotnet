@@ -9,6 +9,11 @@
         public string Name { get; set; } = string.Empty;
         public string Version { get; set; } = string.Empty;
         public NetworkType NetworkType { get; set; }
+
+        /// <summary>
+        /// Number of decimals of the asset. Used to convert dollar-denominated prices to atomic units.
+        /// </summary>
+        public int Decimals { get; init; } = 6;
     }
 
     public enum NetworkType

@@ -46,14 +46,15 @@ namespace x402.Facilitator
             return result;
         }
 
-        public async Task<SettlementResponse> SettleAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements req, CancellationToken cancellationToken = default)
+        public async Task<SettlementResponse> SettleAsync(PaymentPayloadHeader paymentPayload, PaymentRequirements req, string? settlementAmount = null, CancellationToken cancellationToken = default)
         {
             logger.LogInformation("Settling payment on network {Network} to {PayTo}", req.Network, req.PayTo);
             var body = new FacilitatorRequest
             {
                 X402Version = paymentPayload.X402Version,
                 PaymentPayload = paymentPayload,
-                PaymentRequirements = req
+                PaymentRequirements = req,
+                SettlementInfo = settlementAmount == null ? null : new SettlementInfo { Amount = settlementAmount }
             };
 
             var url = BuildUrl("settle", HttpMethod.Post);

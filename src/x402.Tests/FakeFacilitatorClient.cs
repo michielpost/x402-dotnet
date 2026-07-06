@@ -8,6 +8,16 @@ namespace x402.Tests
         public Func<Core.Models.v2.PaymentPayloadHeader, Core.Models.v2.PaymentRequirements, Task<VerificationResponse>>? VerifyAsyncImpl { get; set; }
         public Func<Core.Models.v2.PaymentPayloadHeader, Core.Models.v2.PaymentRequirements, Task<SettlementResponse>>? SettleAsyncImpl { get; set; }
 
+        /// <summary>
+        /// The settlementAmount passed to the most recent SettleAsync call.
+        /// </summary>
+        public string? LastSettlementAmount { get; private set; }
+
+        /// <summary>
+        /// Number of SettleAsync calls received.
+        /// </summary>
+        public int SettleCallCount { get; private set; }
+
         public Task<SupportedResponse> SupportedAsync(CancellationToken cancellationToken = default)
         {
             return Task.FromResult(new SupportedResponse());
@@ -19,8 +29,10 @@ namespace x402.Tests
             return Task.FromResult(new VerificationResponse { IsValid = true });
         }
 
-        Task<SettlementResponse> IFacilitatorV2Client.SettleAsync(Core.Models.v2.PaymentPayloadHeader paymentPayload, Core.Models.v2.PaymentRequirements requirements, CancellationToken cancellationToken)
+        Task<SettlementResponse> IFacilitatorV2Client.SettleAsync(Core.Models.v2.PaymentPayloadHeader paymentPayload, Core.Models.v2.PaymentRequirements requirements, string? settlementAmount, CancellationToken cancellationToken)
         {
+            LastSettlementAmount = settlementAmount;
+            SettleCallCount++;
             if (SettleAsyncImpl != null) return SettleAsyncImpl(paymentPayload, requirements);
             return Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xabc", Network = requirements.Network });
         }

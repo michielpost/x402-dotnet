@@ -50,6 +50,29 @@ namespace x402.Core.Models.v2
     {
         public string? Name { get; set; }
         public string? Version { get; set; }
+
+        /// <summary>
+        /// The EVM transfer method used to move the asset. Defaults to EIP-3009
+        /// (Transfer With Authorization) when null. Set to <see cref="AssetTransferMethods.Permit2"/>
+        /// to accept any ERC-20 token via Permit2.
+        /// </summary>
+        public string? AssetTransferMethod { get; set; }
+    }
+
+    /// <summary>
+    /// Known values for <see cref="PaymentRequirementsExtra.AssetTransferMethod"/>.
+    /// </summary>
+    public static class AssetTransferMethods
+    {
+        /// <summary>
+        /// EIP-3009 Transfer With Authorization (default; requires no on-chain approval from buyers).
+        /// </summary>
+        public const string Eip3009 = "eip3009";
+
+        /// <summary>
+        /// Permit2 transfers, allowing any ERC-20 token to be accepted.
+        /// </summary>
+        public const string Permit2 = "permit2";
     }
 
     public class OutputSchema

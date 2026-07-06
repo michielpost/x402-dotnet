@@ -1,4 +1,5 @@
 ﻿using x402.Core.Enums;
+using x402.Core.Models.v2;
 
 namespace x402.Core.Models
 {
@@ -8,6 +9,12 @@ namespace x402.Core.Models
         public required List<PaymentRequirementsBasic> Accepts { get; set; }
 
         public bool Discoverable { get; set; }
+
+        /// <summary>
+        /// Optional x402 extensions declared for this resource (e.g. gas sponsorship extensions).
+        /// Included in the 402 Payment Required response.
+        /// </summary>
+        public Dictionary<string, ExtensionData>? Extensions { get; set; }
 
     }
 
@@ -65,6 +72,12 @@ namespace x402.Core.Models
         /// The maximum timeout in seconds.
         /// </summary>
         public int MaxTimeoutSeconds { get; set; } = 60;
+
+        /// <summary>
+        /// Optional EVM transfer method (e.g. <see cref="AssetTransferMethods.Permit2"/>).
+        /// When null, the default EIP-3009 Transfer With Authorization is used.
+        /// </summary>
+        public string? AssetTransferMethod { get; set; }
     }
 
 }
