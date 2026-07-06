@@ -65,7 +65,7 @@ namespace x402.Tests
         [Test]
         public async Task DiscoveryAsync_BuildsUrl_AndDeserializesMetadata()
         {
-            var json = $$$"""{"x402Version":2,"items":[{{ItemJson}}],"pagination":{"limit":20,"offset":0,"total":1}}""";
+            var json = $$$"""{"x402Version":2,"items":[{{{ItemJson}}}],"pagination":{"limit":20,"offset":0,"total":1}}""";
             var (client, handler) = CreateClient(json);
 
             var result = await client.DiscoveryAsync(type: "http", limit: 20, offset: 5);
@@ -87,7 +87,7 @@ namespace x402.Tests
         public async Task DiscoveryMerchantAsync_BuildsUrl_AndDeserializesResources()
         {
             var payTo = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e";
-            var json = $$$"""{"x402Version":2,"payTo":"{{payTo}}","resources":[{{ItemJson}}],"pagination":{"limit":20,"offset":0,"total":1}}""";
+            var json = $$$"""{"x402Version":2,"payTo":"{{{payTo}}}","resources":[{{{ItemJson}}}],"pagination":{"limit":20,"offset":0,"total":1}}""";
             var (client, handler) = CreateClient(json);
 
             var result = await client.DiscoveryMerchantAsync(payTo, limit: 10, offset: 0);
@@ -123,7 +123,7 @@ namespace x402.Tests
                 Limit = 5
             });
 
-            Assert.That(handler.LastRequest!.RequestUri!.ToString(),
+            Assert.That(handler.LastRequest!.RequestUri!.AbsoluteUri,
                 Is.EqualTo("https://facilitator.example/discovery/search" +
                     "?query=weather%20forecast&network=eip155%3A8453&scheme=exact" +
                     "&urlSubstring=api.example.com&maxUsdPrice=1.00" +

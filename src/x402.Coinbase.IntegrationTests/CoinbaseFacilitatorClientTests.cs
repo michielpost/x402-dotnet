@@ -92,5 +92,37 @@ namespace x402.Coinbase.IntegrationTests
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Items.Count, Is.GreaterThan(0));
         }
+
+        [Test]
+        public async Task DiscoveryMerchantAsync_ShouldReturnMerchantResources()
+        {
+            // Take a payTo address from the public discovery list so the lookup has data
+            var discovery = await client.DiscoveryAsync(limit: 20);
+            var payTo = discovery.Items.SelectMany(i => i.Accepts).Select(a => a.PayTo).First();
+
+            var result = await client.DiscoveryMerchantAsync(payTo);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.PayTo, Is.EqualTo(payTo).IgnoreCase);
+            Assert.That(result.Resources.Count, Is.GreaterThan(0));
+            TestContext.Out.WriteLine($"Merchant {payTo} has {result.Pagination.Total} resources");
+        }
+
+        [Test]
+        public async Task DiscoverySearchAsync_ShouldReturnResults()
+        {
+            var result = await client.DiscoverySearchAsync(new Core.Models.v2.Facilitator.DiscoverySearchRequest
+            {
+                Query = "data",
+                Limit = 5
+            });
+
+            Assert.That(result, Is.Not.Null);
+            TestContext.Out.WriteLine($"Search method: {result.SearchMethod}, partial: {result.PartialResults}, results: {result.Resources.Count}");
+            foreach (var resource in result.Resources)
+            {
+                TestContext.Out.WriteLine($"  {resource.ServiceName ?? "(no serviceName)"} - {resource.Resource}");
+            }
+        }
     }
 }

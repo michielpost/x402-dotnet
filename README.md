@@ -23,6 +23,7 @@ Install the `x402` packages from NuGet:
 - Extensible AssetInfoProvider that fills in network and coin data based on the asset address
 - Payment schemes: `exact`, `upto` (usage-based billing with settlement overrides) and `batch-settlement` (payment channels with a `ChannelManager`)
 - Accept any ERC-20 token via Permit2 (`AssetTransferMethod`) with optional gas sponsorship extensions
+- Discovery layer (Bazaar) support: expose `serviceName`, `tags` and `iconUrl` metadata on your endpoints, and query the facilitator's discovery API (list, merchant lookup, search)
 
 
 ### x402 enabled HttpClient
@@ -337,6 +338,51 @@ if (supported.SupportsExtension(X402ExtensionKeys.Eip2612GasSponsoring))
 {
     // safe to declare the extension on your routes
 }
+```
+
+## Discovery layer (Bazaar)
+
+Endpoints with `Discoverable = true` are indexed by the facilitator's discovery layer (e.g. the Coinbase Bazaar).
+You can enrich your listing with provider-level metadata on the resource object of the 402 response:
+`serviceName` (max 32 printable ASCII chars), `tags` (max 5 tags of 32 chars each) and `iconUrl`
+(absolute http(s) URL, no IP literals or loopback hostnames). Facilitators silently drop fields that fail validation.
+
+Using the attribute:
+```cs
+[PaymentRequired("1000", "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "0xYourAddressHere",
+    Discoverable = true,
+    Description = "Premium API access for data analysis.",
+    ServiceName = "Premium Data API",
+    Tags = new[] { "data", "analytics" },
+    IconUrl = "https://example.com/icon.png")]
+```
+
+Or on `ResourceInfoBasic` when using `PaymentRequiredInfo` (middleware, Minimal APIs or `X402HandlerV2`):
+```cs
+Resource = new ResourceInfoBasic
+{
+    Description = "Premium API access for data analysis.",
+    ServiceName = "Premium Data API",
+    Tags = new List<string> { "data", "analytics" },
+    IconUrl = "https://example.com/icon.png",
+}
+```
+
+Query the discovery API through any `IFacilitatorV2Client`:
+```cs
+// List all discovered resources (paginated)
+var resources = await facilitatorClient.DiscoveryAsync(type: "http", limit: 100, offset: 0);
+
+// Look up all resources of a merchant by payment address
+var merchant = await facilitatorClient.DiscoveryMerchantAsync("0x742d35Cc6634C0532925a3b844Bc454e4438f44e");
+
+// Search resources with a text query and filters
+var search = await facilitatorClient.DiscoverySearchAsync(new DiscoverySearchRequest
+{
+    Query = "weather forecast",
+    Network = "eip155:8453",
+    MaxUsdPrice = "1.00",
+});
 ```
 
 ## Coinbase Facilitator
