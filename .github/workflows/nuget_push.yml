@@ -47,3 +47,6 @@ jobs:
 
     - name: Publish x402.Client.EVM
       run: dotnet nuget push src/x402.Client.EVM/bin/Release/*.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+    - name: Publish x402.Client.Casper
+      run: dotnet nuget push src/x402.Client.Casper/bin/Release/*.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

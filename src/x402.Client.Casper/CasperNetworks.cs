@@ -27,12 +27,6 @@ namespace x402.Client.Casper
         public const string WCsprVersion = "1";
 
         /// <summary>
-        /// Public Casper facilitator, which verifies and settles payments on both
-        /// Casper networks.
-        /// </summary>
-        public const string FacilitatorUrl = "https://x402-facilitator.cspr.cloud";
-
-        /// <summary>
         /// Returns whether a network identifier names a Casper network.
         /// </summary>
         /// <param name="network">CAIP-2 network identifier.</param>
