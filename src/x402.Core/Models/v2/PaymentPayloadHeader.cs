@@ -88,6 +88,13 @@ namespace x402.Core.Models.v2
         /// EIP-3009 authorization parameter
         /// </summary>
         public required Authorization Authorization { get; set; }
+
+        /// <summary>
+        /// Public key of the signer, hex encoded. Only used by networks where the
+        /// signer cannot be recovered from the signature alone, such as Casper.
+        /// Omitted from the serialized header when null.
+        /// </summary>
+        public string? PublicKey { get; set; }
     }
 
     public class Authorization

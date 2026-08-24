@@ -34,6 +34,7 @@ Install the `x402.Client.EVM` package from NuGet:
 - Transparant access x402-protected resources
 - Fully HttpClient compatible
 - Pay using the embedded EVM compatible wallet (Ethereum / Base)
+- Pay on the Casper Network with `x402.Client.Casper` (wCSPR settlement, Ed25519 and secp256k1 keys)
 - Set allowances per request or globally
 - X402.Client.ConsoleSample sample application included
 - Blazor Sample project available
@@ -420,6 +421,54 @@ Console.WriteLine($"Final: {(int)response.StatusCode} {response.ReasonPhrase}");
 
 See `X402.Client.ConsoleSample` for a complete example.
 
+## x402 HttpClient on Casper
+
+Install the `x402.Client.Casper` package to pay on the Casper Network, where
+payments settle in wCSPR (a CEP-18 token with 9 decimals) rather than USDC.
+
+```cs
+// Load a Casper key from a PEM file, the format the Casper client and the
+// cspr.live wallet export
+var wallet = CasperWallet.FromPem("secret_key.pem", CasperNetworks.Testnet)
+{
+    IgnoreAllowances = true
+};
+
+var handler = new PaymentRequiredV2Handler(new WalletProvider(wallet));
+
+var client = new HttpClient(handler);
+var response = await client.GetAsync("https://your-casper-resource/protected");
+```
+
+Casper uses CAIP-2 network identifiers, `casper:casper` for mainnet and
+`casper:casper-test` for the testnet, and the asset is the CEP-18 contract
+package hash of the settlement token:
+
+```cs
+new PaymentRequirementsBasic
+{
+    Amount = "1000000000", // 1 wCSPR, in motes
+    Asset = "3d80df21ba4ee4d66a2a1f60c32570dd5685e4b279f6538162a5fd1314847c1e", // wCSPR on casper-test
+    PayTo = "00...", // recipient account hash, prefixed with 00
+    Extra = new PaymentRequirementsExtra { Name = "Wrapped CSPR", Version = "1" }
+}
+```
+
+`extra.name` and `extra.version` are required on Casper: together with the
+network id and the contract package hash they form the EIP-712 domain that the
+authorization is signed against, so a payment missing them is rejected by the
+facilitator rather than merely being incomplete.
+
+Settle Casper payments with the Casper facilitator:
+
+```cs
+builder.Services.AddX402().WithHttpFacilitator("https://x402-facilitator.cspr.cloud");
+```
+
+Keys are signed locally: `CasperWallet` supports Ed25519 and secp256k1 keys, and
+an overload taking a signing delegate lets you keep the key in a hardware wallet
+or a key management service.
+
 ## x402-dotnet Facilitator
 Explore the `x402.FacilitatorWeb` project for a dotnet based facilitator for EVM and Solana networks.
 
@@ -443,6 +492,7 @@ List of facilitators you can use:
 - https://facilitator.payai.network
 - https://facilitator.mogami.tech/
 - https://facilitator.daydreams.systems
+- https://x402-facilitator.cspr.cloud (Casper, requires API key)
 
 View more facilitators and their status on https://www.x402dev.com
 

@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/Beta/">
     <Project Path="x402.Client.Solana/x402.Client.Solana.csproj" Id="9fab5c3c-5053-4ad6-829e-0e465839985d" />
+    <Project Path="x402.Client.Casper/x402.Client.Casper.csproj" />
     <Project Path="x402.Facilitator.EVM/x402.Facilitator.EVM.csproj" Id="8570a9eb-24ff-4dcc-a200-4727a7786115" />
     <Project Path="x402.Facilitator.Solana/x402.Facilitator.Solana.csproj" Id="73197c2f-91e7-4846-8591-49a72b81e2e7" />
     <Project Path="x402.Facilitator/x402.Facilitator.csproj" Id="4fb22d74-359c-439e-931e-94b1278db117" />
@@ -22,6 +23,7 @@
     <Project Path="x402.SampleWeb/x402.SampleWeb.csproj" />
   </Folder>
   <Folder Name="/Tests/">
+    <Project Path="x402.Client.Casper.Tests/x402.Client.Casper.Tests.csproj" />
     <Project Path="x402.Client.EVM.IntegrationTests/x402.Client.EVM.IntegrationTests.csproj" Id="0b6f262a-d6a7-421b-9584-8673af556ffa" />
     <Project Path="x402.Client.EVM.Tests/x402.Client.EVM.Tests.csproj" Id="923302bb-db20-4b24-bc49-8ceb0eda1d57" />
     <Project Path="x402.Client.Solana.IntegrationTests/x402.Client.Solana.IntegrationTests.csproj" Id="2ae65d65-7e70-4316-a845-670485d262f2" />
