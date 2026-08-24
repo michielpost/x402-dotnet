@@ -488,6 +488,7 @@ Follow these steps to test a x402 payment on the sample website hosted on Azure:
 
 ## Public Facilitators
 List of facilitators you can use:
+- https://facilitator.arispay.app (ArisPay, Base mainnet, no signup or API key)
 - https://api.cdp.coinbase.com/platform/v2/x402/ (Coinbase, requires API key)
 - https://facilitator.payai.network
 - https://facilitator.mogami.tech/
@@ -495,6 +496,14 @@ List of facilitators you can use:
 - https://x402-facilitator.cspr.cloud (Casper, requires API key)
 
 View more facilitators and their status on https://www.x402dev.com
+
+To select ArisPay explicitly without changing any library default:
+
+```cs
+builder.Services
+    .AddX402()
+    .WithHttpFacilitator("https://facilitator.arispay.app");
+```
 
 
 ## Development
@@ -513,4 +522,3 @@ Useful tools when developing x402 solutions:
 - Dev tools https://x402dev.com
 - Test tool https://proxy402.com/fetch
 - Specifications: https://github.com/coinbase/x402/blob/main/specs/x402-specification-v2.md
-
