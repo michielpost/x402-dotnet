@@ -16,7 +16,7 @@ namespace x402.Client.Tests
             var body = new PaymentRequiredResponse
             {
                 X402Version = 2,
-                Resource = new(),
+                Resource = new() { Url = "https://unit.test/resource" },
                 Accepts = accepts.ToList()
             };
             var json = JsonSerializer.Serialize(body, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
@@ -116,6 +116,11 @@ namespace x402.Client.Tests
             Assert.That(retryRequest.Headers.TryGetValues("PAYMENT-SIGNATURE", out var values), Is.True);
             var value = values!.Single();
             Assert.That(string.IsNullOrWhiteSpace(value), Is.False);
+
+            var headerJson = Encoding.UTF8.GetString(Convert.FromBase64String(value));
+            var payload = JsonSerializer.Deserialize<PaymentPayloadHeader>(headerJson, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+            Assert.That(payload, Is.Not.Null);
+            Assert.That(payload!.Payload.Resource, Is.EqualTo("https://unit.test/resource"));
         }
 
         [Test]

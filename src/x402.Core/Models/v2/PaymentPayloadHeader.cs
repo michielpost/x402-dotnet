@@ -95,6 +95,13 @@ namespace x402.Core.Models.v2
         /// Omitted from the serialized header when null.
         /// </summary>
         public string? PublicKey { get; set; }
+
+        /// <summary>
+        /// URL of the resource this payment was created for. Echoed from the
+        /// PAYMENT-REQUIRED response so the server can bind the payment to the
+        /// requested resource. Omitted from the serialized header when null.
+        /// </summary>
+        public string? Resource { get; set; }
     }
 
     public class Authorization

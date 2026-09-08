@@ -85,22 +85,29 @@ namespace x402.Tests
             };
         }
 
-        private static string CreateHeaderB64(PaymentRequirements accepted, string authorizedValue, string from = "0xabc")
+        private static string CreateHeaderB64(PaymentRequirements accepted, string authorizedValue, string from = "0xabc", string? resource = null)
         {
+            var payloadFields = new Dictionary<string, object?>
+            {
+                { "authorization", new Dictionary<string, object?> {
+                    { "from", from },
+                    { "to", accepted.PayTo },
+                    { "value", authorizedValue },
+                    { "validBefore", DateTimeOffset.UtcNow.AddSeconds(5).ToUnixTimeSeconds().ToString() },
+                    { "validAfter", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString() }
+                } }
+            };
+
+            if (resource != null)
+            {
+                payloadFields.Add("resource", $"http://localhost{resource}");
+            }
+
             var payload = new
             {
                 x402Version = 2,
                 accepted = accepted,
-                payload = new Dictionary<string, object?>
-                {
-                    { "authorization", new Dictionary<string, object?> {
-                        { "from", from },
-                        { "to", accepted.PayTo },
-                        { "value", authorizedValue },
-                        { "validBefore", DateTimeOffset.UtcNow.AddSeconds(5).ToUnixTimeSeconds().ToString() },
-                        { "validAfter", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString() }
-                    } }
-                }
+                payload = payloadFields
             };
             string json = JsonSerializer.Serialize(payload, new JsonSerializerOptions(JsonSerializerDefaults.Web));
             return Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
@@ -109,7 +116,7 @@ namespace x402.Tests
         private static HttpRequestMessage CreateRequest(string path, PaymentRequirements accepted, string authorizedValue)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, path);
-            request.Headers.Add("PAYMENT-SIGNATURE", CreateHeaderB64(accepted, authorizedValue));
+            request.Headers.Add("PAYMENT-SIGNATURE", CreateHeaderB64(accepted, authorizedValue, resource: path));
             return request;
         }
 

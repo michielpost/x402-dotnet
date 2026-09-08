@@ -135,21 +135,27 @@ namespace x402.Tests
 
         private static string CreateHeaderJson(PaymentRequirements accepted, string? resource = null, string? from = null, string? network = "eip155:84532", string to = "0x0000000000000000000000000000000000000001", string value = "1")
         {
+            var payloadFields = new Dictionary<string, object?>
+            {
+                { "authorization", new Dictionary<string, object?> {
+                    { "from", from ?? "0xF00" },
+                    { "to", to } ,
+                    { "value", value },
+                    { "validBefore", DateTimeOffset.UtcNow.AddSeconds(5).ToUnixTimeSeconds().ToString() },
+                    { "validAfter", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString() }
+                } }
+            };
+
+            if (resource != null)
+            {
+                payloadFields.Add("resource", $"http://localhost{resource}");
+            }
+
             var payload = new
             {
                 x402Version = 2,
                 accepted = accepted,
-                payload = new Dictionary<string, object?>
-                {
-                    { "authorization", new Dictionary<string, object?> {
-                        { "from", from ?? "0xF00" },
-                        { "to", to } ,
-                        { "value", value },
-                        { "validBefore", DateTimeOffset.UtcNow.AddSeconds(5).ToUnixTimeSeconds().ToString() },
-                        { "validAfter", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString() }
-                    } },
-                    { "resource", $"http://localhost{resource}" }
-                }
+                payload = payloadFields
             };
             return JsonSerializer.Serialize(payload, new JsonSerializerOptions(JsonSerializerDefaults.Web));
         }
@@ -188,6 +194,47 @@ namespace x402.Tests
             Assert.That(resp.StatusCode, Is.EqualTo((System.Net.HttpStatusCode)StatusCodes.Status402PaymentRequired));
         }
 
+
+        [Test]
+        public async Task ResourceMismatch_Returns402()
+        {
+            var facilitator = new FakeFacilitatorClient
+            {
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, _) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xdead" })
+            };
+            var reqs = CreateRequirements("/paid-b");
+            using var host = BuildHost(facilitator, "/paid-b", reqs);
+            var client = host.GetTestClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "/paid-b");
+            // Header created for /paid-a but presented to /paid-b: same scheme/network/amount/asset/payTo
+            request.Headers.Add("PAYMENT-SIGNATURE", CreateHeaderB64(reqs, resource: "/paid-a", from: "0xabc"));
+
+            var resp = await client.SendAsync(request);
+
+            Assert.That(resp.StatusCode, Is.EqualTo((System.Net.HttpStatusCode)StatusCodes.Status402PaymentRequired));
+            Assert.That(facilitator.LastSettlementAmount, Is.Null);
+        }
+
+        [Test]
+        public async Task MissingResource_Returns402()
+        {
+            var facilitator = new FakeFacilitatorClient
+            {
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, _) => Task.FromResult(new SettlementResponse { Success = true, Transaction = "0xdead" })
+            };
+            var reqs = CreateRequirements("/no-resource");
+            using var host = BuildHost(facilitator, "/no-resource", reqs);
+            var client = host.GetTestClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "/no-resource");
+            request.Headers.Add("PAYMENT-SIGNATURE", CreateHeaderB64(reqs, resource: null, from: "0xabc"));
+
+            var resp = await client.SendAsync(request);
+
+            Assert.That(resp.StatusCode, Is.EqualTo((System.Net.HttpStatusCode)StatusCodes.Status402PaymentRequired));
+            Assert.That(facilitator.LastSettlementAmount, Is.Null);
+        }
 
         [Test]
         public async Task InvalidVerification_Returns402()

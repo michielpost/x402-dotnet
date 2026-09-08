@@ -80,6 +80,15 @@ public class PaymentRequiredV2Handler : DelegatingHandler
             }
 
             var header = await _walletProvider.Wallet.CreateHeaderAsync(selectedRequirement, cancellationToken);
+
+            // Bind the payment to the advertised resource so the server can verify
+            // the payment was created for this resource.
+            var advertisedResource = paymentRequiredResponse.Resource?.Url;
+            if (header.Payload != null && !string.IsNullOrEmpty(advertisedResource))
+            {
+                header.Payload.Resource = advertisedResource;
+            }
+
             retries++;
             _walletProvider.RaiseOnHeaderCreated(new HeaderCreatedEventArgs<PaymentPayloadHeader>(header, retries));
 

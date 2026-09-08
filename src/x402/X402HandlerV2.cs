@@ -494,6 +494,31 @@ public class X402HandlerV2
 
     private async Task<X402ProcessingResult> ValidatePayload(List<PaymentRequirements> paymentRequirements, ResourceInfo resourceInfo, PaymentPayloadHeader payload, string fullUrl)
     {
+        var payloadResource = payload.Payload.Resource;
+        if (string.IsNullOrWhiteSpace(payloadResource))
+        {
+            logger.LogWarning("Payment payload is missing the resource binding for path {Path}", fullUrl);
+            return X402ProcessingResult.CreateError(
+                paymentRequirements,
+                resourceInfo,
+                "Payment payload is missing the resource binding",
+                StatusCodes.Status402PaymentRequired,
+                paymentPayload: payload,
+                fullUrl: fullUrl);
+        }
+
+        if (!ResourceMatches(payloadResource, fullUrl) && !ResourceMatches(payloadResource, resourceInfo.Url))
+        {
+            logger.LogWarning("Payment payload resource {PayloadResource} does not match the requested resource {RequestUrl}", payloadResource, fullUrl);
+            return X402ProcessingResult.CreateError(
+                paymentRequirements,
+                resourceInfo,
+                "Payment payload resource does not match the requested resource",
+                StatusCodes.Status402PaymentRequired,
+                paymentPayload: payload,
+                fullUrl: fullUrl);
+        }
+
         var selectedRequirement = paymentRequirements.FirstOrDefault(pr =>
             pr.Scheme == payload.Accepted.Scheme &&
             pr.Network.Equals(payload.Accepted.Network, StringComparison.InvariantCultureIgnoreCase) &&
@@ -575,6 +600,17 @@ public class X402HandlerV2
 
 
         return X402ProcessingResult.Success(paymentRequirements, resourceInfo, selectedRequirement, null!, fullUrl: fullUrl);
+    }
+
+    private static bool ResourceMatches(string payloadResource, string? expectedResource)
+    {
+        if (string.IsNullOrWhiteSpace(expectedResource))
+        {
+            return false;
+        }
+
+        static string Normalize(string url) => url.Trim().TrimEnd('/').ToLowerInvariant();
+        return Normalize(payloadResource) == Normalize(expectedResource);
     }
 
     /// <summary>
