@@ -476,10 +476,9 @@ Explore the `x402.FacilitatorWeb` project for a dotnet based facilitator for EVM
 ## How to test?
 Follow these steps to test a x402 payment on the sample website hosted on Azure:
 - Get some `USDC` tokens on the `base-sepolia` network from the [Coinbase Faucet](https://faucet.circle.com/)
-- Use the x402 Debug Tool: https://proxy402.com/fetch
-- Enter an API endpoint from the [test website](https://x402-dotnet.azurewebsites.net/), for example:
-  - `https://x402-dotnet.azurewebsites.net/resource/middleware` (controller + middleware)
-  - `https://x402-dotnet.azurewebsites.net/api/minimal/protected` (Minimal API)
+- Use the x402 Debug Tool: https://www.x402dev.com/resource-tester
+- Enter an API endpoint, for example:
+  - `https://api2.x402dev.com/resourcev2/middleware`
 - Connect your wallet
 - Click Pay
 - Payment will complete and show the result: `Protected by middleware`
