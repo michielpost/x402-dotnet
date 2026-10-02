@@ -75,14 +75,13 @@ namespace x402.Tests
         }
 
         [Test]
-        public void VerifyAsync_NonSuccess_Throws()
+        public async System.Threading.Tasks.Task VerifyAsync_NonSuccess_Throws()
         {
             var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
             {
                 Content = new StringContent("oops")
             });
-
-            Assert.ThrowsAsync<HttpRequestException>(async () => await client.VerifyAsync(emptyPayloadHeader, CreateReqs()));
+            await Assert.ThrowsAsync<HttpRequestException>(async () => await client.VerifyAsync(emptyPayloadHeader, CreateReqs()));
         }
 
         [Test]
@@ -105,13 +104,13 @@ namespace x402.Tests
         }
 
         [Test]
-        public void SettleAsync_NonSuccess_Throws()
+        public async System.Threading.Tasks.Task SettleAsync_NonSuccess_Throws()
         {
             var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError)
             {
                 Content = new StringContent("fail")
             });
-            Assert.ThrowsAsync<HttpRequestException>(async () => await client.SettleAsync(emptyPayloadHeader, CreateReqs()));
+            await Assert.ThrowsAsync<HttpRequestException>(async () => await client.SettleAsync(emptyPayloadHeader, CreateReqs()));
         }
 
         [Test]

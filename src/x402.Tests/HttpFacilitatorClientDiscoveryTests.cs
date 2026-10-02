@@ -100,10 +100,10 @@ namespace x402.Tests
         }
 
         [Test]
-        public void DiscoveryMerchantAsync_EmptyPayTo_Throws()
+        public async System.Threading.Tasks.Task DiscoveryMerchantAsync_EmptyPayTo_Throws()
         {
             var (client, _) = CreateClient("{}");
-            Assert.ThrowsAsync<ArgumentException>(() => client.DiscoveryMerchantAsync(" "));
+            await Assert.ThrowsAsync<ArgumentException>(() => client.DiscoveryMerchantAsync(" "));
         }
 
         [Test]

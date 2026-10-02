@@ -148,15 +148,14 @@ namespace x402.Client.Casper.Tests
         }
 
         [Test]
-        public void CreateHeader_RejectsSignersThatReturnMalformedSignatures()
+        public async Task CreateHeader_RejectsSignersThatReturnMalformedSignatures()
         {
             var keyPair = KeyPair.CreateNew(KeyAlgo.ED25519);
             var wallet = new CasperWallet(
                 _ => Task.FromResult(new byte[65]),
                 keyPair.PublicKey.ToString()!,
                 CasperNetworks.Testnet);
-
-            Assert.ThrowsAsync<InvalidOperationException>(
+            await Assert.ThrowsAsync<InvalidOperationException>(
                 async () => await wallet.CreateHeaderAsync(BuildRequirement(), CancellationToken.None));
         }
 
@@ -300,19 +299,19 @@ namespace x402.Client.Casper.Tests
         }
 
         [Test]
-        public void CreateHeader_RejectsNonCasperNetworks()
+        public async Task CreateHeader_RejectsNonCasperNetworks()
         {
             var wallet = BuildWallet(KeyAlgo.ED25519, "eip155:8453");
             var requirement = BuildRequirement("eip155:8453");
 
-            var exception = Assert.ThrowsAsync<ArgumentException>(
+            var exception = await Assert.ThrowsAsync<ArgumentException>(
                 async () => await wallet.CreateHeaderAsync(requirement, CancellationToken.None));
 
             Assert.That(exception!.Message, Does.Contain("not a Casper network"));
         }
 
         [Test]
-        public void CreateHeader_RequiresTheTokenNameAndVersion()
+        public async Task CreateHeader_RequiresTheTokenNameAndVersion()
         {
             var wallet = BuildWallet();
 
@@ -325,16 +324,16 @@ namespace x402.Client.Casper.Tests
             var missingExtra = BuildRequirement();
             missingExtra.Extra = null;
 
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
-                Assert.ThrowsAsync<ArgumentException>(async () => await wallet.CreateHeaderAsync(withoutName, CancellationToken.None));
-                Assert.ThrowsAsync<ArgumentException>(async () => await wallet.CreateHeaderAsync(withoutVersion, CancellationToken.None));
-                Assert.ThrowsAsync<ArgumentException>(async () => await wallet.CreateHeaderAsync(missingExtra, CancellationToken.None));
-            });
+                await Assert.ThrowsAsync<ArgumentException>(async () => await wallet.CreateHeaderAsync(withoutName, CancellationToken.None));
+                await Assert.ThrowsAsync<ArgumentException>(async () => await wallet.CreateHeaderAsync(withoutVersion, CancellationToken.None));
+                await Assert.ThrowsAsync<ArgumentException>(async () => await wallet.CreateHeaderAsync(missingExtra, CancellationToken.None));
+            }
         }
 
         [Test]
-        public void CreateHeader_RejectsMalformedAmounts()
+        public async Task CreateHeader_RejectsMalformedAmounts()
         {
             var wallet = BuildWallet();
 
@@ -344,11 +343,11 @@ namespace x402.Client.Casper.Tests
             var fractional = BuildRequirement();
             fractional.Amount = "1.5";
 
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
-                Assert.ThrowsAsync<ArgumentException>(async () => await wallet.CreateHeaderAsync(negative, CancellationToken.None));
-                Assert.ThrowsAsync<ArgumentException>(async () => await wallet.CreateHeaderAsync(fractional, CancellationToken.None));
-            });
+                await Assert.ThrowsAsync<ArgumentException>(async () => await wallet.CreateHeaderAsync(negative, CancellationToken.None));
+                await Assert.ThrowsAsync<ArgumentException>(async () => await wallet.CreateHeaderAsync(fractional, CancellationToken.None));
+            }
         }
 
         [Test]
