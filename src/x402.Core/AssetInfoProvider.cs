@@ -156,6 +156,14 @@ namespace x402.Core
                 Name = "USDC",
                 Version = "1",
                 NetworkType = NetworkType.EVM
+            },
+            new AssetInfo
+            {
+                Network = "nano:mainnet",
+                ContractAddress = "XNO", // Nano's native coin; there is no contract
+                Name = "Nano",
+                Decimals = 30, // 1 XNO = 10^30 raw
+                NetworkType = NetworkType.Other
             }
         };
 

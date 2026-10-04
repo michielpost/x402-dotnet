@@ -102,6 +102,13 @@ namespace x402.Core.Models.v2
         /// requested resource. Omitted from the serialized header when null.
         /// </summary>
         public string? Resource { get; set; }
+
+        /// <summary>
+        /// Hash of the send block the payer already published, 64 hex characters.
+        /// Only used by networks where the payer broadcasts the transfer itself,
+        /// such as Nano. Omitted from the serialized header when null.
+        /// </summary>
+        public string? BlockHash { get; set; }
     }
 
     public class Authorization
