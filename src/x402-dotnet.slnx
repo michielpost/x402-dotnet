@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/Beta/">
     <Project Path="x402.Facilitator.EVM/x402.Facilitator.EVM.csproj" Id="8570a9eb-24ff-4dcc-a200-4727a7786115" />
+    <Project Path="x402.Facilitator.Nano.Tests/x402.Facilitator.Nano.Tests.csproj" />
+    <Project Path="x402.Facilitator.Nano/x402.Facilitator.Nano.csproj" />
     <Project Path="x402.Facilitator.Solana/x402.Facilitator.Solana.csproj" Id="73197c2f-91e7-4846-8591-49a72b81e2e7" />
     <Project Path="x402.Facilitator/x402.Facilitator.csproj" Id="4fb22d74-359c-439e-931e-94b1278db117" />
   </Folder>

@@ -16,6 +16,7 @@
 		<ProjectReference Include="..\x402-dotnet.ServiceDefaults\x402-dotnet.ServiceDefaults.csproj" />
 		<ProjectReference Include="..\x402.Core\x402.Core.csproj" />
 		<ProjectReference Include="..\x402.Facilitator.EVM\x402.Facilitator.EVM.csproj" />
+		<ProjectReference Include="..\x402.Facilitator.Nano\x402.Facilitator.Nano.csproj" />
 		<ProjectReference Include="..\x402.Facilitator.Solana\x402.Facilitator.Solana.csproj" />
 	</ItemGroup>
 
