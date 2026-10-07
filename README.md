@@ -234,6 +234,8 @@ Three payment schemes control how charges are calculated:
 - **`upto`** — the client authorizes a maximum amount; the server settles only what was actually used (usage-based billing). EVM networks only.
 - **`batch-settlement`** — requests are recorded as signed off-chain vouchers on a payment channel; a `ChannelManager` periodically batches vouchers into a single on-chain settlement. EVM networks only.
 
+Nano (XNO) is supported with the `exact` scheme only, see [Nano (XNO)](#nano-xno).
+
 ### upto
 
 Set `Scheme = PaymentScheme.Upto` (the configured `Amount` becomes the maximum the client authorizes) and call `SetSettlementOverrides` in your handler to charge the actual usage:
@@ -385,6 +387,37 @@ var search = await facilitatorClient.DiscoverySearchAsync(new DiscoverySearchReq
     MaxUsdPrice = "1.00",
 });
 ```
+
+## Nano (XNO)
+
+`nano:mainnet` is known to the `AssetInfoProvider` with the asset `XNO`. Amounts are in raw (1 XNO = 10^30 raw) and must be integer strings:
+
+```cs
+new PaymentRequirementsBasic
+{
+    Asset = "XNO",
+    Amount = "1000000000000000000000000000", // 0.001 XNO in raw
+    PayTo = "nano_yourAddressHere",
+}
+```
+
+On Nano the payer publishes its own send block, so there is nothing for a facilitator to broadcast. The client sends the hash of that block as `payload.blockHash`; `payload.authorization.from`, `to` and `value` carry the payer, the `payTo` account and the raw amount.
+
+`x402.Facilitator.Nano` (beta) contains `NanoPaymentService`, an `IPaymentService` that only reads the ledger and holds no key. A payment is valid when every configured node reports the block as a confirmed `send` of exactly `amount` raw to `payTo`, and the block hash has not settled a payment before. The block hash is returned as the settlement transaction.
+
+```cs
+var nodes = new[] { "https://rpc.nano.to", "https://rainstorm.city/api" }
+    .Select(url => new NanoRpcClient(httpClient, url));
+
+factory.Register(
+    new FacilitatorKind("exact", NanoNetworks.Mainnet, 2),
+    new NanoPaymentService(nodes, new InMemoryNanoClaimStore()));
+```
+
+Notes:
+- Nano blocks have no memo and the payload is not signed by the payer. A payment is tied to a request only by `payTo` and the exact amount, and a block hash is public once the block is published: the first request that presents it is the one that is served. Use a separate `payTo` account per request when that matters.
+- `InMemoryNanoClaimStore` forgets used block hashes on restart; implement `INanoClaimStore` on your own storage for anything long-running.
+- There is no Nano client wallet in this repository yet.
 
 ## Coinbase Facilitator
 To use the Coinbase Facilitator, install [x402.Coinbase](https://nuget.org/packages/x402.Coinbase)

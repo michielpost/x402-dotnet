@@ -4,6 +4,7 @@ using Solnet.Rpc;
 using x402.Core.Models.Facilitator;
 using x402.Facilitator;
 using x402.Facilitator.EVM;
+using x402.Facilitator.Nano;
 using x402.Facilitator.Solana;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,6 +44,19 @@ builder.Services.AddScoped(sp =>
     return new EvmPaymentService(web3Service, facilitatorAddress);
 });
 
+// Nano setup: read-only, no key. Every configured node must agree on a block.
+var nanoRpcUrls = builder.Configuration.GetSection("NanoRpcUrls").Get<string[]>()
+    ?? ["https://rpc.nano.to", "https://rainstorm.city/api"];
+
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<INanoClaimStore, InMemoryNanoClaimStore>();
+builder.Services.AddSingleton(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var rpcClients = nanoRpcUrls.Select(url => new NanoRpcClient(httpClientFactory.CreateClient(), url));
+    return new NanoPaymentService(rpcClients, sp.GetRequiredService<INanoClaimStore>());
+});
+
 // Register PaymentServiceFactory and configure supported networks
 builder.Services.AddSingleton<PaymentServiceFactory>(sp =>
 {
@@ -69,6 +83,11 @@ builder.Services.AddSingleton<PaymentServiceFactory>(sp =>
     factory.Register(avalancheKind, () => sp.GetRequiredService<EvmPaymentService>());
     factory.Register(polygonKind, () => sp.GetRequiredService<EvmPaymentService>());
     factory.Register(polygonAmoyKind, () => sp.GetRequiredService<EvmPaymentService>());
+
+    // Register Nano
+    var nanoKind = new FacilitatorKind("exact", NanoNetworks.Mainnet, 2);
+
+    factory.Register(nanoKind, () => sp.GetRequiredService<NanoPaymentService>());
 
     return factory;
 });
