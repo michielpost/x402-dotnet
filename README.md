@@ -35,6 +35,7 @@ Install the `x402.Client.EVM` package from NuGet:
 - Fully HttpClient compatible
 - Pay using the embedded EVM compatible wallet (Ethereum / Base)
 - Pay on the Casper Network with `x402.Client.Casper` (wCSPR settlement, Ed25519 and secp256k1 keys)
+- Pay `nano:mainnet` exact requirements with `x402.Client.Nano` (XNO, the key stays in your node or signer)
 - Set allowances per request or globally
 - X402.Client.ConsoleSample sample application included
 - Blazor Sample project available
@@ -417,7 +418,31 @@ factory.Register(
 Notes:
 - Nano blocks have no memo and the payload is not signed by the payer. A payment is tied to a request only by `payTo` and the exact amount, and a block hash is public once the block is published: the first request that presents it is the one that is served. Use a separate `payTo` account per request when that matters.
 - `InMemoryNanoClaimStore` forgets used block hashes on restart; implement `INanoClaimStore` on your own storage for anything long-running.
-- There is no Nano client wallet in this repository yet.
+- To pay these requirements from .NET, see [x402 HttpClient on Nano](#x402-httpclient-on-nano).
+
+## x402 HttpClient on Nano
+
+`x402.Client.Nano` (beta) contains `NanoWallet`, which pays `exact` requirements on `nano:mainnet` and produces the payload `NanoPaymentService` verifies. It selects a requirement only when the scheme is `exact`, the asset is `XNO`, `payTo` is a Nano account and the amount is a positive integer in raw; amounts are handled as `BigInteger`, never as floating point.
+
+Paying on Nano means publishing a send block, so `CreateHeaderAsync` moves the funds before the request is retried. The wallet does not hold a key: an `INanoSender` publishes the block and returns its hash once it is confirmed. `NanoNodeWalletSender` does this with the RPC `send` action of a node you run (it needs `enable_control`, so never point it at a public node); implement `INanoSender` to use a hardware wallet or a key management service instead.
+
+```cs
+var sender = new NanoNodeWalletSender(httpClient, "http://127.0.0.1:7076", walletId, "nano_yourAccount");
+var wallet = new NanoWallet("nano_yourAccount", sender)
+{
+    // Raw amounts do not fit in a long, so Nano has its own allowance.
+    Allowance = new NanoAllowance
+    {
+        TotalAllowanceRaw = BigInteger.Pow(10, 28),         // 0.01 XNO
+        MaxPerRequestAllowanceRaw = BigInteger.Pow(10, 27)  // 0.001 XNO
+    }
+};
+
+var handler = new PaymentRequiredV2Handler(new WalletProvider(wallet));
+var client = new HttpClient(handler);
+```
+
+A send cannot be taken back: if the server refuses the payment after the block is published, the funds stay with `payTo`. The allowance is lowered before sending and is not restored when a send fails, since a send that timed out may still have been published.
 
 ## Coinbase Facilitator
 To use the Coinbase Facilitator, install [x402.Coinbase](https://nuget.org/packages/x402.Coinbase)
