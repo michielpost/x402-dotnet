@@ -2,6 +2,7 @@
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Signer.EIP712;
+using Nethereum.Contracts;
 using Nethereum.Web3;
 using Newtonsoft.Json;
 using System.Numerics;
@@ -19,6 +20,21 @@ namespace x402.Facilitator.EVM
         {
             _web3 = web3;
             _facilitatorAddress = facilitatorAddress;
+        }
+
+        /// <summary>Maximum number of times settlement polls for the transaction receipt. Overridable for tests.</summary>
+        protected virtual int MaxReceiptAttempts => 30;
+
+        /// <summary>Delay in milliseconds between receipt polls. Overridable for tests.</summary>
+        protected virtual int ReceiptPollDelayMs => 2000;
+
+        /// <summary>
+        /// Whether this authorization's nonce has already been used on chain (EIP-3009
+        /// authorizationState). Overridable for tests.
+        /// </summary>
+        protected virtual Task<bool> IsAuthorizationUsedAsync(Contract contract, string from, byte[] nonce)
+        {
+            return contract.GetFunction("authorizationState").CallAsync<bool>(from, nonce);
         }
 
         private void VerifySchemesAndNetworks(PaymentPayloadHeader payload, PaymentRequirements requirements)
@@ -116,6 +132,8 @@ namespace x402.Facilitator.EVM
                 };
             }
 
+            string txHash = string.Empty;
+
             try
             {
                 var auth = payload.Payload.Authorization;
@@ -151,27 +169,45 @@ namespace x402.Facilitator.EVM
                     s
                 );
 
-                var txHash = await _web3.Eth.Transactions.SendTransaction.SendRequestAsync(txInput);
+                // If this authorization's nonce has already been used on chain, a prior attempt
+                // already settled it. Broadcasting again would revert on the used nonce, so report
+                // the payment as pending (reconcile on chain) rather than re-broadcasting. The first
+                // transaction's hash is not tracked here, so none is returned.
+                if (await IsAuthorizationUsedAsync(contract, from, nonce))
+                {
+                    return new SettlementResponse
+                    {
+                        Success = false,
+                        ErrorReason = FacilitatorErrorCodes.SettlementPending,
+                        Network = payload.Accepted.Network,
+                        Transaction = txHash,
+                        Payer = payer
+                    };
+                }
+
+                txHash = await _web3.Eth.Transactions.SendTransaction.SendRequestAsync(txInput);
 
                 // Wait for transaction receipt
                 var receipt = await _web3.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(txHash);
 
                 // Poll for receipt if not immediately available
-                int maxAttempts = 30;
                 int attempt = 0;
-                while (receipt == null && attempt < maxAttempts)
+                while (receipt == null && attempt < MaxReceiptAttempts)
                 {
-                    await Task.Delay(2000);
+                    await Task.Delay(ReceiptPollDelayMs);
                     receipt = await _web3.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(txHash);
                     attempt++;
                 }
 
                 if (receipt == null)
                 {
+                    // The transaction was broadcast but no receipt arrived within the poll window.
+                    // Report it as pending with the hash so the payer can reconcile on chain, rather
+                    // than a terminal error that makes a pessimistic seller ask for a new signature.
                     return new SettlementResponse
                     {
                         Success = false,
-                        ErrorReason = FacilitatorErrorCodes.InvalidTransactionState,
+                        ErrorReason = FacilitatorErrorCodes.SettlementPending,
                         Network = payload.Accepted.Network,
                         Transaction = txHash,
                         Payer = payer
@@ -202,12 +238,16 @@ namespace x402.Facilitator.EVM
             catch (Exception e)
             {
                 Console.WriteLine($"Unexpected settle error: {e.Message}");
+                // If the transaction was already broadcast before the error (for example an RPC
+                // failure while polling for the receipt), carry the hash and report it as pending
+                // instead of an empty transaction, so an already-sent transfer is not lost.
+                var broadcast = !string.IsNullOrEmpty(txHash);
                 return new SettlementResponse
                 {
                     Success = false,
-                    ErrorReason = FacilitatorErrorCodes.UnexpectedSettleError,
+                    ErrorReason = broadcast ? FacilitatorErrorCodes.SettlementPending : FacilitatorErrorCodes.UnexpectedSettleError,
                     Network = payload.Accepted.Network,
-                    Transaction = "",
+                    Transaction = txHash,
                     Payer = verifyResponse.Payer
                 };
             }
@@ -317,6 +357,16 @@ namespace x402.Facilitator.EVM
                 ""name"": ""receiveWithAuthorization"",
                 ""outputs"": [],
                 ""stateMutability"": ""nonpayable"",
+                ""type"": ""function""
+            },
+            {
+                ""inputs"": [
+                    { ""internalType"": ""address"", ""name"": ""authorizer"", ""type"": ""address"" },
+                    { ""internalType"": ""bytes32"", ""name"": ""nonce"", ""type"": ""bytes32"" }
+                ],
+                ""name"": ""authorizationState"",
+                ""outputs"": [ { ""internalType"": ""bool"", ""name"": ""used"", ""type"": ""bool"" } ],
+                ""stateMutability"": ""view"",
                 ""type"": ""function""
             }
         ]";

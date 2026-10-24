@@ -342,6 +342,41 @@ namespace x402.Tests
         }
 
         [Test]
+        public async Task Pessimistic_SettlementPending_DoesNotReturn402_AndHeaderReportsPending()
+        {
+            var facilitator = new FakeFacilitatorClient
+            {
+                VerifyAsyncImpl = (_, _) => Task.FromResult(new VerificationResponse { IsValid = true }),
+                SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse
+                {
+                    Success = false,
+                    ErrorReason = FacilitatorErrorCodes.SettlementPending,
+                    Transaction = "0xpendinghash",
+                    Network = req.Network
+                })
+            };
+            var reqs = CreateRequirements("/pess-pending");
+            using var host = BuildHost(facilitator, "/pess-pending", reqs, SettlementMode.Pessimistic);
+            var client = host.GetTestClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "/pess-pending");
+            request.Headers.Add("PAYMENT-SIGNATURE", CreateHeaderB64(reqs, resource: "/pess-pending", from: "0xabc"));
+
+            var resp = await client.SendAsync(request);
+
+            Assert.That(resp.StatusCode, Is.Not.EqualTo((System.Net.HttpStatusCode)StatusCodes.Status402PaymentRequired),
+                "settlement_pending must not be turned into a 402 that makes the shared clients re-sign");
+            Assert.That(resp.Headers.Contains("PAYMENT-RESPONSE"), Is.True,
+                "the pending settlement must be carried to the client in the response header");
+
+            var header = resp.Headers.GetValues("PAYMENT-RESPONSE").First();
+            using var doc = JsonDocument.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(header)));
+            Assert.That(doc.RootElement.GetProperty("success").GetBoolean(), Is.False,
+                "the response header must not claim success for a pending settlement");
+            Assert.That(doc.RootElement.GetProperty("transaction").GetString(), Is.EqualTo("0xpendinghash"),
+                "the broadcast hash must be carried so the payer can reconcile on chain");
+        }
+
+        [Test]
         public async Task Version2_UsesPaymentSignatureHeader()
         {
             var facilitator = new FakeFacilitatorClient

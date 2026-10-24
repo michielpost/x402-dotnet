@@ -198,7 +198,16 @@ public class X402HandlerV2
             if (settlementMode == SettlementMode.Pessimistic && !deferredScheme)
             {
                 (preSettledResponse, settlementException) = await HandlePessimisticSettlement(payload, validationResult.SelectedPaymentRequirement, fullUrl);
-                if (settlementException != null || preSettledResponse == null || !preSettledResponse.Success)
+
+                // A settlement_pending result means the transfer was broadcast but not yet confirmed.
+                // It is not a refusal: returning 402 here would make the client re-sign and pay again
+                // while the first transfer can still land. Carry the pending response through to the
+                // response phase (callback and PAYMENT-RESPONSE header) instead of asking for payment again.
+                var settlementPending = preSettledResponse != null
+                    && !preSettledResponse.Success
+                    && preSettledResponse.ErrorReason == FacilitatorErrorCodes.SettlementPending;
+
+                if (!settlementPending && (settlementException != null || preSettledResponse == null || !preSettledResponse.Success))
                 {
                     var errorMsg = preSettledResponse?.ErrorReason ?? settlementException?.Message ?? FacilitatorErrorCodes.UnexpectedSettleError;
                     return X402ProcessingResult.CreateError(
@@ -634,7 +643,7 @@ public class X402HandlerV2
     private string CreatePaymentResponseHeader(SettlementResponse sr, string? payer)
     {
         var settlementHeader = new SettlementResponseHeader(
-            true,
+            sr.Success,
             sr.Transaction ?? string.Empty,
             sr.Network ?? string.Empty,
             payer
