@@ -20,8 +20,8 @@ namespace x402.Facilitator.EVM.Tests
     /// Settlement behaviour of EvmPaymentService when the receiveWithAuthorization transfer is
     /// broadcast but the receipt is not (yet) available, or when the authorization's nonce has
     /// already been used. These cases cover the x402 v2 §9 pending state: an already-broadcast hash
-    /// must be carried, not discarded; a reused nonce must not be re-broadcast; and the result must
-    /// not read as a terminal failure that makes a pessimistic seller ask the payer to sign again.
+    /// must be carried, not discarded, and must not read as a terminal failure that makes a
+    /// pessimistic seller ask the payer to sign again. A used nonce is terminal and not re-broadcast.
     /// </summary>
     [TestFixture]
     public class EvmSettlementPendingTests
@@ -65,10 +65,13 @@ namespace x402.Facilitator.EVM.Tests
         {
             public FastEvmPaymentService(IWeb3 web3, string facilitatorAddress) : base(web3, facilitatorAddress) { }
             public bool AuthorizationUsed { get; set; }
+            public bool NonceCheckThrows { get; set; }
             protected override int MaxReceiptAttempts => 2;
             protected override int ReceiptPollDelayMs => 0;
             protected override Task<bool> IsAuthorizationUsedAsync(Contract contract, string from, byte[] nonce)
-                => Task.FromResult(AuthorizationUsed);
+                => NonceCheckThrows
+                    ? Task.FromException<bool>(new IOException("rpc error reading authorizationState"))
+                    : Task.FromResult(AuthorizationUsed);
         }
 
         /// <summary>
@@ -257,7 +260,7 @@ namespace x402.Facilitator.EVM.Tests
         }
 
         [Test]
-        public async Task Settle_WhenNonceAlreadyUsed_DoesNotReBroadcastAndReturnsPending()
+        public async Task Settle_WhenNonceAlreadyUsed_DoesNotReBroadcastAndIsTerminal()
         {
             var (payload, requirements) = BuildSignedPayload();
             var (web3, send) = BuildWeb3(TxHash, MinedReceipt(1));
@@ -266,10 +269,43 @@ namespace x402.Facilitator.EVM.Tests
             var result = await service.SettlePayment(payload, requirements);
 
             send.Verify(s => s.SendRequestAsync(It.IsAny<TransactionInput>(), It.IsAny<object>()), Times.Never(),
-                "a retry on an already-used nonce must not re-broadcast receiveWithAuthorization");
+                "a used nonce must not re-broadcast receiveWithAuthorization");
             Assert.That(result.Success, Is.False);
-            Assert.That(result.ErrorReason, Is.EqualTo(FacilitatorErrorCodes.SettlementPending),
-                "a used nonce means a prior transfer consumed it: report pending so the payer reconciles, not a re-sign refusal");
+            Assert.That(result.ErrorReason, Is.EqualTo(FacilitatorErrorCodes.InvalidTransactionState),
+                "a used nonce does not prove this request settled, so it must not be reported as pending");
+            Assert.That(result.Transaction, Is.Empty,
+                "the prior transaction is not tracked, so no hash is reported");
+        }
+
+        [Test]
+        public async Task Settle_WhenNonceCheckFails_StillSettles()
+        {
+            var (payload, requirements) = BuildSignedPayload();
+            var (web3, send) = BuildWeb3(TxHash, MinedReceipt(1));
+            var service = new FastEvmPaymentService(web3, FacilitatorAddress) { NonceCheckThrows = true };
+
+            var result = await service.SettlePayment(payload, requirements);
+
+            send.Verify(s => s.SendRequestAsync(It.IsAny<TransactionInput>(), It.IsAny<object>()), Times.Once(),
+                "an RPC error in the optional nonce check must not block settlement");
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Transaction, Is.EqualTo(TxHash));
+        }
+
+        [Test]
+        public async Task Settle_WhenReceiptReverted_ReturnsInvalidTransactionStateWithHash()
+        {
+            var (payload, requirements) = BuildSignedPayload();
+            var (web3, _) = BuildWeb3(TxHash, MinedReceipt(0));
+            var service = new FastEvmPaymentService(web3, FacilitatorAddress);
+
+            var result = await service.SettlePayment(payload, requirements);
+
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.ErrorReason, Is.EqualTo(FacilitatorErrorCodes.InvalidTransactionState),
+                "a mined receipt with status 0 is a final failure, not pending");
+            Assert.That(result.Transaction, Is.EqualTo(TxHash),
+                "the reverted transaction's hash is still reported");
         }
 
         [Test]

@@ -37,6 +37,24 @@ namespace x402.Facilitator.EVM
             return contract.GetFunction("authorizationState").CallAsync<bool>(from, nonce);
         }
 
+        /// <summary>
+        /// The pre-broadcast nonce check is an optimisation, not a gate: if it fails (transient RPC
+        /// error, or a token without authorizationState), settlement goes ahead as it did before the
+        /// check existed, and a used nonce is then refused by the token itself.
+        /// </summary>
+        private async Task<bool> IsAuthorizationUsedSafeAsync(Contract contract, string from, byte[] nonce)
+        {
+            try
+            {
+                return await IsAuthorizationUsedAsync(contract, from, nonce);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"authorizationState check failed, settling without it: {e.Message}");
+                return false;
+            }
+        }
+
         private void VerifySchemesAndNetworks(PaymentPayloadHeader payload, PaymentRequirements requirements)
         {
             if (payload.Accepted.Scheme != Core.Enums.PaymentScheme.Exact || requirements.Scheme != Core.Enums.PaymentScheme.Exact)
@@ -169,18 +187,19 @@ namespace x402.Facilitator.EVM
                     s
                 );
 
-                // If this authorization's nonce has already been used on chain, a prior attempt
-                // already settled it. Broadcasting again would revert on the used nonce, so report
-                // the payment as pending (reconcile on chain) rather than re-broadcasting. The first
-                // transaction's hash is not tracked here, so none is returned.
-                if (await IsAuthorizationUsedAsync(contract, from, nonce))
+                // A used nonce means some transaction already consumed this authorization, not that
+                // this request settled it, and the first transaction's hash is not tracked here. So
+                // treat it as terminal: do not re-broadcast (it would revert on the used nonce), and do
+                // not report pending, which would need a non-empty transaction (x402 v2 §9) and would
+                // let a replayed payload be served again.
+                if (await IsAuthorizationUsedSafeAsync(contract, from, nonce))
                 {
                     return new SettlementResponse
                     {
                         Success = false,
-                        ErrorReason = FacilitatorErrorCodes.SettlementPending,
+                        ErrorReason = FacilitatorErrorCodes.InvalidTransactionState,
                         Network = payload.Accepted.Network,
-                        Transaction = txHash,
+                        Transaction = "",
                         Payer = payer
                     };
                 }

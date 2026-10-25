@@ -260,6 +260,60 @@ namespace x402.Tests
         }
 
         [Test]
+        public async Task Upto_Pessimistic_SettlementPending_DoesNotReturn402()
+        {
+            var facilitator = new FakeFacilitatorClient
+            {
+                SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse
+                {
+                    Success = false,
+                    ErrorReason = FacilitatorErrorCodes.SettlementPending,
+                    Transaction = "0xpendinghash",
+                    Network = req.Network
+                })
+            };
+            var reqs = CreateRequirements(PaymentScheme.Upto, "100");
+            using var host = BuildHost(facilitator, new List<PaymentRequirements> { reqs },
+                SettlementMode.Pessimistic,
+                onRequest: ctx => ctx.SetSettlementOverrides("40"));
+            var client = host.GetTestClient();
+
+            var resp = await client.SendAsync(CreateRequest("/upto", reqs, authorizedValue: "100"));
+
+            Assert.That(resp.StatusCode, Is.Not.EqualTo(System.Net.HttpStatusCode.PaymentRequired),
+                "a deferred settlement_pending must not be turned into a 402 either");
+            var header = resp.Headers.GetValues("PAYMENT-RESPONSE").First();
+            using var doc = JsonDocument.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(header)));
+            Assert.That(doc.RootElement.GetProperty("success").GetBoolean(), Is.False);
+            Assert.That(doc.RootElement.GetProperty("transaction").GetString(), Is.EqualTo("0xpendinghash"));
+        }
+
+        [Test]
+        public async Task Upto_Pessimistic_SettlementPendingWithoutHash_Returns402()
+        {
+            var facilitator = new FakeFacilitatorClient
+            {
+                SettleAsyncImpl = (_, req) => Task.FromResult(new SettlementResponse
+                {
+                    Success = false,
+                    ErrorReason = FacilitatorErrorCodes.SettlementPending,
+                    Transaction = "",
+                    Network = req.Network
+                })
+            };
+            var reqs = CreateRequirements(PaymentScheme.Upto, "100");
+            using var host = BuildHost(facilitator, new List<PaymentRequirements> { reqs },
+                SettlementMode.Pessimistic,
+                onRequest: ctx => ctx.SetSettlementOverrides("40"));
+            var client = host.GetTestClient();
+
+            var resp = await client.SendAsync(CreateRequest("/upto", reqs, authorizedValue: "100"));
+
+            Assert.That(resp.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.PaymentRequired),
+                "pending without a transaction cannot be reconciled (x402 v2 §9), so it is a failure");
+        }
+
+        [Test]
         public async Task Exact_SettlesWithoutSettlementAmount()
         {
             var facilitator = new FakeFacilitatorClient();
