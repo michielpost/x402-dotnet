@@ -198,7 +198,14 @@ public class X402HandlerV2
             if (settlementMode == SettlementMode.Pessimistic && !deferredScheme)
             {
                 (preSettledResponse, settlementException) = await HandlePessimisticSettlement(payload, validationResult.SelectedPaymentRequirement, fullUrl);
-                if (settlementException != null || preSettledResponse == null || !preSettledResponse.Success)
+
+                // A settlement_pending result means the transfer was broadcast but not yet confirmed.
+                // It is not a refusal: returning 402 here would make the client re-sign and pay again
+                // while the first transfer can still land. Carry the pending response through to the
+                // response phase (callback and PAYMENT-RESPONSE header) instead of asking for payment again.
+                var settlementPending = IsSettlementPending(preSettledResponse);
+
+                if (!settlementPending && (settlementException != null || preSettledResponse == null || !preSettledResponse.Success))
                 {
                     var errorMsg = preSettledResponse?.ErrorReason ?? settlementException?.Message ?? FacilitatorErrorCodes.UnexpectedSettleError;
                     return X402ProcessingResult.CreateError(
@@ -313,7 +320,9 @@ public class X402HandlerV2
                 if (sr == null && processingResult.PaymentPayload != null && processingResult.SelectedPaymentRequirement != null)
                 {
                     sr = await SettleDeferredAsync(context, processingResult);
-                    if (sr == null || !sr.Success)
+                    // Same rule as the pessimistic pre-settlement path: a pending settlement is not a
+                    // refusal, so it is reported in PAYMENT-RESPONSE rather than replaced by a 402.
+                    if (sr == null || (!sr.Success && !IsSettlementPending(sr)))
                     {
                         var errorMsg = sr?.ErrorReason ?? FacilitatorErrorCodes.UnexpectedSettleError;
                         logger.LogWarning("Settlement failed for path {Path}: {Reason}", processingResult.FullUrl, errorMsg);
@@ -631,10 +640,20 @@ public class X402HandlerV2
                authorized <= max;
     }
 
+    /// <summary>
+    /// A settlement_pending result (x402 v2 §9) with a transaction hash: broadcast, not yet final.
+    /// Without a hash it cannot be reconciled, so it is treated as a failure.
+    /// </summary>
+    private static bool IsSettlementPending(SettlementResponse? sr) =>
+        sr != null
+        && !sr.Success
+        && sr.ErrorReason == FacilitatorErrorCodes.SettlementPending
+        && !string.IsNullOrEmpty(sr.Transaction);
+
     private string CreatePaymentResponseHeader(SettlementResponse sr, string? payer)
     {
         var settlementHeader = new SettlementResponseHeader(
-            true,
+            sr.Success,
             sr.Transaction ?? string.Empty,
             sr.Network ?? string.Empty,
             payer

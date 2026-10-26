@@ -41,6 +41,9 @@
         /// <summary>Blockchain transaction failed or was rejected.</summary>
         public static readonly string InvalidTransactionState = "invalid_transaction_state";
 
+        /// <summary>Transaction was broadcast but not yet confirmed; the payer should reconcile on chain using the returned hash rather than re-sign (x402 v2 §9).</summary>
+        public static readonly string SettlementPending = "settlement_pending";
+
         /// <summary>Unexpected error occurred during payment verification.</summary>
         public static readonly string UnexpectedVerifyError = "unexpected_verify_error";
 
