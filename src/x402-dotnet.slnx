@@ -11,6 +11,10 @@
     <Project Path="x402.Client.Casper.Tests/x402.Client.Casper.Tests.csproj" />
     <Project Path="x402.Client.Casper/x402.Client.Casper.csproj" />
   </Folder>
+  <Folder Name="/Beta/Nano/">
+    <Project Path="x402.Client.Nano.Tests/x402.Client.Nano.Tests.csproj" />
+    <Project Path="x402.Client.Nano/x402.Client.Nano.csproj" />
+  </Folder>
   <Folder Name="/Beta/Solana/">
     <Project Path="x402.Client.Solana.IntegrationTests/x402.Client.Solana.IntegrationTests.csproj" Id="2ae65d65-7e70-4316-a845-670485d262f2" />
     <Project Path="x402.Client.Solana.Tests/x402.Client.Solana.Tests.csproj" Id="249990ce-e307-4634-8658-2a5714e1b7cc" />
