@@ -427,7 +427,11 @@ Notes:
 Paying on Nano means publishing a send block, so `CreateHeaderAsync` moves the funds before the request is retried. The wallet does not hold a key: an `INanoSender` publishes the block and returns its hash once it is confirmed. `NanoNodeWalletSender` does this with the RPC `send` action of a node you run (it needs `enable_control`, so never point it at a public node); implement `INanoSender` to use a hardware wallet or a key management service instead.
 
 ```cs
-var sender = new NanoNodeWalletSender(httpClient, "http://127.0.0.1:7076", walletId, "nano_yourAccount");
+using System.Numerics;
+using x402.Client.Nano;
+using x402.Client.v2;
+
+var sender = new NanoNodeWalletSender(new HttpClient(), "http://127.0.0.1:7076", walletId, "nano_yourAccount");
 var wallet = new NanoWallet("nano_yourAccount", sender)
 {
     // Raw amounts do not fit in a long, so Nano has its own allowance.
@@ -438,9 +442,11 @@ var wallet = new NanoWallet("nano_yourAccount", sender)
     }
 };
 
-var handler = new PaymentRequiredV2Handler(new WalletProvider(wallet));
+var handler = PaymentRequiredV2Handler.Create(new WalletProvider(wallet));
 var client = new HttpClient(handler);
 ```
+
+`CreateHeaderAsync` must be called once per requirement: each call is a new payment with a fresh idempotency `id`, so calling it again for the same requirement pays again.
 
 A send cannot be taken back: if the server refuses the payment after the block is published, the funds stay with `payTo`. The allowance is lowered before sending and is not restored when a send fails, since a send that timed out may still have been published.
 

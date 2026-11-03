@@ -69,6 +69,48 @@ public class NanoNodeWalletSenderTests
     }
 
     [Test]
+    public async Task SendAsync_BlockNotFoundYet_KeepsPolling()
+    {
+        // A node can answer "Block not found" for a moment right after "send" returns.
+        var handler = new ScriptedHandler(
+            $$"""{"block":"{{BlockHash}}"}""",
+            """{"error":"Block not found"}""",
+            """{"confirmed":"true"}""");
+
+        var hash = await Sender(handler).SendAsync(PayTo, BigInteger.One, "attempt-1");
+
+        Assert.That(hash, Is.EqualTo(BlockHash));
+        Assert.That(handler.Requests, Has.Count.EqualTo(3));
+    }
+
+    [Test]
+    public async Task SendAsync_ConfirmedAsJsonBoolean_IsConfirmed()
+    {
+        var handler = new ScriptedHandler(
+            $$"""{"block":"{{BlockHash}}"}""",
+            """{"confirmed":true}""");
+
+        var hash = await Sender(handler).SendAsync(PayTo, BigInteger.One, "attempt-1");
+
+        Assert.That(hash, Is.EqualTo(BlockHash));
+    }
+
+    [Test]
+    public async Task SendAsync_UppercaseAccounts_AreSentLowercase()
+    {
+        var handler = new ScriptedHandler($$"""{"block":"{{BlockHash}}"}""", """{"confirmed":"true"}""");
+        var sender = new NanoNodeWalletSender(new HttpClient(handler), "http://127.0.0.1:7076", WalletId, Payer.ToUpperInvariant())
+        {
+            PollInterval = TimeSpan.FromMilliseconds(1)
+        };
+
+        await sender.SendAsync(PayTo.ToUpperInvariant(), BigInteger.One, "attempt-1");
+
+        Assert.That(handler.Requests[0]["source"], Is.EqualTo(Payer));
+        Assert.That(handler.Requests[0]["destination"], Is.EqualTo(PayTo));
+    }
+
+    [Test]
     public async Task SendAsync_RpcError_Throws()
     {
         var handler = new ScriptedHandler("""{"error":"Insufficient balance"}""");

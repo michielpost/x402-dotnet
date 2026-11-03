@@ -39,7 +39,7 @@ namespace x402.Client.Nano
             this.httpClient = httpClient;
             this.endpoint = endpoint;
             this.walletId = walletId;
-            this.source = source.Trim();
+            this.source = source.Trim().ToLowerInvariant();
         }
 
         public async Task<string> SendAsync(string destination, BigInteger amountRaw, string id, CancellationToken cancellationToken = default)
@@ -57,7 +57,7 @@ namespace x402.Client.Nano
                 ["action"] = "send",
                 ["wallet"] = walletId,
                 ["source"] = source,
-                ["destination"] = destination,
+                ["destination"] = destination.Trim().ToLowerInvariant(),
                 ["amount"] = amountRaw.ToString(CultureInfo.InvariantCulture),
                 ["id"] = id
             }, cancellationToken).ConfigureAwait(false);
@@ -93,14 +93,24 @@ namespace x402.Client.Nano
                 ["action"] = "block_info",
                 ["json_block"] = "true",
                 ["hash"] = blockHash
-            }, cancellationToken).ConfigureAwait(false);
+            }, cancellationToken, treatNotFoundAsNull: true).ConfigureAwait(false);
 
-            return info.RootElement.TryGetProperty("confirmed", out var confirmed)
-                && confirmed.ValueKind == JsonValueKind.String
-                && confirmed.GetString() == "true";
+            // Right after "send" the node may not know the block yet: keep polling.
+            if (info == null)
+                return false;
+
+            if (!info.RootElement.TryGetProperty("confirmed", out var confirmed))
+                return false;
+
+            // Nodes answer "true" as a string; some proxies turn it into a JSON boolean.
+            return confirmed.ValueKind == JsonValueKind.True
+                || (confirmed.ValueKind == JsonValueKind.String && confirmed.GetString() == "true");
         }
 
         private async Task<JsonDocument> CallAsync(Dictionary<string, string> body, CancellationToken cancellationToken)
+            => (await CallAsync(body, cancellationToken, treatNotFoundAsNull: false).ConfigureAwait(false))!;
+
+        private async Task<JsonDocument?> CallAsync(Dictionary<string, string> body, CancellationToken cancellationToken, bool treatNotFoundAsNull)
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
             {
@@ -125,6 +135,9 @@ namespace x402.Client.Nano
             {
                 var message = error.ToString();
                 document.Dispose();
+                if (treatNotFoundAsNull && message.Contains("not found", StringComparison.OrdinalIgnoreCase))
+                    return null;
+
                 throw new InvalidOperationException($"Nano RPC {body["action"]} failed: {message}");
             }
 

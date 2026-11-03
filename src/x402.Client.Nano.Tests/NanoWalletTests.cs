@@ -74,6 +74,20 @@ public class NanoWalletTests
     };
 
     [Test]
+    public async Task UppercaseAccounts_AreNormalizedToLowercase()
+    {
+        var sender = new FakeSender();
+        var wallet = new NanoWallet(Payer.ToUpperInvariant(), sender) { IgnoreAllowances = true };
+
+        Assert.That(wallet.Account, Is.EqualTo(Payer));
+
+        var header = await wallet.CreateHeaderAsync(NanoRequirement(payTo: PayTo.ToUpperInvariant()));
+
+        Assert.That(sender.Sends.Single().Destination, Is.EqualTo(PayTo));
+        Assert.That(header.Payload!.Authorization!.From, Is.EqualTo(Payer));
+    }
+
+    [Test]
     public async Task SelectPayment_PicksNanoExact_FromMixedOffer()
     {
         var nano = NanoRequirement();

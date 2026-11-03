@@ -37,7 +37,7 @@ namespace x402.Client.Nano
             if (!IsAccount(account))
                 throw new ArgumentException($"'{account}' is not a Nano account.", nameof(account));
 
-            Account = account.Trim();
+            Account = account.Trim().ToLowerInvariant();
             this.sender = sender;
         }
 
@@ -59,6 +59,11 @@ namespace x402.Client.Nano
         /// Publishes a send of exactly <c>amount</c> raw to <c>payTo</c> and returns the header
         /// carrying the block hash. The funds move here, before the request is retried.
         /// </summary>
+        /// <remarks>
+        /// Call this once per requirement. Every call is a new payment: it passes a fresh
+        /// idempotency id to the <see cref="INanoSender"/>, so calling it again for the same
+        /// requirement (for example to retry after an error) sends the amount a second time.
+        /// </remarks>
         public override async Task<PaymentPayloadHeader> CreateHeaderAsync(PaymentRequirements requirement, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(requirement);
@@ -71,7 +76,8 @@ namespace x402.Client.Nano
 
             // The allowance is not given back when the send fails: a send that timed out
             // may still have been published, and counting it is the safe side.
-            var blockHash = await sender.SendAsync(requirement.PayTo.Trim(), amount, Guid.NewGuid().ToString("N"), cancellationToken).ConfigureAwait(false);
+            var payTo = requirement.PayTo.Trim().ToLowerInvariant();
+            var blockHash = await sender.SendAsync(payTo, amount, Guid.NewGuid().ToString("N"), cancellationToken).ConfigureAwait(false);
 
             blockHash = blockHash?.Trim().ToUpperInvariant() ?? string.Empty;
             if (blockHash.Length != 64 || !blockHash.All(char.IsAsciiHexDigit))
@@ -87,7 +93,7 @@ namespace x402.Client.Nano
                     Authorization = new Authorization
                     {
                         From = Account,
-                        To = requirement.PayTo,
+                        To = payTo,
                         Value = amount.ToString(CultureInfo.InvariantCulture)
                     }
                 }
