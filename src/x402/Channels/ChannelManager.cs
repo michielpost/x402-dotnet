@@ -40,6 +40,9 @@ namespace x402.Channels
             public PaymentPayloadHeader? LatestPayload;
             public PaymentRequirements? LatestRequirements;
             public ChannelPhase Phase = ChannelPhase.Idle;
+
+            /// <summary>Refund attempts that did not complete. Reset whenever a new voucher is recorded.</summary>
+            public int RefundAttempts;
         }
 
         private readonly ILogger<ChannelManager> logger;
@@ -47,8 +50,8 @@ namespace x402.Channels
         private readonly ConcurrentDictionary<string, Channel> channels = new();
 
         /// <summary>
-        /// Upper bound for the record/refund revalidation loop in <see cref="RecordVoucher"/>. Only a
-        /// channel stuck in <see cref="ChannelPhase.Refunding"/> can exhaust it.
+        /// Upper bound for the record/refund revalidation loop in <see cref="RecordVoucher"/>. Only a channel
+        /// that is repeatedly refunded (or otherwise replaced) can exhaust it.
         /// </summary>
         private const int MaxChannelLookupAttempts = 64;
 
@@ -96,53 +99,90 @@ namespace x402.Channels
             var payer = payload.ExtractPayerFromPayload() ?? string.Empty;
             var channelId = $"{requirements.Network}|{requirements.Asset}|{payer}".ToLowerInvariant();
 
+            var now = DateTimeOffset.UtcNow;
             Channel channel;
             for (int attempt = 0; ; attempt++)
             {
                 if (attempt >= MaxChannelLookupAttempts)
-                    throw new InvalidOperationException($"Could not record a voucher on channel {channelId}; the channel is being refunded");
+                    throw new InvalidOperationException($"Could not record a voucher on channel {channelId}; the channel keeps being removed or replaced");
 
-                channel = channels.GetOrAdd(channelId, _ => CreateChannel(channelId, payer, requirements));
-
-                lock (channel.SyncRoot)
+                if (channels.TryGetValue(channelId, out var tracked))
                 {
-                    if (channel.Phase == ChannelPhase.Refunding)
+                    lock (tracked.SyncRoot)
                     {
-                        // The refund has already been decided for this generation, so the channel is about
-                        // to be released on-chain: new vouchers start a new generation instead.
-                        channels.TryUpdate(channelId, CreateChannel(channelId, payer, requirements), channel);
-                        continue;
+                        if (!channels.TryGetValue(channelId, out var current) || !ReferenceEquals(current, tracked))
+                            continue; // the channel was removed or replaced between the lookup and the lock
+
+                        if (tracked.Phase == ChannelPhase.Refunding)
+                        {
+                            // The refund has already been decided for this generation, so the channel is about to be
+                            // released on-chain: the voucher starts a new generation instead. It is recorded before
+                            // that generation is published, so no cycle can ever observe a channel without a voucher.
+                            var replacement = CreateChannel(channelId, payer, requirements);
+                            RecordVoucherLocked(replacement, payload, requirements, amount, now);
+
+                            if (channels.TryUpdate(channelId, replacement, tracked))
+                            {
+                                channel = replacement;
+                                break;
+                            }
+
+                            continue; // the refund removed the channel first; retry against the current entry
+                        }
+
+                        RecordVoucherLocked(tracked, payload, requirements, amount, now);
+                        channel = tracked;
+                        break;
                     }
+                }
 
-                    if (!channels.TryGetValue(channelId, out var current) || !ReferenceEquals(current, channel))
-                        continue; // the channel was removed or replaced between the lookup and the lock
+                // Not tracked: build the generation first, so the channel is never published without its voucher.
+                var fresh = CreateChannel(channelId, payer, requirements);
+                RecordVoucherLocked(fresh, payload, requirements, amount, now);
 
-                    var now = DateTimeOffset.UtcNow;
-                    if (BigInteger.TryParse(payload.Payload.Authorization.Value, out var authorized))
-                    {
-                        channel.State.AuthorizedAmount = authorized;
-                    }
-
-                    channel.PendingVouchers.Enqueue(new ChannelVoucher
-                    {
-                        Payload = payload,
-                        Requirements = requirements,
-                        Amount = amount,
-                        Timestamp = now
-                    });
-                    channel.LatestPayload = payload;
-                    channel.LatestRequirements = requirements;
-                    channel.State.PendingAmount += amount;
-                    channel.State.TotalCharged += amount;
-                    channel.State.PendingVoucherCount = channel.PendingVouchers.Count;
-                    channel.State.LastRequestTimestamp = now;
-
+                if (channels.TryAdd(channelId, fresh))
+                {
+                    channel = fresh;
                     break;
                 }
             }
 
             logger.LogDebug("Recorded voucher of {Amount} on channel {Channel}", amount, channelId);
             return channel.State;
+        }
+
+        /// <summary>
+        /// Records a voucher on <paramref name="channel"/>. The caller must hold <see cref="Channel.SyncRoot"/>,
+        /// or own the channel exclusively because it has not been published yet.
+        /// </summary>
+        private static void RecordVoucherLocked(
+            Channel channel,
+            PaymentPayloadHeader payload,
+            PaymentRequirements requirements,
+            BigInteger amount,
+            DateTimeOffset now)
+        {
+            if (BigInteger.TryParse(payload.Payload.Authorization.Value, out var authorized))
+            {
+                channel.State.AuthorizedAmount = authorized;
+            }
+
+            channel.PendingVouchers.Enqueue(new ChannelVoucher
+            {
+                Payload = payload,
+                Requirements = requirements,
+                Amount = amount,
+                Timestamp = now
+            });
+            channel.LatestPayload = payload;
+            channel.LatestRequirements = requirements;
+            channel.State.PendingAmount += amount;
+            channel.State.TotalCharged += amount;
+            channel.State.PendingVoucherCount = channel.PendingVouchers.Count;
+            channel.State.LastRequestTimestamp = now;
+
+            // A voucher means the channel is active again, so automatic refunds get a fresh set of attempts.
+            channel.RefundAttempts = 0;
         }
 
         /// <summary>
@@ -406,7 +446,8 @@ namespace x402.Channels
         /// which idle channels to release and raises <see cref="ChannelManagerOptions.OnRefund"/> (or
         /// <see cref="ChannelManagerOptions.OnRefundAsync"/>) so the host can execute the cooperative refund.
         /// A channel is only removed from tracking once that callback reports success; a throwing or
-        /// unsuccessful callback leaves the channel tracked so a later cycle retries.
+        /// unsuccessful callback leaves the channel tracked so a later cycle retries, up to
+        /// <see cref="ChannelManagerOptions.MaxRefundAttempts"/> attempts.
         /// Channels with unclaimed, unsettled, in-flight or already refunding amounts are never refunded.
         /// </summary>
         public async Task RefundIdleChannelsAsync(CancellationToken cancellationToken = default)
@@ -422,8 +463,13 @@ namespace x402.Channels
 
                 if (options.OnRefund == null && options.OnRefundAsync == null)
                 {
-                    logger.LogWarning("Refund cycle skipped: no OnRefund or OnRefundAsync callback is configured to execute the refund");
-                    return;
+                    if (!options.RemoveIdleChannelsWithoutRefundCallback)
+                    {
+                        logger.LogWarning("Refund cycle skipped: no OnRefund or OnRefundAsync callback is configured to execute the refund, so idle channels stay tracked (set RemoveIdleChannelsWithoutRefundCallback to remove them without refunding)");
+                        return;
+                    }
+
+                    logger.LogWarning("No OnRefund or OnRefundAsync callback is configured; idle channels are removed from tracking without being refunded (RemoveIdleChannelsWithoutRefundCallback is set)");
                 }
 
                 var snapshot = channels.Values.Select(c =>
@@ -455,6 +501,7 @@ namespace x402.Channels
         private async Task RefundChannelAsync(Channel channel, CancellationToken cancellationToken)
         {
             var channelId = channel.State.ChannelId;
+            bool hasCallback = options.OnRefund != null || options.OnRefundAsync != null;
             BigInteger balance;
 
             lock (channel.SyncRoot)
@@ -473,34 +520,49 @@ namespace x402.Channels
                     return;
                 }
 
+                if (hasCallback && IsRefundAbandoned(channel))
+                {
+                    logger.LogDebug("Skipping refund of channel {Channel}; automatic refunds were abandoned after {Attempts} failed attempts", channelId, channel.RefundAttempts);
+                    return;
+                }
+
                 channel.Phase = ChannelPhase.Refunding;
                 balance = channel.State.Balance;
             }
 
             var result = new RefundResult(channelId, balance.ToString());
-            bool refunded;
-            try
-            {
-                refunded = await InvokeRefundCallbackAsync(result, cancellationToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                ResetPhase(channel);
-                throw;
-            }
-            catch (Exception ex)
-            {
-                ResetPhase(channel);
-                ReportError(ex);
-                logger.LogWarning("Refund of channel {Channel} failed; the channel stays tracked so a later cycle can retry", channelId);
-                return;
-            }
 
-            if (!refunded)
+            if (hasCallback)
             {
-                ResetPhase(channel);
-                logger.LogWarning("Refund of channel {Channel} did not complete; the channel stays tracked so a later cycle can retry", channelId);
-                return;
+                bool refunded;
+                try
+                {
+                    refunded = await InvokeRefundCallbackAsync(result, cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    ResetPhase(channel);
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    ResetPhase(channel);
+                    ReportError(ex);
+                    RegisterRefundFailure(channel, channelId, ex);
+                    return;
+                }
+
+                if (!refunded)
+                {
+                    ResetPhase(channel);
+                    RegisterRefundFailure(channel, channelId, null);
+                    return;
+                }
+            }
+            else
+            {
+                // Explicitly opted in: the host accepts that unused balances are dropped from tracking.
+                logger.LogWarning("Removing idle channel {Channel} without refunding its unused balance {Balance}: no OnRefund or OnRefundAsync callback is configured", channelId, balance);
             }
 
             // Remove only this exact channel instance: vouchers recorded while the refund was in flight
@@ -548,6 +610,43 @@ namespace x402.Channels
             {
                 channel.Phase = ChannelPhase.Idle;
             }
+        }
+
+        /// <summary>
+        /// True when automatic refunds for the channel were abandoned after
+        /// <see cref="ChannelManagerOptions.MaxRefundAttempts"/> failed attempts. The channel stays tracked so
+        /// the host can still refund it; a new voucher resets the attempt count. Caller holds the channel lock.
+        /// </summary>
+        private bool IsRefundAbandoned(Channel channel)
+        {
+            int max = options.MaxRefundAttempts;
+            return max > 0 && channel.RefundAttempts >= max;
+        }
+
+        /// <summary>
+        /// Counts a refund attempt that did not complete and reports the channel once the retry budget is spent.
+        /// </summary>
+        private void RegisterRefundFailure(Channel channel, string channelId, Exception? failure)
+        {
+            int attempts;
+            lock (channel.SyncRoot)
+            {
+                attempts = ++channel.RefundAttempts;
+            }
+
+            if (!IsRefundAbandoned(channel))
+            {
+                logger.LogWarning(
+                    "Refund of channel {Channel} did not complete (attempt {Attempts}); the channel stays tracked so a later cycle can retry",
+                    channelId, attempts);
+                return;
+            }
+
+            ReportError(new InvalidOperationException(
+                $"Giving up automatic refund of channel {channelId} after {attempts} failed attempts"
+                + (failure == null ? "; the refund callback reported the refund did not complete" : $": {failure.Message}")
+                + ". The channel stays tracked so it can be refunded manually; recording a new voucher restarts automatic refunds.",
+                failure));
         }
 
         private void InvokeCallback<T>(Action<T>? callback, T result)

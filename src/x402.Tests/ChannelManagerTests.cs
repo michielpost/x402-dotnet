@@ -323,6 +323,122 @@ namespace x402.Tests
         }
 
         [Test]
+        public async Task RefundIdleChannels_NoCallback_KeepsChannelTrackedByDefault()
+        {
+            var manager = CreateManager(new FakeFacilitatorClient());
+            manager.Start(ManualCycleOptions(new ChannelManagerOptions
+            {
+                SelectRefundChannels = (channels, _) => channels
+            }));
+
+            manager.RecordVoucher(CreatePayload("1000"), CreateRequirements(), new BigInteger(100));
+            await manager.ClaimPendingAsync();
+            await manager.SettleClaimedAsync();
+
+            await manager.RefundIdleChannelsAsync();
+
+            Assert.That(manager.Channels, Has.Count.EqualTo(1),
+                "without a refund callback the channel must stay tracked so its unused balance can still be refunded");
+
+            await manager.StopAsync();
+        }
+
+        [Test]
+        public async Task RefundIdleChannels_NoCallback_RemovesChannelWhenOptedIn()
+        {
+            var manager = CreateManager(new FakeFacilitatorClient());
+            manager.Start(ManualCycleOptions(new ChannelManagerOptions
+            {
+                SelectRefundChannels = (channels, _) => channels,
+                RemoveIdleChannelsWithoutRefundCallback = true
+            }));
+
+            manager.RecordVoucher(CreatePayload("1000"), CreateRequirements(), new BigInteger(100));
+            await manager.ClaimPendingAsync();
+            await manager.SettleClaimedAsync();
+
+            await manager.RefundIdleChannelsAsync();
+
+            Assert.That(manager.Channels, Is.Empty,
+                "opting in removes idle channels even though no refund callback can run");
+
+            await manager.StopAsync();
+        }
+
+        [Test]
+        public async Task RefundIdleChannels_RepeatedFailures_AbandonsRetries()
+        {
+            var manager = CreateManager(new FakeFacilitatorClient());
+            var reported = new List<Exception>();
+            int attempts = 0;
+            manager.Start(ManualCycleOptions(new ChannelManagerOptions
+            {
+                SelectRefundChannels = (channels, _) => channels,
+                MaxRefundAttempts = 2,
+                OnError = reported.Add,
+                OnRefund = _ =>
+                {
+                    attempts++;
+                    throw new InvalidOperationException("refund endpoint unreachable");
+                }
+            }));
+
+            manager.RecordVoucher(CreatePayload("1000"), CreateRequirements(), new BigInteger(100));
+            await manager.ClaimPendingAsync();
+            await manager.SettleClaimedAsync();
+
+            await manager.RefundIdleChannelsAsync();
+            await manager.RefundIdleChannelsAsync();
+            await manager.RefundIdleChannelsAsync();
+
+            Assert.That(attempts, Is.EqualTo(2), "retries stop once the attempt budget is spent");
+            Assert.That(manager.Channels, Has.Count.EqualTo(1), "an abandoned channel stays tracked for a manual refund");
+            Assert.That(reported.Any(e => e.Message.Contains("Giving up automatic refund")), Is.True,
+                "the host is told that automatic refunds were abandoned");
+
+            await manager.StopAsync();
+        }
+
+        [Test]
+        public async Task RefundIdleChannels_NewVoucherAfterAbandonedRefund_RestartsAutomaticRefunds()
+        {
+            var manager = CreateManager(new FakeFacilitatorClient());
+            var refunds = new List<RefundResult>();
+            int attempts = 0;
+            manager.Start(ManualCycleOptions(new ChannelManagerOptions
+            {
+                SelectRefundChannels = (channels, _) => channels,
+                MaxRefundAttempts = 1,
+                OnRefund = r =>
+                {
+                    attempts++;
+                    if (attempts == 1)
+                        throw new InvalidOperationException("transient refund failure");
+                    refunds.Add(r);
+                }
+            }));
+
+            manager.RecordVoucher(CreatePayload("1000"), CreateRequirements(), new BigInteger(100));
+            await manager.ClaimPendingAsync();
+            await manager.SettleClaimedAsync();
+
+            await manager.RefundIdleChannelsAsync();
+            await manager.RefundIdleChannelsAsync();
+            Assert.That(attempts, Is.EqualTo(1), "the retry budget is spent");
+
+            // Traffic reactivates the channel, so automatic refunds start over.
+            manager.RecordVoucher(CreatePayload("1000"), CreateRequirements(), new BigInteger(50));
+            await manager.ClaimPendingAsync();
+            await manager.SettleClaimedAsync();
+            await manager.RefundIdleChannelsAsync();
+
+            Assert.That(refunds, Has.Count.EqualTo(1), "recording a voucher restarts automatic refunds");
+            Assert.That(manager.Channels, Is.Empty);
+
+            await manager.StopAsync();
+        }
+
+        [Test]
         public async Task RefundIdleChannels_DoesNotRefundChannelWhileClaimIsInFlight()
         {
             var gate = new TaskCompletionSource<SettlementResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
