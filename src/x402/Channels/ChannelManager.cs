@@ -14,6 +14,24 @@ namespace x402.Channels
     /// </summary>
     public class ChannelManager : IAsyncDisposable
     {
+        /// <summary>
+        /// Which background cycle currently owns a channel. Guarded by <see cref="Channel.SyncRoot"/>.
+        /// </summary>
+        private enum ChannelPhase
+        {
+            /// <summary>No cycle is operating on the channel.</summary>
+            Idle,
+
+            /// <summary>A batch of vouchers is being settled with the facilitator.</summary>
+            Claiming,
+
+            /// <summary>The claimed balance is being handed to the settle callback.</summary>
+            Settling,
+
+            /// <summary>A cooperative refund is in flight.</summary>
+            Refunding,
+        }
+
         private sealed class Channel
         {
             public required ChannelState State { get; init; }
@@ -21,11 +39,18 @@ namespace x402.Channels
             public readonly Queue<ChannelVoucher> PendingVouchers = new();
             public PaymentPayloadHeader? LatestPayload;
             public PaymentRequirements? LatestRequirements;
+            public ChannelPhase Phase = ChannelPhase.Idle;
         }
 
         private readonly ILogger<ChannelManager> logger;
         private readonly IFacilitatorV2Client facilitator;
         private readonly ConcurrentDictionary<string, Channel> channels = new();
+
+        /// <summary>
+        /// Upper bound for the record/refund revalidation loop in <see cref="RecordVoucher"/>. Only a
+        /// channel stuck in <see cref="ChannelPhase.Refunding"/> can exhaust it.
+        /// </summary>
+        private const int MaxChannelLookupAttempts = 64;
 
         private ChannelManagerOptions options = new();
         private CancellationTokenSource? cts;
@@ -45,7 +70,15 @@ namespace x402.Channels
         /// <summary>
         /// Snapshot of all tracked channels.
         /// </summary>
-        public IReadOnlyList<ChannelState> Channels => channels.Values.Select(c => c.State).ToList();
+        public IReadOnlyList<ChannelState> Channels => channels.Values
+            .Select(c =>
+            {
+                lock (c.SyncRoot)
+                {
+                    return c.State;
+                }
+            })
+            .ToList();
 
         /// <summary>
         /// Records an off-chain voucher for a verified batch-settlement request.
@@ -63,38 +96,49 @@ namespace x402.Channels
             var payer = payload.ExtractPayerFromPayload() ?? string.Empty;
             var channelId = $"{requirements.Network}|{requirements.Asset}|{payer}".ToLowerInvariant();
 
-            var channel = channels.GetOrAdd(channelId, _ => new Channel
+            Channel channel;
+            for (int attempt = 0; ; attempt++)
             {
-                State = new ChannelState
-                {
-                    ChannelId = channelId,
-                    Payer = payer,
-                    Network = requirements.Network,
-                    Asset = requirements.Asset,
-                }
-            });
+                if (attempt >= MaxChannelLookupAttempts)
+                    throw new InvalidOperationException($"Could not record a voucher on channel {channelId}; the channel is being refunded");
 
-            lock (channel.SyncRoot)
-            {
-                var now = DateTimeOffset.UtcNow;
-                if (BigInteger.TryParse(payload.Payload.Authorization.Value, out var authorized))
-                {
-                    channel.State.AuthorizedAmount = authorized;
-                }
+                channel = channels.GetOrAdd(channelId, _ => CreateChannel(channelId, payer, requirements));
 
-                channel.PendingVouchers.Enqueue(new ChannelVoucher
+                lock (channel.SyncRoot)
                 {
-                    Payload = payload,
-                    Requirements = requirements,
-                    Amount = amount,
-                    Timestamp = now
-                });
-                channel.LatestPayload = payload;
-                channel.LatestRequirements = requirements;
-                channel.State.PendingAmount += amount;
-                channel.State.TotalCharged += amount;
-                channel.State.PendingVoucherCount = channel.PendingVouchers.Count;
-                channel.State.LastRequestTimestamp = now;
+                    if (channel.Phase == ChannelPhase.Refunding)
+                    {
+                        // The refund has already been decided for this generation, so the channel is about
+                        // to be released on-chain: new vouchers start a new generation instead.
+                        channels.TryUpdate(channelId, CreateChannel(channelId, payer, requirements), channel);
+                        continue;
+                    }
+
+                    if (!channels.TryGetValue(channelId, out var current) || !ReferenceEquals(current, channel))
+                        continue; // the channel was removed or replaced between the lookup and the lock
+
+                    var now = DateTimeOffset.UtcNow;
+                    if (BigInteger.TryParse(payload.Payload.Authorization.Value, out var authorized))
+                    {
+                        channel.State.AuthorizedAmount = authorized;
+                    }
+
+                    channel.PendingVouchers.Enqueue(new ChannelVoucher
+                    {
+                        Payload = payload,
+                        Requirements = requirements,
+                        Amount = amount,
+                        Timestamp = now
+                    });
+                    channel.LatestPayload = payload;
+                    channel.LatestRequirements = requirements;
+                    channel.State.PendingAmount += amount;
+                    channel.State.TotalCharged += amount;
+                    channel.State.PendingVoucherCount = channel.PendingVouchers.Count;
+                    channel.State.LastRequestTimestamp = now;
+
+                    break;
+                }
             }
 
             logger.LogDebug("Recorded voucher of {Amount} on channel {Channel}", amount, channelId);
@@ -195,74 +239,96 @@ namespace x402.Channels
             {
                 foreach (var channel in channels.Values)
                 {
-                    List<ChannelVoucher> batch;
-                    BigInteger batchAmount = BigInteger.Zero;
-                    PaymentPayloadHeader? payload;
-                    PaymentRequirements? requirements;
-
-                    lock (channel.SyncRoot)
-                    {
-                        if (channel.PendingVouchers.Count == 0)
-                            continue;
-
-                        int take = Math.Min(channel.PendingVouchers.Count, Math.Max(1, options.MaxClaimsPerBatch));
-                        batch = new List<ChannelVoucher>(take);
-                        for (int i = 0; i < take; i++)
-                        {
-                            var voucher = channel.PendingVouchers.Dequeue();
-                            batch.Add(voucher);
-                            batchAmount += voucher.Amount;
-                        }
-                        channel.State.PendingAmount -= batchAmount;
-                        channel.State.PendingVoucherCount = channel.PendingVouchers.Count;
-
-                        // The most recent voucher in the batch supersedes the earlier ones on-chain.
-                        payload = batch[^1].Payload;
-                        requirements = batch[^1].Requirements;
-                    }
-
-                    if (batchAmount == BigInteger.Zero)
-                    {
-                        // Nothing to move on-chain; the vouchers are simply consumed.
-                        options.OnClaim?.Invoke(new ClaimResult(channel.State.ChannelId, batch.Count, null));
-                        continue;
-                    }
-
-                    try
-                    {
-                        var response = await facilitator.SettleAsync(payload!, requirements!, batchAmount.ToString(), cancellationToken).ConfigureAwait(false);
-                        if (response.Success)
-                        {
-                            lock (channel.SyncRoot)
-                            {
-                                channel.State.ClaimedAmount += batchAmount;
-                            }
-                            logger.LogInformation("Claimed {Count} vouchers ({Amount}) on channel {Channel} (tx: {Tx})",
-                                batch.Count, batchAmount, channel.State.ChannelId, response.Transaction);
-                            options.OnClaim?.Invoke(new ClaimResult(channel.State.ChannelId, batch.Count, response.Transaction));
-                        }
-                        else
-                        {
-                            Requeue(channel, batch, batchAmount);
-                            ReportError(new InvalidOperationException($"Claim failed for channel {channel.State.ChannelId}: {response.ErrorReason}"));
-                        }
-                    }
-                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                    {
-                        Requeue(channel, batch, batchAmount);
-                        throw;
-                    }
-                    catch (Exception ex)
-                    {
-                        Requeue(channel, batch, batchAmount);
-                        ReportError(ex);
-                    }
+                    await ClaimChannelAsync(channel, cancellationToken).ConfigureAwait(false);
                 }
             }
             finally
             {
                 Interlocked.Exchange(ref claimCycleRunning, 0);
             }
+        }
+
+        /// <summary>
+        /// Claims the vouchers of a single channel. The batch is only peeked from the queue: it keeps
+        /// counting towards <see cref="ChannelState.PendingAmount"/> until the facilitator accepts it, so
+        /// a concurrent refund cycle can never observe a channel that looks fully refundable mid-claim.
+        /// A failed claim therefore needs no requeue and keeps the vouchers in their original order.
+        /// </summary>
+        private async Task ClaimChannelAsync(Channel channel, CancellationToken cancellationToken)
+        {
+            List<ChannelVoucher> batch;
+            BigInteger batchAmount;
+            PaymentPayloadHeader payload;
+            PaymentRequirements requirements;
+
+            lock (channel.SyncRoot)
+            {
+                if (channel.Phase != ChannelPhase.Idle || channel.PendingVouchers.Count == 0)
+                    return;
+
+                int take = Math.Min(channel.PendingVouchers.Count, Math.Max(1, options.MaxClaimsPerBatch));
+                batch = channel.PendingVouchers.Take(take).ToList();
+                batchAmount = batch.Aggregate(BigInteger.Zero, static (sum, voucher) => sum + voucher.Amount);
+
+                // The most recent voucher in the batch supersedes the earlier ones on-chain.
+                payload = batch[^1].Payload;
+                requirements = batch[^1].Requirements;
+                channel.Phase = ChannelPhase.Claiming;
+            }
+
+            try
+            {
+                if (batchAmount == BigInteger.Zero)
+                {
+                    // Nothing to move on-chain; the vouchers are simply consumed.
+                    CompleteClaim(channel, batch.Count, BigInteger.Zero, null);
+                    return;
+                }
+
+                var response = await facilitator.SettleAsync(payload, requirements, batchAmount.ToString(), cancellationToken).ConfigureAwait(false);
+                if (response.Success)
+                {
+                    CompleteClaim(channel, batch.Count, batchAmount, response.Transaction);
+                    return;
+                }
+
+                ResetPhase(channel);
+                ReportError(new InvalidOperationException($"Claim failed for channel {channel.State.ChannelId}: {response.ErrorReason}"));
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                ResetPhase(channel);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                ResetPhase(channel);
+                ReportError(ex);
+            }
+        }
+
+        private void CompleteClaim(Channel channel, int voucherCount, BigInteger batchAmount, string? transaction)
+        {
+            lock (channel.SyncRoot)
+            {
+                for (int i = 0; i < voucherCount && channel.PendingVouchers.Count > 0; i++)
+                {
+                    channel.PendingVouchers.Dequeue();
+                }
+
+                channel.State.PendingAmount -= batchAmount;
+                channel.State.ClaimedAmount += batchAmount;
+                channel.State.PendingVoucherCount = channel.PendingVouchers.Count;
+                channel.Phase = ChannelPhase.Idle;
+            }
+
+            if (batchAmount != BigInteger.Zero)
+            {
+                logger.LogInformation("Claimed {Count} vouchers ({Amount}) on channel {Channel} (tx: {Tx})",
+                    voucherCount, batchAmount, channel.State.ChannelId, transaction);
+            }
+
+            InvokeCallback(options.OnClaim, new ClaimResult(channel.State.ChannelId, voucherCount, transaction));
         }
 
         /// <summary>
@@ -279,24 +345,7 @@ namespace x402.Channels
             {
                 foreach (var channel in channels.Values)
                 {
-                    BigInteger settled;
-                    lock (channel.SyncRoot)
-                    {
-                        settled = channel.State.ClaimedAmount;
-                        if (settled == BigInteger.Zero)
-                            continue;
-                        channel.State.ClaimedAmount = BigInteger.Zero;
-                    }
-
-                    logger.LogInformation("Settled {Amount} on channel {Channel}", settled, channel.State.ChannelId);
-                    try
-                    {
-                        options.OnSettle?.Invoke(new SettleResult(channel.State.ChannelId, settled.ToString(), null));
-                    }
-                    catch (Exception ex)
-                    {
-                        ReportError(ex);
-                    }
+                    SettleChannel(channel);
                 }
             }
             finally
@@ -307,72 +356,212 @@ namespace x402.Channels
             return Task.CompletedTask;
         }
 
+        private void SettleChannel(Channel channel)
+        {
+            BigInteger settled;
+            lock (channel.SyncRoot)
+            {
+                if (channel.Phase != ChannelPhase.Idle)
+                    return;
+
+                settled = channel.State.ClaimedAmount;
+                if (settled == BigInteger.Zero)
+                    return;
+
+                channel.Phase = ChannelPhase.Settling;
+            }
+
+            Exception? failure = null;
+            try
+            {
+                options.OnSettle?.Invoke(new SettleResult(channel.State.ChannelId, settled.ToString(), null));
+            }
+            catch (Exception ex)
+            {
+                failure = ex;
+            }
+
+            lock (channel.SyncRoot)
+            {
+                // Only drop the claimed amount once the host has taken ownership of it. A failed callback
+                // keeps the balance tracked so the next settle cycle retries instead of losing it.
+                if (failure == null)
+                {
+                    channel.State.ClaimedAmount -= settled;
+                }
+                channel.Phase = ChannelPhase.Idle;
+            }
+
+            if (failure != null)
+            {
+                ReportError(failure);
+                return;
+            }
+
+            logger.LogInformation("Settled {Amount} on channel {Channel}", settled, channel.State.ChannelId);
+        }
+
         /// <summary>
         /// Runs a single refund cycle: asks <see cref="ChannelManagerOptions.SelectRefundChannels"/>
-        /// which idle channels to release, removes them from tracking and raises
-        /// <see cref="ChannelManagerOptions.OnRefund"/> so the host can execute the cooperative refund.
-        /// Channels with unclaimed or unsettled amounts are never refunded.
+        /// which idle channels to release and raises <see cref="ChannelManagerOptions.OnRefund"/> (or
+        /// <see cref="ChannelManagerOptions.OnRefundAsync"/>) so the host can execute the cooperative refund.
+        /// A channel is only removed from tracking once that callback reports success; a throwing or
+        /// unsuccessful callback leaves the channel tracked so a later cycle retries.
+        /// Channels with unclaimed, unsettled, in-flight or already refunding amounts are never refunded.
         /// </summary>
-        public Task RefundIdleChannelsAsync(CancellationToken cancellationToken = default)
+        public async Task RefundIdleChannelsAsync(CancellationToken cancellationToken = default)
         {
             if (Interlocked.Exchange(ref refundCycleRunning, 1) == 1)
-                return Task.CompletedTask;
+                return;
 
             try
             {
                 var selector = options.SelectRefundChannels;
                 if (selector == null)
-                    return Task.CompletedTask;
+                    return;
 
-                var snapshot = Channels;
+                if (options.OnRefund == null && options.OnRefundAsync == null)
+                {
+                    logger.LogWarning("Refund cycle skipped: no OnRefund or OnRefundAsync callback is configured to execute the refund");
+                    return;
+                }
+
+                var snapshot = channels.Values.Select(c =>
+                {
+                    lock (c.SyncRoot)
+                    {
+                        return c.State;
+                    }
+                }).ToList();
+
                 var selected = selector(snapshot, new RefundContext { Now = DateTimeOffset.UtcNow })?.ToList();
                 if (selected == null || selected.Count == 0)
-                    return Task.CompletedTask;
+                    return;
 
                 foreach (var state in selected)
                 {
                     if (!channels.TryGetValue(state.ChannelId, out var channel))
                         continue;
 
-                    lock (channel.SyncRoot)
-                    {
-                        if (channel.State.PendingAmount != BigInteger.Zero || channel.State.ClaimedAmount != BigInteger.Zero)
-                        {
-                            logger.LogDebug("Skipping refund of channel {Channel}; it has unclaimed or unsettled amounts", state.ChannelId);
-                            continue;
-                        }
-                        channels.TryRemove(state.ChannelId, out _);
-                    }
-
-                    logger.LogInformation("Refunded channel {Channel} (unused balance {Balance})", state.ChannelId, channel.State.Balance);
-                    try
-                    {
-                        options.OnRefund?.Invoke(new RefundResult(state.ChannelId, channel.State.Balance.ToString()));
-                    }
-                    catch (Exception ex)
-                    {
-                        ReportError(ex);
-                    }
+                    await RefundChannelAsync(channel, cancellationToken).ConfigureAwait(false);
                 }
             }
             finally
             {
                 Interlocked.Exchange(ref refundCycleRunning, 0);
             }
-
-            return Task.CompletedTask;
         }
 
-        private static void Requeue(Channel channel, List<ChannelVoucher> batch, BigInteger batchAmount)
+        private async Task RefundChannelAsync(Channel channel, CancellationToken cancellationToken)
+        {
+            var channelId = channel.State.ChannelId;
+            BigInteger balance;
+
+            lock (channel.SyncRoot)
+            {
+                if (channel.Phase != ChannelPhase.Idle)
+                {
+                    logger.LogDebug("Skipping refund of channel {Channel}; a {Phase} cycle is in flight", channelId, channel.Phase);
+                    return;
+                }
+
+                if (channel.PendingVouchers.Count > 0
+                    || channel.State.PendingAmount != BigInteger.Zero
+                    || channel.State.ClaimedAmount != BigInteger.Zero)
+                {
+                    logger.LogDebug("Skipping refund of channel {Channel}; it has unclaimed or unsettled amounts", channelId);
+                    return;
+                }
+
+                channel.Phase = ChannelPhase.Refunding;
+                balance = channel.State.Balance;
+            }
+
+            var result = new RefundResult(channelId, balance.ToString());
+            bool refunded;
+            try
+            {
+                refunded = await InvokeRefundCallbackAsync(result, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                ResetPhase(channel);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                ResetPhase(channel);
+                ReportError(ex);
+                logger.LogWarning("Refund of channel {Channel} failed; the channel stays tracked so a later cycle can retry", channelId);
+                return;
+            }
+
+            if (!refunded)
+            {
+                ResetPhase(channel);
+                logger.LogWarning("Refund of channel {Channel} did not complete; the channel stays tracked so a later cycle can retry", channelId);
+                return;
+            }
+
+            // Remove only this exact channel instance: vouchers recorded while the refund was in flight
+            // start a replacement generation that is already tracked and must stay claimable.
+            if (channels.TryRemove(new KeyValuePair<string, Channel>(channelId, channel)))
+            {
+                logger.LogInformation("Refunded channel {Channel} (unused balance {Balance})", channelId, balance);
+            }
+            else
+            {
+                logger.LogInformation("Refunded channel {Channel} (unused balance {Balance}); a newer channel generation is already tracked", channelId, balance);
+            }
+        }
+
+        private async Task<bool> InvokeRefundCallbackAsync(RefundResult result, CancellationToken cancellationToken)
+        {
+            var asyncCallback = options.OnRefundAsync;
+            if (asyncCallback != null)
+                return await asyncCallback(result, cancellationToken).ConfigureAwait(false);
+
+            var callback = options.OnRefund;
+            if (callback != null)
+            {
+                callback(result);
+                return true;
+            }
+
+            return false;
+        }
+
+        private static Channel CreateChannel(string channelId, string payer, PaymentRequirements requirements) => new()
+        {
+            State = new ChannelState
+            {
+                ChannelId = channelId,
+                Payer = payer,
+                Network = requirements.Network,
+                Asset = requirements.Asset,
+            }
+        };
+
+        private static void ResetPhase(Channel channel)
         {
             lock (channel.SyncRoot)
             {
-                foreach (var voucher in batch)
-                {
-                    channel.PendingVouchers.Enqueue(voucher);
-                }
-                channel.State.PendingAmount += batchAmount;
-                channel.State.PendingVoucherCount = channel.PendingVouchers.Count;
+                channel.Phase = ChannelPhase.Idle;
+            }
+        }
+
+        private void InvokeCallback<T>(Action<T>? callback, T result)
+        {
+            if (callback == null)
+                return;
+
+            try
+            {
+                callback(result);
+            }
+            catch (Exception ex)
+            {
+                ReportError(ex);
             }
         }
 

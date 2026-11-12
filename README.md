@@ -306,6 +306,8 @@ app.Lifetime.ApplicationStopping.Register(() => channelManager.StopAsync(flush: 
 
 Endpoint handlers can use the same `SetSettlementOverrides` formats as `upto` to bill a fraction of the authorized amount per request.
 
+Channels are only removed from tracking after the refund succeeds: if `OnRefund` throws (or `OnRefundAsync` returns `false`), the channel stays tracked and the next refund cycle retries it. Use `OnRefundAsync` when the cooperative refund performs I/O, and return `true` only once it completed. Vouchers recorded while a refund is in flight start a new channel generation, so they are still claimed. Without `OnRefund`/`OnRefundAsync`, no channel is refunded and the refund cycle logs a warning.
+
 ## Accept Any ERC-20 Token with Permit2 (Optional, EVM)
 
 By default USDC is transferred via EIP-3009 (Transfer With Authorization). To accept any ERC-20 token, set the transfer method to Permit2 and optionally declare a gas sponsorship extension so the facilitator sponsors the buyer's one-time Permit2 approval:

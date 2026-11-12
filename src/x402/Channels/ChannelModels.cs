@@ -120,7 +120,21 @@ namespace x402.Channels
 
         public Action<ClaimResult>? OnClaim { get; set; }
         public Action<SettleResult>? OnSettle { get; set; }
+
+        /// <summary>
+        /// Executes the cooperative refund for a channel selected by <see cref="SelectRefundChannels"/>.
+        /// The channel is only removed from tracking when the callback returns without throwing; when it
+        /// throws the channel stays tracked and a later refund cycle retries it.
+        /// </summary>
         public Action<RefundResult>? OnRefund { get; set; }
+
+        /// <summary>
+        /// Asynchronous variant of <see cref="OnRefund"/>, taking precedence when set. Return <c>true</c>
+        /// when the refund completed so the channel can be removed from tracking; return <c>false</c> or
+        /// throw to keep the channel tracked for a later retry.
+        /// </summary>
+        public Func<RefundResult, CancellationToken, Task<bool>>? OnRefundAsync { get; set; }
+
         public Action<Exception>? OnError { get; set; }
     }
 }
